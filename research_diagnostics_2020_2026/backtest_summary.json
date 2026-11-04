@@ -1,0 +1,239 @@
+{
+  "candles_processed": 232608,
+  "signals_generated": 16822,
+  "entry_attempts": 16822,
+  "entries_accepted": 9071,
+  "entries_rejected": 7751,
+  "entries_skipped_kill_switch": 0,
+  "rejection_reasons": {
+    "POSITION_SIZE_ZERO": 7751
+  },
+  "rejection_examples": {
+    "POSITION_SIZE_ZERO": [
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "POSITION_SIZE_ZERO",
+        "timestamp": "2024-08-04T17:45:00+00:00",
+        "candle_index": 161159,
+        "strategy": "momentum",
+        "signal_id": 8556,
+        "order_id": 8556,
+        "trade_id": 8556,
+        "price": 57319.9257,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 0.19690075571825627,
+        "available_cash": 0.19690075571825627,
+        "requested_position_size": 0.0,
+        "requested_order_value": 0.0,
+        "detail": "no executable quantity",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 1.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "POSITION_SIZE_ZERO",
+        "timestamp": "2024-08-04T18:00:00+00:00",
+        "candle_index": 161160,
+        "strategy": "momentum",
+        "signal_id": 8557,
+        "order_id": 8557,
+        "trade_id": 8557,
+        "price": 57813.17895,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 0.19690075571825627,
+        "available_cash": 0.19690075571825627,
+        "requested_position_size": 0.0,
+        "requested_order_value": 0.0,
+        "detail": "no executable quantity",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 1.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "POSITION_SIZE_ZERO",
+        "timestamp": "2024-08-04T18:15:00+00:00",
+        "candle_index": 161161,
+        "strategy": "momentum",
+        "signal_id": 8558,
+        "order_id": 8558,
+        "trade_id": 8558,
+        "price": 58159.1059,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 0.19690075571825627,
+        "available_cash": 0.19690075571825627,
+        "requested_position_size": 0.0,
+        "requested_order_value": 0.0,
+        "detail": "no executable quantity",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 1.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "POSITION_SIZE_ZERO",
+        "timestamp": "2024-08-04T18:30:00+00:00",
+        "candle_index": 161162,
+        "strategy": "momentum",
+        "signal_id": 8559,
+        "order_id": 8559,
+        "trade_id": 8559,
+        "price": 58310.929950000005,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 0.19690075571825627,
+        "available_cash": 0.19690075571825627,
+        "requested_position_size": 0.0,
+        "requested_order_value": 0.0,
+        "detail": "no executable quantity",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 1.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "POSITION_SIZE_ZERO",
+        "timestamp": "2024-08-04T18:45:00+00:00",
+        "candle_index": 161163,
+        "strategy": "momentum",
+        "signal_id": 8560,
+        "order_id": 8560,
+        "trade_id": 8560,
+        "price": 58410.68005,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 0.19690075571825627,
+        "available_cash": 0.19690075571825627,
+        "requested_position_size": 0.0,
+        "requested_order_value": 0.0,
+        "detail": "no executable quantity",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 1.0
+        }
+      }
+    ]
+  },
+  "trades_opened": 9071,
+  "trades_closed": 9071,
+  "partial_fills": 0,
+  "rejected_orders": 0,
+  "kill_switch_activations": 0,
+  "kill_switch_would_trigger": 59,
+  "strategy_performance": {
+    "breakout": {
+      "signals": 1396,
+      "entries": 1013,
+      "wins": 375,
+      "losses": 638,
+      "net_pnl": -1071.1983449221093,
+      "expectancy": -1.0574514757375215,
+      "profit_factor": 0.6731097166572271,
+      "drawdown_contribution": 3276.935410768578
+    },
+    "mean_reversion": {
+      "signals": 13078,
+      "entries": 7043,
+      "wins": 2568,
+      "losses": 4475,
+      "net_pnl": -7963.771022429623,
+      "expectancy": -1.1307356272085225,
+      "profit_factor": 0.45472881870071746,
+      "drawdown_contribution": 14557.93330069802
+    },
+    "momentum": {
+      "signals": 1292,
+      "entries": 466,
+      "wins": 203,
+      "losses": 263,
+      "net_pnl": -516.5156210248755,
+      "expectancy": -1.1084026202250548,
+      "profit_factor": 0.6827854515135813,
+      "drawdown_contribution": 1628.284779148424
+    },
+    "trend_following": {
+      "signals": 1056,
+      "entries": 549,
+      "wins": 217,
+      "losses": 332,
+      "net_pnl": -448.4393710039698,
+      "expectancy": -0.8168294553806372,
+      "profit_factor": 0.738384559563875,
+      "drawdown_contribution": 1666.0143669855383
+    }
+  },
+  "final_equity": 0.07564061942224679,
+  "net_pnl": -9999.924359380579,
+  "return_pct": -0.9999924359380579,
+  "max_drawdown_pct": 0.9999925039058327,
+  "performance_timings": {
+    "15m_feature_update": {
+      "seconds": 5.546614699604106,
+      "calls": 232608,
+      "average_ms": 0.023845330769380703
+    },
+    "15m_signal_generation": {
+      "seconds": 1.1585548000439303,
+      "calls": 137838,
+      "average_ms": 0.00840519160205408
+    },
+    "1h_structure_calculation": {
+      "seconds": 0.43522299870528514,
+      "calls": 232608,
+      "average_ms": 0.0018710577396533444
+    },
+    "4h_regime_calculation": {
+      "seconds": 3.356224000137445,
+      "calls": 232608,
+      "average_ms": 0.01442866969380866
+    },
+    "accounting": {
+      "seconds": 3.0609730993055564,
+      "calls": 345519,
+      "average_ms": 0.008859058689407982
+    },
+    "data_loading": {
+      "seconds": 1.3311709000008705,
+      "calls": 1,
+      "average_ms": 1331.1709000008705
+    },
+    "execution_fills": {
+      "seconds": 0.20368679891180363,
+      "calls": 146555,
+      "average_ms": 0.0013898317963345068
+    },
+    "market_data_update": {
+      "seconds": 2.742945800142479,
+      "calls": 232608,
+      "average_ms": 0.011792138706074078
+    },
+    "position_sizing_risk": {
+      "seconds": 0.220136400188494,
+      "calls": 16822,
+      "average_ms": 0.013086220436838308
+    }
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "input": {
+    "path": "tests/tests/combined.csv",
+    "sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+    "candle_count": 232608
+  },
+  "configuration_reconciliation": {
+    "historical_92_trade_baseline_leverage": 2.0,
+    "historical_92_trade_baseline_risk_per_trade_pct": 0.005,
+    "historical_92_trade_baseline_initial_equity": 10000.0,
+    "optimized_93_trade_run_leverage": 1.0,
+    "initial_equity": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "fee_rate": 0.0005,
+    "slippage_bps": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "max_participation_rate": 0.05,
+    "monte_carlo_iterations": 0,
+    "note": "The old diagnostic artifact contains leverage=2.0 in rejection risk_values. The 93-trade invocation omitted --leverage and used the CLI default 1.0."
+  },
+  "full_dataset_results": {
+    "historical_baseline_leverage_2": {
+      "trades": 92,
+      "final_equity": 9072.61676158795,
+      "net_pnl": -927.383238412047,
+      "max_drawdown_pct": 0.100890631140073
+    },
+    "optimized_leverage_1": {
+      "trades": 93,
+      "final_equity": 9156.83619475902,
+      "net_pnl": -843.16380524098,
+      "max_drawdown_pct": 0.10038949128606
+    },
+    "optimized_leverage_2_replay": {
+      "trades": 92,
+      "final_equity": 9072.61676158795,
+      "net_pnl": -927.383238412047,
+      "max_drawdown_pct": 0.100890631140073,
+      "trade_csv_byte_identical_to_historical_baseline": true,
+      "signal_csv_byte_identical_to_historical_baseline": true
+    }
+  },
+  "legacy_vs_optimized_same_configuration": {
+    "config": {
+      "initial_equity": 10000.0,
+      "risk_per_trade_pct": 0.005,
+      "leverage": 2.0,
+      "fee_rate": 0.0005,
+      "slippage_bps": 5.0,
+      "funding_rate_per_8h": 0.0001,
+      "estimated_round_trip_cost_pct": 0.002,
+      "monte_carlo_iterations": 0
+    },
+    "input_csv_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+    "input_rows": 232608,
+    "compared_trade_active_prefix_rows": 3000,
+    "legacy_trades": 92,
+    "optimized_trades": 92,
+    "decision_trace_calls": 1947,
+    "decision_trace_equal": true,
+    "trades_equal": true,
+    "equity_curve_equal": true,
+    "kill_switch_events_equal": true,
+    "rejections_equal": true,
+    "first_decision_divergence": null,
+    "trade_exports": {
+      "legacy": "legacy_trades.csv",
+      "optimized": "optimized_trades.csv",
+      "sha256_equal": true
+    }
+  },
+  "first_divergence_between_the_two_historical_configurations": {
+    "type": "position_size_due_to_margin_cap",
+    "trade_id": 17,
+    "signal_timestamp": "2020-01-12T06:00:00+00:00",
+    "signal_candle_index": 1176,
+    "signal_candle_ohlcv": {
+      "open": 8108.06,
+      "high": 8144.85,
+      "low": 8107.28,
+      "close": 8138.65,
+      "volume": 2133.199
+    },
+    "entry_timestamp": "2020-01-12T06:15:00+00:00",
+    "entry_candle_ohlcv": {
+      "open": 8138.79,
+      "high": 8155.0,
+      "low": 8121.14,
+      "close": 8121.14,
+      "volume": 1371.181
+    },
+    "signal": {
+      "strategy": "mean_reversion",
+      "direction": "short",
+      "confidence": 0.85,
+      "stop_price": 8168.6725,
+      "take_profit": 8088.7875
+    },
+    "fifteen_minute_features": {
+      "atr_14": 20.014999999999937,
+      "previous_high_20": 8119.24,
+      "previous_low_20": 8038.0,
+      "baseline_volume_20": 749.4911500000001,
+      "momentum_12": 0.006394260375370608,
+      "mean_20": 8088.7875,
+      "standard_deviation_20": 16.374849884808025
+    },
+    "one_hour": {
+      "latest_candle": {
+        "timestamp": "2020-01-12T06:00:00+00:00",
+        "open": 8108.06,
+        "high": 8144.85,
+        "low": 8107.28,
+        "close": 8138.65,
+        "volume": 2133.199
+      },
+      "ema_20": 8096.291834975873,
+      "ema_50": 8057.326956739418
+    },
+    "four_hour": {
+      "regime": "range",
+      "trend_strength": 1.1431419328560872,
+      "volatility_pct": 0.019960663886867864,
+      "momentum_pct": 0.009778109739151164,
+      "latest_candle": {
+        "timestamp": "2020-01-12T04:00:00+00:00",
+        "open": 8092.09,
+        "high": 8144.85,
+        "low": 8072.0,
+        "close": 8138.65,
+        "volume": 6422.117
+      }
+    },
+    "position_before_entry": null,
+    "equity_before_entry": 9872.88240790273,
+    "kill_switch_active": false,
+    "risk_sizing": {
+      "risk_budget": 49.3644120395136,
+      "unit_risk": 50.2213362099992,
+      "unconstrained_quantity": 0.982937049565898,
+      "max_notional_quantity": 1.21367197317562,
+      "leverage_1_margin_cap_quantity": 0.970937578540496,
+      "leverage_2_margin_cap_quantity": 1.94187515708099,
+      "leverage_1_filled_quantity": 0.970937578540496,
+      "leverage_2_filled_quantity": 0.982937049565898
+    }
+  },
+  "first_entry_gate_divergence": {
+    "timestamp": "2020-01-28T01:00:00+00:00",
+    "candle_index": 2692,
+    "ohlcv": {
+      "open": 9076.45,
+      "high": 9156.34,
+      "low": 9076.43,
+      "close": 9122.45,
+      "volume": 7074.732
+    },
+    "entry_candle_ohlcv": {
+      "timestamp": "2020-01-28T01:15:00+00:00",
+      "open": 9122.3,
+      "high": 9176.68,
+      "low": 9109.94,
+      "close": 9128.0,
+      "volume": 4266.798
+    },
+    "signal": "mean_reversion short, confidence 0.8203065567369143, stop 9196.314285714287, target 8965.015",
+    "fifteen_minute_features": {
+      "atr_14": 49.242857142856984,
+      "previous_high_20": 9106.9,
+      "previous_low_20": 8895.32,
+      "baseline_volume_20": 2058.7341499999998,
+      "momentum_12": 0.019633857506435204,
+      "mean_20": 8965.015,
+      "standard_deviation_20": 58.24313028160493
+    },
+    "one_hour_state": {
+      "latest_candle": {
+        "timestamp": "2020-01-28T01:00:00+00:00",
+        "open": 9076.45,
+        "high": 9156.34,
+        "low": 9076.43,
+        "close": 9122.45,
+        "volume": 7074.732
+      },
+      "ema_20": 8850.72875031143,
+      "ema_50": 8688.528613148255
+    },
+    "four_hour_state": {
+      "regime": "range",
+      "trend_strength": 0.6199519868918685,
+      "volatility_pct": 0.012927996316778921,
+      "momentum_pct": 0.07272460018814675,
+      "latest_candle": {
+        "timestamp": "2020-01-28T00:00:00+00:00",
+        "open": 8913.61,
+        "high": 9156.34,
+        "low": 8913.61,
+        "close": 9122.45,
+        "volume": 20403.464
+      }
+    },
+    "historical_leverage_2_state": {
+      "position": null,
+      "equity": 9072.616761587953,
+      "kill_switch_active": true,
+      "decision": "skip signal 93"
+    },
+    "optimized_leverage_1_state": {
+      "position": null,
+      "equity_after_trade_92": 9091.000771742968,
+      "kill_switch_active": false,
+      "decision": "accept signal 93 for next open"
+    },
+    "consequence": {
+      "leverage_1_trade_93_entry": "2020-01-28T01:15:00+00:00",
+      "leverage_1_trade_93_exit": "2020-01-28T10:00:00+00:00",
+      "net_pnl": 65.83542301605392,
+      "kill_switch_later_activated_at": "2020-01-28T01:45:00+00:00"
+    }
+  },
+  "non_trading_state_difference": {
+    "first_observed_at": "2019-12-31T00:45:00+00:00",
+    "field": "aggregated_1h_and_4h_volume",
+    "legacy": 6603.433999999999,
+    "optimized": 6603.434,
+    "ohlc_equal": true,
+    "regime_equal": true,
+    "strategy_decision_equal": true,
+    "note": "Floating point accumulation differs by about 9e-13. Current strategies do not use aggregated 1H/4H volume."
+  }
+}

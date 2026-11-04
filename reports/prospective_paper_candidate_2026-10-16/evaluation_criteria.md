@@ -1,0 +1,24 @@
+# Proposed prospective evaluation criteria (pre-registration draft)
+
+These are proposed decision rules to approve and timestamp **before** the first scored candle. They are not applied to the historical diagnostics and are not evidence that the strategy is profitable. Keep the baseline strategy, risk, costs, and safety controls frozen throughout the evaluation.
+
+## Evaluation boundary and minimum evidence
+
+- Score only candles received prospectively after the approved start time. All preceding candles are indicator warm-up only. Do not reuse the previously examined 2025–August 2026 window as a holdout.
+- Minimum evidence for any performance inference: **12 calendar months and 100 closed trades**, whichever takes longer. Aim for 200 or more trades; 100 is only a floor, not a guarantee of useful precision. Stop at 24 months if the minimum is not met and report “insufficient evidence.”
+- Safety events override the sample plan. A permanent 10% drawdown/ATR lock or daily 3% loss lock remains enabled. A lock that materially blocks future entries ends the executed-portfolio sample at that event; later unexecuted signals do not count toward trade count or P&L. If the lock occurs before the minimum evidence threshold, classify the outcome as safety-limited/inconclusive (or a risk-limit failure under the approved policy), not as a clean test of subsequent strategy performance.
+- Evaluate only a flat account at the endpoint for final net P&L. If the calendar/trade minimum is reached while a position is open, continue to its normal modeled exit; do not force a favorable endpoint or call open mark-to-market a closed trade. Report marked equity throughout.
+
+## Proposed measurable criteria
+
+1. **Net performance after frozen costs:** require cumulative closed-trade net P&L after 5 bp/side fees, 5 bp/side slippage, and the frozen funding model to be positive, and the 95% block-bootstrap interval for mean daily net return to have a lower bound above zero. Also report trade-level expectancy and profit factor; neither can substitute for the portfolio-level test. If the interval includes zero, result is inconclusive rather than “pass.”
+2. **Drawdown and safety:** no permanent max-drawdown trip (10% peak-to-valley) and no unresolved daily-loss trip (3% daily). These are existing safety limits, not proposed parameter changes. Any trigger stops new entries according to the frozen control and must be reported as a safety failure/limited sample; do not resume by disabling the switch.
+3. **Trade count and uncertainty:** at least 100 closed trades and 12 months before considering the performance criterion; target at least 200 closed trades. Give 95% intervals for mean/median trade expectancy, win rate, and daily portfolio return. A 100-trade win-rate estimate still has roughly ±10 percentage-point uncertainty near a 50% win rate before dependence effects.
+4. **Turnover / capacity:** report monthly entry-plus-exit notional divided by time-weighted average equity, number of fills, partial fills, participation used, and modeled fees/slippage. Require every fill to respect the existing 5% prior-volume cap. A hard monthly-turnover ceiling depends on venue/liquidity capacity and is not currently configured; proposed governance starting point for approval is **25× average equity per month**, to be validated against intended deployment size before registration. Exceeding it triggers a capacity review; never lower modeled costs to pass.
+5. **Uncertainty method:** primary interval should use daily marked-to-market portfolio returns, resampled in chronological 7-day blocks with at least 5,000 deterministic replicates. Predeclare 14- and 28-day block sensitivity as secondary analyses. Report the number of occupied blocks and effective test duration. Use a Wilson interval for win rate and show gross/net distributions, but do not assume trades are independent.
+
+## Statistical limits and interpretation
+
+The strategy has relatively few actual closed trades in the frozen safety-on windows, and the safety switch can censor later execution. Trade overlap, time-varying regimes, clustered losses, and early stopping all reduce effective sample size. A positive point estimate with a confidence interval crossing zero is not evidence of an edge. A result that passes these thresholds would justify further validation only; it would not authorize live trading or establish fill quality. Prospective simulated opens remain bar-level estimates unless independently matched to contemporaneous quotes/trades.
+
+Before collection starts, record the approved start/end rules, minimums, turnover ceiling, bootstrap implementation/seed, dataset and source hashes, cost assumptions, and who may access interim results. Avoid repeated interim significance checks; use a fixed final analysis date or a predeclared sequential-testing method. Do not revise criteria after viewing prospective results.

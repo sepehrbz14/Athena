@@ -1,0 +1,69 @@
+{
+  "candles_processed": 105216,
+  "signals_generated": 13158,
+  "entry_attempts": 13158,
+  "entries_accepted": 92,
+  "entries_rejected": 0,
+  "entries_skipped_kill_switch": 13066,
+  "rejection_reasons": {},
+  "rejection_examples": {},
+  "trades_opened": 92,
+  "trades_closed": 92,
+  "partial_fills": 0,
+  "rejected_orders": 0,
+  "kill_switch_activations": 1,
+  "kill_switch_would_trigger": 0,
+  "strategy_performance": {
+    "breakout": {
+      "signals": 1395,
+      "entries": 6,
+      "wins": 3,
+      "losses": 3,
+      "net_pnl": 26.808929116600574,
+      "expectancy": 4.468154852766762,
+      "profit_factor": 1.1948391403741663,
+      "drawdown_contribution": 137.59519296337015
+    },
+    "mean_reversion": {
+      "signals": 8620,
+      "entries": 59,
+      "wins": 23,
+      "losses": 36,
+      "net_pnl": -617.303619651527,
+      "expectancy": -10.46277321443266,
+      "profit_factor": 0.5929392553047272,
+      "drawdown_contribution": 1469.2668197663515
+    },
+    "momentum": {
+      "signals": 2441,
+      "entries": 10,
+      "wins": 3,
+      "losses": 7,
+      "net_pnl": -173.5823368398976,
+      "expectancy": -17.35823368398976,
+      "profit_factor": 0.47479475313720454,
+      "drawdown_contribution": 330.50381327444023
+    },
+    "trend_following": {
+      "signals": 702,
+      "entries": 17,
+      "wins": 7,
+      "losses": 10,
+      "net_pnl": -163.30621103722297,
+      "expectancy": -9.606247708071939,
+      "profit_factor": 0.6493912828273336,
+      "drawdown_contribution": 417.6768555018592
+    }
+  },
+  "final_equity": 9072.616761587959,
+  "net_pnl": -927.3832384120415,
+  "return_pct": -0.09273832384120415,
+  "max_drawdown_pct": 0.10089063114007268,
+  "performance_timings": {},
+  "timestamp_convention": {
+    "input_timestamp": "candle_open_timestamp",
+    "decision_at_close": "candle_open_timestamp + candle_minutes",
+    "execution_at_next_open": "next candle's candle_open_timestamp",
+    "intrabar_exit": "timestamp identifies the exit candle; exact intrabar time is unknown in OHLC data"
+  }
+}

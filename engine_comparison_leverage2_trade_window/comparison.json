@@ -1,0 +1,148 @@
+{
+  "input_csv": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "input_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+  "candles": 3000,
+  "input_candles": 232608,
+  "configuration": {
+    "initial_equity": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "leverage": 2.0,
+    "fee_rate": 0.0005,
+    "slippage_bps": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "estimated_round_trip_cost_pct": 0.002,
+    "max_participation_rate": 0.05,
+    "force_close_at_end": true,
+    "monte_carlo_iterations": 0
+  },
+  "legacy": {
+    "trades": 92,
+    "final_equity": 9072.616761587953,
+    "net_pnl": -927.3832384120469,
+    "max_drawdown_pct": 0.10089063114007324,
+    "trades_csv": "legacy_trades.csv"
+  },
+  "optimized": {
+    "trades": 92,
+    "final_equity": 9072.616761587953,
+    "net_pnl": -927.3832384120469,
+    "max_drawdown_pct": 0.10089063114007324,
+    "trades_csv": "optimized_trades.csv"
+  },
+  "equivalent": {
+    "trades": true,
+    "equity_curve": true,
+    "kill_switch_events": true,
+    "rejected_orders": true,
+    "partial_fills": true,
+    "final_equity": true,
+    "decision_trace": true,
+    "higher_timeframe_and_candle_state": false,
+    "decision_trace_calls": [
+      1947,
+      1947
+    ]
+  },
+  "first_decision_difference": null,
+  "first_candle_or_timeframe_state_difference": {
+    "decision_index": 3,
+    "legacy": {
+      "timestamp": "2019-12-31T00:45:00+00:00",
+      "ohlcv": [
+        7231.68,
+        7250.0,
+        7227.86,
+        7246.97,
+        812.426
+      ],
+      "regime": {
+        "primary": "unknown",
+        "trend_strength": 0.0,
+        "volatility_pct": 0.0,
+        "momentum_pct": 0.0,
+        "detail": "insufficient higher-timeframe history"
+      },
+      "1h_count": 1,
+      "1h_latest": {
+        "timestamp": "2019-12-31T00:00:00+00:00",
+        "open": 7240.8,
+        "high": 7250.0,
+        "low": 7190.0,
+        "close": 7246.97,
+        "volume": 6603.433999999999
+      },
+      "4h_count": 1,
+      "4h_latest": {
+        "timestamp": "2019-12-31T00:00:00+00:00",
+        "open": 7240.8,
+        "high": 7250.0,
+        "low": 7190.0,
+        "close": 7246.97,
+        "volume": 6603.433999999999
+      },
+      "optimized_15m_features": null,
+      "signal": null,
+      "considered": [],
+      "rejected": [
+        "trend_following",
+        "mean_reversion",
+        "breakout",
+        "momentum"
+      ]
+    },
+    "optimized": {
+      "timestamp": "2019-12-31T00:45:00+00:00",
+      "ohlcv": [
+        7231.68,
+        7250.0,
+        7227.86,
+        7246.97,
+        812.426
+      ],
+      "regime": {
+        "primary": "unknown",
+        "trend_strength": 0.0,
+        "volatility_pct": 0.0,
+        "momentum_pct": 0.0,
+        "detail": "insufficient higher-timeframe history"
+      },
+      "1h_count": 1,
+      "1h_latest": {
+        "timestamp": "2019-12-31T00:00:00+00:00",
+        "open": 7240.8,
+        "high": 7250.0,
+        "low": 7190.0,
+        "close": 7246.97,
+        "volume": 6603.434
+      },
+      "4h_count": 1,
+      "4h_latest": {
+        "timestamp": "2019-12-31T00:00:00+00:00",
+        "open": 7240.8,
+        "high": 7250.0,
+        "low": 7190.0,
+        "close": 7246.97,
+        "volume": 6603.434
+      },
+      "optimized_15m_features": {
+        "execution_atr": null,
+        "trend_fast_1h": null,
+        "trend_slow_1h": null,
+        "previous_high_15m": null,
+        "previous_low_15m": null,
+        "baseline_volume_15m": null,
+        "momentum_15m": null,
+        "mean_15m": null,
+        "deviation_15m": null
+      },
+      "signal": null,
+      "considered": [],
+      "rejected": [
+        "trend_following",
+        "mean_reversion",
+        "breakout",
+        "momentum"
+      ]
+    }
+  }
+}

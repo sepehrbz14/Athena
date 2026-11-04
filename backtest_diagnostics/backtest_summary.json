@@ -1,0 +1,63 @@
+{
+  "candles_processed": 232608,
+  "signals_generated": 28702,
+  "entry_attempts": 28702,
+  "entries_accepted": 91,
+  "entries_rejected": 0,
+  "entries_skipped_kill_switch": 28611,
+  "rejection_reasons": {},
+  "rejection_examples": {},
+  "trades_opened": 91,
+  "trades_closed": 91,
+  "partial_fills": 0,
+  "rejected_orders": 0,
+  "kill_switch_activations": 1,
+  "kill_switch_would_trigger": 0,
+  "strategy_performance": {
+    "breakout": {
+      "signals": 2215,
+      "entries": 6,
+      "wins": 3,
+      "losses": 3,
+      "net_pnl": 22.85550103233723,
+      "expectancy": 3.809250172056205,
+      "profit_factor": 1.15206351925525,
+      "drawdown_contribution": 150.30232855503348
+    },
+    "mean_reversion": {
+      "signals": 20590,
+      "entries": 58,
+      "wins": 23,
+      "losses": 35,
+      "net_pnl": -594.2382851718836,
+      "expectancy": -10.245487675377303,
+      "profit_factor": 0.6196895880285079,
+      "drawdown_contribution": 1510.5336957026773
+    },
+    "momentum": {
+      "signals": 4179,
+      "entries": 10,
+      "wins": 3,
+      "losses": 7,
+      "net_pnl": -186.20138158296646,
+      "expectancy": -18.620138158296648,
+      "profit_factor": 0.47183202334690344,
+      "drawdown_contribution": 352.54197492792053
+    },
+    "trend_following": {
+      "signals": 1718,
+      "entries": 17,
+      "wins": 7,
+      "losses": 10,
+      "net_pnl": -171.34338168332272,
+      "expectancy": -10.07902245196016,
+      "profit_factor": 0.6577012000195571,
+      "drawdown_contribution": 449.38962368601364
+    }
+  },
+  "final_equity": 9071.072452594166,
+  "net_pnl": -928.927547405834,
+  "return_pct": -0.09289275474058341,
+  "max_drawdown_pct": 0.10149596034872499,
+  "performance_timings": {}
+}

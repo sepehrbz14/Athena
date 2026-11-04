@@ -1,0 +1,29 @@
+{
+  "window": "2020_2022",
+  "dataset_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+  "baseline_config_unchanged": true,
+  "baseline_comparison": "exact trade fields, equity curve, final equity, max drawdown, and kill events asserted equal",
+  "safety_mode": "safety",
+  "diagnostic_mode": true,
+  "diagnostics_are_observer_only": true,
+  "signals_generated": 13158,
+  "signals_skipped_kill_switch": 13066,
+  "signals_with_executed_trade": 92,
+  "skipped_signal_pnl_assigned": false,
+  "actual_trades": 92,
+  "actual_net_pnl": -927.3832384120415,
+  "equity_curve_max_drawdown": 0.10089063114007268,
+  "kill_events": [
+    [
+      "2020-01-28T01:00:00+00:00",
+      "max_drawdown_limit",
+      "peak-to-valley drawdown threshold exceeded"
+    ]
+  ],
+  "diagnostic_files": [
+    "diagnostic_capture/signals.csv",
+    "diagnostic_capture/orders.csv",
+    "diagnostic_capture/trades.csv",
+    "diagnostic_capture/events.jsonl"
+  ]
+}

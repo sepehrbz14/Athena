@@ -1,0 +1,69 @@
+{
+  "candles_processed": 57120,
+  "signals_generated": 6871,
+  "entry_attempts": 6871,
+  "entries_accepted": 78,
+  "entries_rejected": 0,
+  "entries_skipped_kill_switch": 6793,
+  "rejection_reasons": {},
+  "rejection_examples": {},
+  "trades_opened": 78,
+  "trades_closed": 78,
+  "partial_fills": 0,
+  "rejected_orders": 0,
+  "kill_switch_activations": 1,
+  "kill_switch_would_trigger": 0,
+  "strategy_performance": {
+    "breakout": {
+      "signals": 319,
+      "entries": 2,
+      "wins": 2,
+      "losses": 0,
+      "net_pnl": 68.2010381026931,
+      "expectancy": 34.10051905134655,
+      "profit_factor": null,
+      "drawdown_contribution": 0.0
+    },
+    "mean_reversion": {
+      "signals": 5595,
+      "entries": 75,
+      "wins": 32,
+      "losses": 43,
+      "net_pnl": -955.1136132909372,
+      "expectancy": -12.734848177212497,
+      "profit_factor": 0.4836868962996147,
+      "drawdown_contribution": 1849.87289000743
+    },
+    "momentum": {
+      "signals": 555,
+      "entries": 1,
+      "wins": 0,
+      "losses": 1,
+      "net_pnl": -46.27266478855541,
+      "expectancy": -46.27266478855541,
+      "profit_factor": 0.0,
+      "drawdown_contribution": 46.27266478855541
+    },
+    "trend_following": {
+      "signals": 402,
+      "entries": 0,
+      "wins": 0,
+      "losses": 0,
+      "net_pnl": 0,
+      "expectancy": null,
+      "profit_factor": null,
+      "drawdown_contribution": 0
+    }
+  },
+  "final_equity": 9066.814760023202,
+  "net_pnl": -933.1852399767977,
+  "return_pct": -0.09331852399767977,
+  "max_drawdown_pct": 0.10063481433767252,
+  "performance_timings": {},
+  "timestamp_convention": {
+    "input_timestamp": "candle_open_timestamp",
+    "decision_at_close": "candle_open_timestamp + candle_minutes",
+    "execution_at_next_open": "next candle's candle_open_timestamp",
+    "intrabar_exit": "timestamp identifies the exit candle; exact intrabar time is unknown in OHLC data"
+  }
+}

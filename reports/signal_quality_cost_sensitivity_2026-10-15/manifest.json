@@ -1,0 +1,73 @@
+{
+  "dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "dataset_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+  "signal_source": "recorded causal signal events from reports/trade_economics_signal_audit",
+  "frozen_baseline_configuration": {
+    "initial_equity_per_independent_window": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "leverage": 2.0,
+    "max_position_notional_pct": 1.0,
+    "max_margin_fraction": 0.8,
+    "fee_bps_per_side": 5.0,
+    "slippage_bps_per_side": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "max_participation_rate": 0.05,
+    "max_daily_loss_pct": 0.03,
+    "max_drawdown_pct": 0.1,
+    "max_atr_pct": 0.08,
+    "sizing_round_trip_cost_reserve_pct": 0.002
+  },
+  "cost_grid_predeclared": [
+    {
+      "scenario": "baseline_actual",
+      "fee_bps_per_side": 5.0,
+      "slippage_bps_per_side": 5.0,
+      "status": "actual baseline"
+    },
+    {
+      "scenario": "lower_cost_2p5_2p5",
+      "fee_bps_per_side": 2.5,
+      "slippage_bps_per_side": 2.5,
+      "status": "hypothetical"
+    },
+    {
+      "scenario": "lower_cost_1_2",
+      "fee_bps_per_side": 1.0,
+      "slippage_bps_per_side": 2.0,
+      "status": "hypothetical"
+    },
+    {
+      "scenario": "lower_cost_0p5_1",
+      "fee_bps_per_side": 0.5,
+      "slippage_bps_per_side": 1.0,
+      "status": "hypothetical"
+    }
+  ],
+  "cost_grid_policy": "only fee and slippage rates vary; funding, sizing reserve, fill assumptions, risk, leverage, and safety thresholds are frozen",
+  "forward_horizons_candles": [
+    1,
+    4,
+    16,
+    64
+  ],
+  "forward_return_anchor": "signal candle close; outcome closes at i+h; excursion path uses candles i+1 through i+h",
+  "forward_returns_are_executable_pnl": false,
+  "block_bootstrap": {
+    "method": "resample occupied non-overlapping chronological time blocks for each group; blocks retain clusters from overlapping forward horizons",
+    "block_candles": 64,
+    "replicates": 200,
+    "seed_policy": "fixed deterministic seed by window/group/horizon"
+  },
+  "signals_by_window": {
+    "2020_2022": 13158,
+    "2023_2024": 8580,
+    "2025_2026-08-19_previously_examined": 6871
+  },
+  "hypothetical_cost_scenarios": [
+    "lower_cost_2p5_2p5",
+    "lower_cost_1_2",
+    "lower_cost_0p5_1"
+  ],
+  "baseline_scenario_asserted_equal_to_safety_risk_reports": true,
+  "previous_2025_2026_window_status": "previously examined historical diagnostic window; not an untouched holdout"
+}

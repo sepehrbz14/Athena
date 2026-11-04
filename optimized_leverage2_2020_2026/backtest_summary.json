@@ -1,0 +1,109 @@
+{
+  "candles_processed": 232608,
+  "signals_generated": 28701,
+  "entry_attempts": 28701,
+  "entries_accepted": 92,
+  "entries_rejected": 0,
+  "entries_skipped_kill_switch": 28609,
+  "rejection_reasons": {},
+  "rejection_examples": {},
+  "trades_opened": 92,
+  "trades_closed": 92,
+  "partial_fills": 0,
+  "rejected_orders": 0,
+  "kill_switch_activations": 1,
+  "kill_switch_would_trigger": 0,
+  "strategy_performance": {
+    "breakout": {
+      "signals": 2215,
+      "entries": 6,
+      "wins": 3,
+      "losses": 3,
+      "net_pnl": 26.80892911660058,
+      "expectancy": 4.468154852766763,
+      "profit_factor": 1.1948391403741663,
+      "drawdown_contribution": 137.59519296337015
+    },
+    "mean_reversion": {
+      "signals": 20589,
+      "entries": 59,
+      "wins": 23,
+      "losses": 36,
+      "net_pnl": -617.3036196515361,
+      "expectancy": -10.462773214432815,
+      "profit_factor": 0.5929392553047211,
+      "drawdown_contribution": 1469.266819766351
+    },
+    "momentum": {
+      "signals": 4179,
+      "entries": 10,
+      "wins": 3,
+      "losses": 7,
+      "net_pnl": -173.5823368398976,
+      "expectancy": -17.35823368398976,
+      "profit_factor": 0.47479475313720454,
+      "drawdown_contribution": 330.5038132744402
+    },
+    "trend_following": {
+      "signals": 1718,
+      "entries": 17,
+      "wins": 7,
+      "losses": 10,
+      "net_pnl": -163.30621103722302,
+      "expectancy": -9.606247708071942,
+      "profit_factor": 0.6493912828273335,
+      "drawdown_contribution": 417.6768555018592
+    }
+  },
+  "final_equity": 9072.616761587953,
+  "net_pnl": -927.3832384120469,
+  "return_pct": -0.09273832384120469,
+  "max_drawdown_pct": 0.10089063114007324,
+  "performance_timings": {
+    "15m_feature_update": {
+      "seconds": 4.330403500160173,
+      "calls": 232608,
+      "average_ms": 0.018616743620856434
+    },
+    "15m_signal_generation": {
+      "seconds": 1.3844308000166166,
+      "calls": 231555,
+      "average_ms": 0.00597884217579675
+    },
+    "1h_structure_calculation": {
+      "seconds": 0.3237967000336539,
+      "calls": 232608,
+      "average_ms": 0.0013920273594788396
+    },
+    "4h_regime_calculation": {
+      "seconds": 2.4478019998518903,
+      "calls": 232608,
+      "average_ms": 0.010523292405471394
+    },
+    "accounting": {
+      "seconds": 2.0161496001619525,
+      "calls": 233844,
+      "average_ms": 0.008621771780169483
+    },
+    "data_loading": {
+      "seconds": 1.337754700000005,
+      "calls": 1,
+      "average_ms": 1337.754700000005
+    },
+    "execution_fills": {
+      "seconds": 0.0014711000030729338,
+      "calls": 1420,
+      "average_ms": 0.0010359859176569956
+    },
+    "market_data_update": {
+      "seconds": 2.046860600075888,
+      "calls": 232608,
+      "average_ms": 0.00879961394309692
+    },
+    "position_sizing_risk": {
+      "seconds": 0.000752499997815903,
+      "calls": 92,
+      "average_ms": 0.008179347802346772
+    }
+  }
+}

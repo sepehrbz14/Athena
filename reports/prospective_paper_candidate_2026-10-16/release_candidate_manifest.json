@@ -1,0 +1,187 @@
+{
+  "candidate_id": "athena-paper-research-2026-10-16",
+  "status": "prepared_not_started",
+  "created_date": "2026-10-16",
+  "evaluation_started": false,
+  "live_trading_enabled": false,
+  "git": {
+    "baseline_commit": null,
+    "status": "unavailable: git status and rev-parse report not a git repository",
+    "commit_created": false,
+    "note": "No existing work was discarded and no repository was initialized. File hashes identify this candidate snapshot but do not replace version history."
+  },
+  "dataset": {
+    "path": "tests/tests/combined.csv",
+    "sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+    "candle_count": 232608,
+    "timestamp_semantics": "UTC candle-open labels; numeric Unix milliseconds in combined CSV",
+    "first_candle_open": "2019-12-31T00:00:00+00:00",
+    "last_candle_open": "2026-08-19T23:45:00+00:00",
+    "duplicates_or_out_of_order": 0,
+    "non_15m_intervals": 1,
+    "gap": {
+      "previous_candle_open": "2025-08-13T23:45:00+00:00",
+      "next_candle_open": "2025-08-15T00:00:00+00:00",
+      "missing_15m_candles": 96
+    },
+    "previous_2025_to_2026_window": "previously examined; not untouched out-of-sample"
+  },
+  "frozen_strategy_configuration": {
+    "strategy_ensemble": ["trend_following", "breakout", "momentum", "mean_reversion"],
+    "minimum_confidence": 0.6,
+    "ensemble_policy": "only strategies allowed in the assessed regime are queried; average confidence of selected-side signals must meet 0.6; conflicting side score greater than 0.8 times selected-side score rejects consensus; strongest same-side signal supplies the selected order",
+    "regime_classifier": {
+      "timeframe": "developing 4H candle series at the 15m decision close",
+      "fast_ema_period": 20,
+      "slow_ema_period": 50,
+      "atr_period": 14,
+      "high_volatility_atr_over_close": 0.035,
+      "low_volatility_atr_over_close": 0.008,
+      "trend_strength_threshold_atr": 1.25,
+      "shock_latest_move_atr_multiple": 3.0,
+      "momentum_lookback": 20
+    },
+    "strategy_parameters": {
+      "trend_following": {
+        "allowed_regimes": ["bull_trend", "bear_trend"],
+        "minimum_15m_bars": 22,
+        "minimum_1h_bars": 30,
+        "1h_fast_slow_ema": [20, 50],
+        "15m_atr_period": 14,
+        "15m_breakout_lookback_previous_bars": 20,
+        "stop_distance_atr": 2.0,
+        "target_multiple_of_stop_distance": 1.5,
+        "confidence": 0.75
+      },
+      "breakout": {
+        "allowed_regimes": ["bull_trend", "bear_trend", "high_volatility"],
+        "minimum_15m_bars": 22,
+        "15m_atr_period": 14,
+        "range_lookback_previous_bars": 20,
+        "current_volume_multiple_of_prior_20_bar_sma": 1.2,
+        "stop_distance_atr": 1.75,
+        "target_multiple_of_stop_distance": 1.5,
+        "confidence": 0.7
+      },
+      "momentum": {
+        "allowed_regimes": ["bull_trend", "bear_trend"],
+        "minimum_15m_bars": 30,
+        "return_lookback_bars": 12,
+        "absolute_return_threshold": 0.012,
+        "15m_atr_period": 14,
+        "stop_distance_atr": 1.8,
+        "target_multiple_of_stop_distance": 1.5,
+        "confidence": "min(0.9, 0.55 + abs(return) * 10)"
+      },
+      "mean_reversion": {
+        "allowed_regimes": ["range", "low_volatility"],
+        "minimum_15m_bars": 30,
+        "mean_sma_period": 20,
+        "standard_deviation_period": 20,
+        "entry_z_score_threshold": 2.0,
+        "15m_atr_period": 14,
+        "stop_distance_atr": 1.5,
+        "take_profit": "20-bar mean",
+        "confidence": "min(0.85, 0.55 + abs(z_score) / 10)"
+      }
+    },
+    "initial_equity_per_scored_window": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "max_position_notional_pct": 1.0,
+    "max_margin_fraction": 0.8,
+    "leverage": 2.0,
+    "estimated_round_trip_cost_reserve_pct": 0.002,
+    "minimum_quantity": 0.000001
+  },
+  "risk_controls": {
+    "mode": "safety",
+    "max_daily_loss_pct": 0.03,
+    "max_drawdown_pct": 0.1,
+    "max_atr_pct": 0.08,
+    "daily_loss_lock_resets_on_utc_date_change": true,
+    "max_drawdown_and_atr_locks_permanent_within_scored_run": true,
+    "kill_switch_disabled": false
+  },
+  "execution_and_accounting": {
+    "candle_minutes": 15,
+    "signal_timing": "decision after current candle close",
+    "fill_timing": "next candle open",
+    "entry_liquidity_reference": "preceding completed candle volume",
+    "max_participation_rate": 0.05,
+    "fee_rate_per_side": 0.0005,
+    "slippage_bps_per_side": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "funding_application": "prorated each candle using that candle close; simplified model",
+    "partial_fill_policy": "unfilled quantity remains pending subject to existing strategy/stop and safety rules",
+    "concurrent_positions": "one net position at a time",
+    "intrabar_stop_target_conflict": "stop takes precedence",
+    "historical_backtest_force_close_at_end": true,
+    "prospective_paper_replay_force_close_at_end": false,
+    "higher_timeframe_semantics": "developing 1H/4H aggregates contain only already-closed 15m bars at each decision close"
+  },
+  "runtime_and_dependencies": {
+    "python": "3.11.11 (main, May 31 2025, 09:35:27) [MSC v.1929 64 bit (AMD64)]",
+    "runtime_path": "C:\\Program Files\\Blender Foundation\\Blender 4.5\\4.5\\python\\bin\\python.exe",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "project_requires_python": ">=3.10",
+    "declared_project_runtime_dependencies": [],
+    "bundled_environment_freeze": [
+      "autopep8==2.3.1",
+      "certifi==2025.4.26",
+      "charset-normalizer==3.4.1",
+      "Cython==3.0.11",
+      "idna==3.10",
+      "meson==0.63.0",
+      "numpy==1.26.4",
+      "pycodestyle==2.13.0",
+      "requests==2.32.3",
+      "urllib3==2.4.0",
+      "zstandard==0.23.0"
+    ]
+  },
+  "test_run": {
+    "command": "& 'C:\\Program Files\\Blender Foundation\\Blender 4.5\\4.5\\python\\bin\\python.exe' -m unittest discover -s tests",
+    "result": "passed",
+    "tests_run": 43,
+    "elapsed_seconds": 25.412
+  },
+  "bootstrap": {
+    "existing_method": "200 replicates; resample occupied non-overlapping chronological 64-candle blocks per signal group",
+    "sensitivity_method": "same 200 replicates; compare 32, 64, and 128 candle blocks",
+    "sensitivity_report": "bootstrap_sensitivity.csv",
+    "limitations": ["overlapping forward horizons", "irregular signal spacing", "occupied-block conditional resampling", "200 replicates yield coarse tail quantiles"]
+  },
+  "paper_runner": {
+    "module": "crypto_bot/paper.py",
+    "cli": "tools/run_paper.py",
+    "real_order_submission": false,
+    "acceptance": "one completed UTC 15m candle per invocation; exact continuity; at most 120 seconds late",
+    "restart_model": "append-only candle journal; deterministic replay and atomic derived-output replacement",
+    "state_dir": "reports/prospective_paper_candidate_2026-10-16/paper_run (not created; no paper run started)"
+  },
+  "preserved_artifacts": [
+    "reports/chronological_windows",
+    "reports/trade_economics_signal_audit",
+    "reports/signal_quality_cost_sensitivity_2026-10-15"
+  ],
+  "source_file_sha256": {
+    "pyproject.toml": "b28240aa3c4c53448b213087c0a8b8b5a8cdbfebc2758d00dc3f6d4261929e7d",
+    "crypto_bot/backtest.py": "fc8da8bc60322d28ee55b63210b7249cdd4562f86514501eebc7c5fdad5d9b4f",
+    "crypto_bot/controls.py": "861d4c29a9a7b654a3bc88e21838818935954705e8d9cfde754e2ca53243c99b",
+    "crypto_bot/diagnostics.py": "313a8b9b6505b13708104bfc2dfe6f151a8613ad2dec422cccc245c2d6ffbcd0",
+    "crypto_bot/indicators.py": "fb1727fc439a9b83e39d635a785b7c78584c630a3830ee3bae11bd5b9636e952",
+    "crypto_bot/io.py": "3100e8fbfb8c826bdc15f797056d360d7ff214aa7a626be35f9696c1e27b89bb",
+    "crypto_bot/models.py": "a723985671874ac62dea3d481b126f3f310c68a3ece2807af86dda465aa41cf5",
+    "crypto_bot/paper.py": "6f9d9aa132eeb77b7daf8a381e8c79a510fed4dd909640562a438777f89f6375",
+    "crypto_bot/regimes.py": "2ed1e7446fd0d2f38f29873a76a5864f8ad80365b40d79f47ee62771d06ed3e5",
+    "crypto_bot/risk.py": "1c5cd1c15c0a0d33346d6aa31f60ea1d249500cf37173a91c7688f48254b593f",
+    "crypto_bot/strategies.py": "f2d6f2274a71c22806886e5c8b0e97db6cd11d9e6297874b1f06bee04b8e819d",
+    "tools/run_chronological_windows.py": "6876698c88ec15e263b27abda6806c68ea8a232027bc3a079bb5e04bb34bbbf6",
+    "tools/run_signal_quality_cost_sensitivity.py": "b87f2d81ab51a00aa4e77e876a63289a6f4f4cbdfb7a14fdd4c2a1a058e89420",
+    "tools/audit_candidate_bootstrap.py": "e17a40c54cd71f2acf0ad04781ad3db61f621c998bac1155dda9b721703eed4d",
+    "tools/run_paper.py": "0a42b7cd5b18e0aaa19be2036a5765b2b45f8f80ae4061c181f224804bdea3ac",
+    "tests/test_backtest.py": "dca5a0b446d3a5b47e5e76f1fda31fa717e6a55c5c774b17bd4898a1f478b09c",
+    "tests/test_paper.py": "27c8ce7998f4a841a0c70ecc70c881ea300938b3f98005537b2d59def8139900",
+    "tests/test_signal_research.py": "5fa7d19375ee32d48c17f5967b665f0bb8c13d05a3f1eae09089bf01019bba0f"
+  }
+}

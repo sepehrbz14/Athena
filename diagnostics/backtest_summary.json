@@ -1,0 +1,195 @@
+{
+  "candles_processed": 232608,
+  "signals_generated": 28701,
+  "entry_attempts": 28701,
+  "entries_accepted": 92,
+  "entries_rejected": 28609,
+  "rejection_reasons": {
+    "KILL_SWITCH_ACTIVE": 28609
+  },
+  "rejection_examples": {
+    "KILL_SWITCH_ACTIVE": [
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "KILL_SWITCH_ACTIVE",
+        "timestamp": "2020-01-28T01:00:00+00:00",
+        "candle_index": 2692,
+        "strategy": "mean_reversion",
+        "signal_id": 93,
+        "order_id": null,
+        "trade_id": null,
+        "price": 9122.45,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 9072.616761587953,
+        "available_cash": 9072.616761587953,
+        "requested_position_size": null,
+        "requested_order_value": null,
+        "detail": "kill switch: max_drawdown_limit",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 2.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "KILL_SWITCH_ACTIVE",
+        "timestamp": "2020-01-28T01:15:00+00:00",
+        "candle_index": 2693,
+        "strategy": "mean_reversion",
+        "signal_id": 94,
+        "order_id": null,
+        "trade_id": null,
+        "price": 9128.0,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 9072.616761587953,
+        "available_cash": 9072.616761587953,
+        "requested_position_size": null,
+        "requested_order_value": null,
+        "detail": "kill switch: max_drawdown_limit",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 2.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "KILL_SWITCH_ACTIVE",
+        "timestamp": "2020-01-28T05:15:00+00:00",
+        "candle_index": 2709,
+        "strategy": "mean_reversion",
+        "signal_id": 95,
+        "order_id": null,
+        "trade_id": null,
+        "price": 8999.19,
+        "signal_direction": "long",
+        "current_position": false,
+        "equity": 9072.616761587953,
+        "available_cash": 9072.616761587953,
+        "requested_position_size": null,
+        "requested_order_value": null,
+        "detail": "kill switch: max_drawdown_limit",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 2.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "KILL_SWITCH_ACTIVE",
+        "timestamp": "2020-01-28T11:00:00+00:00",
+        "candle_index": 2732,
+        "strategy": "mean_reversion",
+        "signal_id": 96,
+        "order_id": null,
+        "trade_id": null,
+        "price": 9081.19,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 9072.616761587953,
+        "available_cash": 9072.616761587953,
+        "requested_position_size": null,
+        "requested_order_value": null,
+        "detail": "kill switch: max_drawdown_limit",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 2.0
+        }
+      },
+      {
+        "event_type": "ENTRY_REJECTED",
+        "rejection_reason": "KILL_SWITCH_ACTIVE",
+        "timestamp": "2020-01-28T11:15:00+00:00",
+        "candle_index": 2733,
+        "strategy": "mean_reversion",
+        "signal_id": 97,
+        "order_id": null,
+        "trade_id": null,
+        "price": 9108.42,
+        "signal_direction": "short",
+        "current_position": false,
+        "equity": 9072.616761587953,
+        "available_cash": 9072.616761587953,
+        "requested_position_size": null,
+        "requested_order_value": null,
+        "detail": "kill switch: max_drawdown_limit",
+        "kill_switch_active": true,
+        "risk_values": {
+          "risk_per_trade_pct": 0.005,
+          "max_position_notional_pct": 1.0,
+          "max_margin_fraction": 0.8,
+          "leverage": 2.0
+        }
+      }
+    ]
+  },
+  "trades_opened": 92,
+  "trades_closed": 92,
+  "partial_fills": 0,
+  "rejected_orders": 0,
+  "kill_switch_activations": 1,
+  "final_equity": 9072.616761587953,
+  "net_pnl": -927.3832384120469,
+  "return_pct": -0.09273832384120469,
+  "max_drawdown_pct": 0.10089063114007324,
+  "performance_timings": {
+    "15m_feature_update": {
+      "seconds": 3.582382500961103,
+      "calls": 232608,
+      "average_ms": 0.015400942791998138
+    },
+    "15m_signal_generation": {
+      "seconds": 1.219791199247993,
+      "calls": 231555,
+      "average_ms": 0.0052678249195568785
+    },
+    "1h_structure_calculation": {
+      "seconds": 0.3077328996077995,
+      "calls": 232608,
+      "average_ms": 0.0013229678240120695
+    },
+    "4h_regime_calculation": {
+      "seconds": 1.9501980001077754,
+      "calls": 232608,
+      "average_ms": 0.008384053859315998
+    },
+    "accounting": {
+      "seconds": 1.4671266996738268,
+      "calls": 233844,
+      "average_ms": 0.006273954857399919
+    },
+    "data_loading": {
+      "seconds": 1.2069359999986773,
+      "calls": 1,
+      "average_ms": 1206.9359999986773
+    },
+    "execution_fills": {
+      "seconds": 0.0013252999087853823,
+      "calls": 1420,
+      "average_ms": 0.0009333097949192833
+    },
+    "market_data_update": {
+      "seconds": 1.3748419995717995,
+      "calls": 232608,
+      "average_ms": 0.005910553375515028
+    },
+    "position_sizing_risk": {
+      "seconds": 0.0006545000032929238,
+      "calls": 92,
+      "average_ms": 0.007114130470575258
+    }
+  }
+}
