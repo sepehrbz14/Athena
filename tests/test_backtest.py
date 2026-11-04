@@ -298,6 +298,35 @@ class IntrabarBacktesterTests(unittest.TestCase):
         self.assertEqual(result.trades[0].exit_reason, "stop_loss")
         self.assertAlmostEqual(result.trades[0].net_pnl, -50)
 
+    def test_long_stop_gap_executes_at_open_below_stop(self) -> None:
+        from crypto_bot.models import Position
+
+        position = Position(Side.LONG, 1, 100, 95, 110, candle(0, 100, 101, 99, 100).timestamp, "test", 0)
+        gap_bar = candle(15, 90, 96, 88, 93)
+        self.assertEqual(IntrabarBacktester(self.config, self.sizer)._intrabar_exit(position, gap_bar), (90, "stop_loss"))
+
+    def test_short_stop_gap_executes_at_open_above_stop(self) -> None:
+        from crypto_bot.models import Position
+
+        position = Position(Side.SHORT, 1, 100, 105, 90, candle(0, 100, 101, 99, 100).timestamp, "test", 0)
+        gap_bar = candle(15, 110, 112, 104, 107)
+        self.assertEqual(IntrabarBacktester(self.config, self.sizer)._intrabar_exit(position, gap_bar), (110, "stop_loss"))
+
+    def test_normal_stop_hits_execute_at_stop_price(self) -> None:
+        from crypto_bot.models import Position
+
+        stamp = candle(0, 100, 101, 99, 100).timestamp
+        long_position = Position(Side.LONG, 1, 100, 95, 110, stamp, "test", 0)
+        short_position = Position(Side.SHORT, 1, 100, 105, 90, stamp, "test", 0)
+        self.assertEqual(IntrabarBacktester(self.config, self.sizer)._intrabar_exit(long_position, candle(15, 98, 100, 94, 97)), (95, "stop_loss"))
+        self.assertEqual(IntrabarBacktester(self.config, self.sizer)._intrabar_exit(short_position, candle(15, 102, 106, 100, 103)), (105, "stop_loss"))
+
+    def test_short_stop_wins_stop_target_collision(self) -> None:
+        from crypto_bot.models import Position
+
+        position = Position(Side.SHORT, 1, 100, 105, 95, candle(0, 100, 101, 99, 100).timestamp, "test", 0)
+        self.assertEqual(IntrabarBacktester(self.config, self.sizer)._intrabar_exit(position, candle(15, 100, 106, 94, 100)), (105, "stop_loss"))
+
     def test_volume_cap_records_partial_fill(self) -> None:
         signal = Signal(Side.LONG, 95, 105, 1, "test", "test entry")
         limited = BacktestConfig(fee_rate=0, slippage_bps=0, funding_rate_per_8h=0, max_participation_rate=0.05)

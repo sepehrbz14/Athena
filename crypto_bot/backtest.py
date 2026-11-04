@@ -490,14 +490,14 @@ class IntrabarBacktester:
             stopped = candle.low <= position.stop_price
             targeted = position.take_profit is not None and candle.high >= position.take_profit
             if stopped:  # pessimistic ordering when both stop and target occur in one bar
-                return position.stop_price, "stop_loss"
+                return min(position.stop_price, candle.open), "stop_loss"
             if targeted:
                 return position.take_profit or candle.high, "take_profit"
         else:
             stopped = candle.high >= position.stop_price
             targeted = position.take_profit is not None and candle.low <= position.take_profit
             if stopped:
-                return position.stop_price, "stop_loss"
+                return max(position.stop_price, candle.open), "stop_loss"
             if targeted:
                 return position.take_profit or candle.low, "take_profit"
         return None

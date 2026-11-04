@@ -1,0 +1,87 @@
+{
+  "experiment_id": "stop-gap-data-integrity-compounding-mc-design-2026-11-04",
+  "status": "completed_review_no_strategy_or_risk_change",
+  "git_commit": null,
+  "git_status": "unavailable; workspace is not a valid Git repository",
+  "dataset": {
+    "path": "tests/tests/combined.csv",
+    "sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+    "rows": 232608,
+    "first_candle_open_utc": "2019-12-31T00:00:00+00:00",
+    "last_candle_open_utc": "2026-08-19T23:45:00+00:00",
+    "daily_source_files": 2423,
+    "daily_source_rows": 232608,
+    "missing_date": "2025-08-14",
+    "missing_15m_candles": 96,
+    "duplicates": 0,
+    "invalid_ohlcv_rows": 0,
+    "daily_combined_row_mismatches": 0
+  },
+  "frozen_configuration": {
+    "initial_equity_per_window": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "leverage": 2.0,
+    "max_position_notional_pct": 1.0,
+    "max_margin_fraction": 0.8,
+    "fee_rate_per_side": 0.0005,
+    "slippage_bps_per_side": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "max_participation_rate": 0.05,
+    "estimated_round_trip_cost_reserve_pct": 0.002,
+    "kill_switch_mode": "safety",
+    "max_daily_loss_pct": 0.03,
+    "max_drawdown_pct": 0.1,
+    "max_atr_pct": 0.08,
+    "force_close_at_window_end": true
+  },
+  "commands": {
+    "integrity_audit": "& 'C:\\Program Files\\Blender Foundation\\Blender 4.5\\4.5\\python\\bin\\python.exe' tools\\audit_dataset_integrity.py tests\\tests\\combined.csv tests\\tests reports\\execution_integrity_2026-11-04",
+    "safety_on_replay": "& 'C:\\Program Files\\Blender Foundation\\Blender 4.5\\4.5\\python\\bin\\python.exe' tools\\run_chronological_windows.py tests\\tests\\combined.csv --output reports\\stop_gap_integrity_mc_2026-11-04\\safety_on_replay",
+    "full_tests": "New-Item -ItemType Directory -Force reports\\_test_temp | Out-Null; $env:TEMP = Join-Path (Get-Location) 'reports\\_test_temp'; $env:TMP = $env:TEMP; & 'C:\\Program Files\\Blender Foundation\\Blender 4.5\\4.5\\python\\bin\\python.exe' -m unittest discover -s tests",
+    "full_test_environment": "TEMP and TMP pointed to reports/_test_temp because the default sandbox temp location denied writes"
+  },
+  "baseline_comparison": {
+    "preserved_baseline_directory": "reports/chronological_windows",
+    "new_replay_directory": "reports/stop_gap_integrity_mc_2026-11-04/safety_on_replay",
+    "all_reported_window_metrics_identical": true,
+    "stop_execution_behavior_was_already_gap_aware_before_this_review": true,
+    "production_execution_logic_changed": false
+  },
+  "tests": {
+    "command_result": "passed",
+    "count": 47,
+    "elapsed_seconds": 27.711,
+    "new_regressions": [
+      "long stop gap executes at open below stop",
+      "short stop gap executes at open above stop",
+      "normal long and short stop hits execute at stop",
+      "long and short stop-target collisions remain stop-first"
+    ]
+  },
+  "monte_carlo": {
+    "implementation_added": false,
+    "simulation_run": false,
+    "design_document": "stop_gap_integrity_report.md",
+    "existing_safety_controls_preserved": true
+  },
+  "runtime": {
+    "python": "3.11.11 (main, May 31 2025, 09:35:27) [MSC v.1929 64 bit (AMD64)]",
+    "runtime_path": "C:\\Program Files\\Blender Foundation\\Blender 4.5\\4.5\\python\\bin\\python.exe",
+    "project_declared_runtime_dependencies": []
+  },
+  "source_file_sha256": {
+    "crypto_bot/backtest.py": "efef8f2da77aad20d910fe455ce2586b137ce93a2a87d41e7ab12fbe662b3ba8",
+    "tools/run_chronological_windows.py": "6876698c88ec15e263b27abda6806c68ea8a232027bc3a079bb5e04bb34bbbf6",
+    "tools/audit_dataset_integrity.py": "3df8327994a911695aa15cfca685a181abf638446fb768aaecb94707157b14f4",
+    "tests/test_backtest.py": "9083fa584e7cb6b146195360e865aa2e28b035553d08bb607266fc301ab659cd",
+    "tools/run_signal_quality_cost_sensitivity.py": "b87f2d81ab51a00aa4e77e876a63289a6f4f4cbdfb7a14fdd4c2a1a058e89420"
+  },
+  "artifacts": {
+    "integrity_report": "reports/execution_integrity_2026-11-04/integrity_report.json",
+    "all_gaps": "reports/execution_integrity_2026-11-04/all_gaps.csv",
+    "report": "reports/stop_gap_integrity_mc_2026-11-04/stop_gap_integrity_report.md",
+    "safety_window_replay": "reports/stop_gap_integrity_mc_2026-11-04/safety_on_replay",
+    "safety_controls_disabled": false,
+    "live_trading": false
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "dataset_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+  "dataset_candles": 232608,
+  "dataset_start": "2019-12-31T00:00:00+00:00",
+  "dataset_end": "2026-08-19T23:45:00+00:00",
+  "python": "3.11.11 (main, May 31 2025, 09:35:27) [MSC v.1929 64 bit (AMD64)]",
+  "windows": [
+    {
+      "name": "2020_2022",
+      "summary_file": "2020_2022/summary.json"
+    },
+    {
+      "name": "2023_2024",
+      "summary_file": "2023_2024/summary.json"
+    },
+    {
+      "name": "2025_2026-08-19_previously_examined",
+      "summary_file": "2025_2026-08-19_previously_examined/summary.json"
+    }
+  ],
+  "no_combined_or_stitched_result": true,
+  "2025_2026_status": "previously examined historical diagnostic window; not an untouched holdout"
+}
