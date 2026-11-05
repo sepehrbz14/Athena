@@ -1,0 +1,39 @@
+{
+  "combined_file": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "combined_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+  "combined_rows": 232608,
+  "combined_first_timestamp": "2019-12-31T00:00:00+00:00",
+  "combined_last_timestamp": "2026-08-19T23:45:00+00:00",
+  "daily_file_count": 2423,
+  "daily_source_rows": 232608,
+  "daily_missing_dates": [
+    "2025-08-14"
+  ],
+  "combined_duplicates": [],
+  "combined_gaps_and_unexpected_intervals": [
+    {
+      "dataset": "combined",
+      "previous_timestamp": "2025-08-13T23:45:00+00:00",
+      "next_timestamp": "2025-08-15T00:00:00+00:00",
+      "interval": "1 day, 0:15:00",
+      "missing_15m_candles": 96,
+      "classification": "missing_candles"
+    }
+  ],
+  "daily_duplicates": [],
+  "daily_gaps_and_unexpected_intervals": [
+    {
+      "dataset": "daily_source_files",
+      "previous_timestamp": "2025-08-13T23:45:00+00:00",
+      "next_timestamp": "2025-08-15T00:00:00+00:00",
+      "interval": "1 day, 0:15:00",
+      "missing_15m_candles": 96,
+      "classification": "missing_candles"
+    }
+  ],
+  "invalid_ohlcv_or_parse_issues": [],
+  "rows_present_in_daily_but_missing_from_combined": [],
+  "rows_present_in_combined_but_missing_from_daily": [],
+  "ohlcv_value_mismatches": [],
+  "interpretation": "Read-only audit. No missing candles are synthesized or filled."
+}

@@ -1,0 +1,30 @@
+{
+  "csv": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "candles": 232608,
+  "start": "2019-12-31T00:00:00+00:00",
+  "end": "2026-08-19T23:45:00+00:00",
+  "initial_equity": 10000.0,
+  "risk_per_trade_pct": 0.005,
+  "leverage": 2.0,
+  "fee_bps_per_side": 5.0,
+  "slippage_bps_per_side": 5.0,
+  "funding_bps_per_8h": 1.0,
+  "kill_switch": "safety_enabled",
+  "max_position_notional_pct": 1.0,
+  "max_margin_fraction": 0.8,
+  "sizing_round_trip_cost_reserve_pct": 0.002,
+  "max_participation_rate": 0.05,
+  "force_close_at_end": true,
+  "kill_switch_max_drawdown_pct": 0.1,
+  "entries_accepted": 92,
+  "entries_skipped_kill_switch": 28609,
+  "kill_events": [
+    [
+      "2020-01-28T01:00:00+00:00",
+      "max_drawdown_limit",
+      "peak-to-valley drawdown threshold exceeded"
+    ]
+  ],
+  "final_equity": 9072.616761587953,
+  "max_drawdown_pct": 0.10089063114007324
+}

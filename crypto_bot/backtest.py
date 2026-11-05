@@ -130,6 +130,12 @@ class IntrabarBacktester:
 
         for index, candle in enumerate(candles):
             diagnostics.counts["candles_processed"] += 1
+            if index and candle.timestamp - candles[index - 1].timestamp > timedelta(minutes=self.config.candle_minutes):
+                diagnostics.record("DATA_DISCONTINUITY", timestamp=candle.timestamp,
+                                   previous_candle_timestamp=candles[index - 1].timestamp,
+                                   missing_intervals=max(0, int((candle.timestamp-candles[index-1].timestamp).total_seconds() // (self.config.candle_minutes*60))-1),
+                                   elapsed_seconds=(candle.timestamp-candles[index-1].timestamp).total_seconds(),
+                                   synthetic_prices_created=False)
             atr_history.append(candle)
             with timings.measure("market_data_update"):
                 market_data.update(candle)
@@ -479,10 +485,14 @@ class IntrabarBacktester:
         )
 
     def _apply_funding(self, position: Position, candle: Candle) -> float:
-        periods = self.config.candle_minutes / (8 * 60)
+        previous = position.last_funding_timestamp or position.opened_at
+        funding_timestamp = candle.timestamp + timedelta(minutes=self.config.candle_minutes)
+        elapsed_hours = max(0.0, (funding_timestamp - previous).total_seconds() / 3600)
+        periods = elapsed_hours / 8
         # Positive funding is a cost for longs and a credit for shorts.
         charge = position.side.sign * position.quantity * candle.close * self.config.funding_rate_per_8h * periods
         position.funding_paid += charge
+        position.last_funding_timestamp = funding_timestamp
         return charge
 
     def _intrabar_exit(self, position: Position, candle: Candle) -> tuple[float, str] | None:

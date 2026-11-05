@@ -87,6 +87,7 @@ class Position:
     trade_id: int | None = None
     signal_id: int | None = None
     order_id: int | None = None
+    last_funding_timestamp: datetime | None = None
 
     @property
     def notional(self) -> float:

@@ -1,0 +1,876 @@
+{
+  "dataset_candles": 232608,
+  "configuration": {
+    "equity": 10000,
+    "risk": 0.005,
+    "leverage": 2,
+    "fee_bps_per_side": 5,
+    "slippage_bps_per_side": 5,
+    "funding_bps_per_8h": 1
+  },
+  "modes": {
+    "safety": {
+      "summary": {
+        "candles_processed": 232608,
+        "signals_generated": 28701,
+        "entry_attempts": 28701,
+        "entries_accepted": 92,
+        "entries_rejected": 0,
+        "entries_skipped_kill_switch": 28609,
+        "rejection_reasons": {},
+        "rejection_examples": {},
+        "trades_opened": 92,
+        "trades_closed": 92,
+        "partial_fills": 0,
+        "rejected_orders": 0,
+        "kill_switch_activations": 1,
+        "kill_switch_would_trigger": 0,
+        "strategy_performance": {
+          "breakout": {
+            "signals": 2215,
+            "entries": 6,
+            "wins": 3,
+            "losses": 3,
+            "net_pnl": 26.80892911660058,
+            "expectancy": 4.468154852766763,
+            "profit_factor": 1.1948391403741663,
+            "drawdown_contribution": 137.59519296337015
+          },
+          "mean_reversion": {
+            "signals": 20589,
+            "entries": 59,
+            "wins": 23,
+            "losses": 36,
+            "net_pnl": -617.3036196515361,
+            "expectancy": -10.462773214432815,
+            "profit_factor": 0.5929392553047211,
+            "drawdown_contribution": 1469.266819766351
+          },
+          "momentum": {
+            "signals": 4179,
+            "entries": 10,
+            "wins": 3,
+            "losses": 7,
+            "net_pnl": -173.5823368398976,
+            "expectancy": -17.35823368398976,
+            "profit_factor": 0.47479475313720454,
+            "drawdown_contribution": 330.5038132744402
+          },
+          "trend_following": {
+            "signals": 1718,
+            "entries": 17,
+            "wins": 7,
+            "losses": 10,
+            "net_pnl": -163.30621103722302,
+            "expectancy": -9.606247708071942,
+            "profit_factor": 0.6493912828273335,
+            "drawdown_contribution": 417.6768555018592
+          }
+        },
+        "final_equity": 9072.616761587953,
+        "net_pnl": -927.3832384120469,
+        "return_pct": -0.09273832384120469,
+        "max_drawdown_pct": 0.10089063114007324,
+        "performance_timings": {},
+        "timestamp_convention": {
+          "input_timestamp": "candle_open_timestamp",
+          "decision_at_close": "candle_open_timestamp + candle_minutes",
+          "execution_at_next_open": "next candle's candle_open_timestamp",
+          "intrabar_exit": "timestamp identifies the exit candle; exact intrabar time is unknown in OHLC data"
+        }
+      },
+      "signals": 28701,
+      "closed": 92,
+      "by_strategy": {
+        "trend_following": {
+          "trades": 17,
+          "wins": 7,
+          "win_rate": 0.4117647058823529,
+          "net_pnl": -163.30621103722302,
+          "expectancy": -9.606247708071942,
+          "profit_factor": 0.6493912828273335,
+          "fees": 88.43023384526094,
+          "slippage": 88.4302378884965,
+          "funding_paid": 2.618720721476847
+        },
+        "breakout": {
+          "trades": 6,
+          "wins": 3,
+          "win_rate": 0.5,
+          "net_pnl": 26.80892911660058,
+          "expectancy": 4.468154852766763,
+          "profit_factor": 1.1948391403741663,
+          "fees": 25.68618202783471,
+          "slippage": 25.68620095907815,
+          "funding_paid": -2.456326829498801
+        },
+        "mean_reversion": {
+          "trades": 59,
+          "wins": 23,
+          "win_rate": 0.3898305084745763,
+          "net_pnl": -617.3036196515361,
+          "expectancy": -10.462773214432815,
+          "profit_factor": 0.5929392553047211,
+          "fees": 381.65401952825613,
+          "slippage": 381.65405639672105,
+          "funding_paid": 1.4695702057505127
+        },
+        "momentum": {
+          "trades": 10,
+          "wins": 3,
+          "win_rate": 0.3,
+          "net_pnl": -173.5823368398976,
+          "expectancy": -17.35823368398976,
+          "profit_factor": 0.47479475313720454,
+          "fees": 38.53028163600836,
+          "slippage": 38.53025797480626,
+          "funding_paid": 1.8770049215912468
+        }
+      },
+      "monthly": {
+        "2020-01": {
+          "trades": 92,
+          "wins": 36,
+          "win_rate": 0.391304347826087,
+          "net_pnl": -927.3832384120561,
+          "expectancy": -10.080252591435393,
+          "profit_factor": 0.6215331190690578,
+          "fees": 534.3007170373601,
+          "slippage": 534.3007532191019,
+          "funding_paid": 3.5089690193198053
+        }
+      }
+    },
+    "research": {
+      "summary": {
+        "candles_processed": 232608,
+        "signals_generated": 8507,
+        "entry_attempts": 8454,
+        "entries_accepted": 8454,
+        "entries_rejected": 0,
+        "entries_skipped_kill_switch": 0,
+        "rejection_reasons": {},
+        "rejection_examples": {},
+        "trades_opened": 8454,
+        "trades_closed": 8454,
+        "partial_fills": 0,
+        "rejected_orders": 0,
+        "kill_switch_activations": 0,
+        "kill_switch_would_trigger": 64,
+        "strategy_performance": {
+          "breakout": {
+            "signals": 988,
+            "entries": 984,
+            "wins": 364,
+            "losses": 620,
+            "net_pnl": -1048.2674943485338,
+            "expectancy": -1.06531249425664,
+            "profit_factor": 0.6714913491724366,
+            "drawdown_contribution": 3190.989009597734
+          },
+          "mean_reversion": {
+            "signals": 6541,
+            "entries": 6503,
+            "wins": 2365,
+            "losses": 4138,
+            "net_pnl": -7998.544667938191,
+            "expectancy": -1.229977651535936,
+            "profit_factor": 0.44900036787397307,
+            "drawdown_contribution": 14469.201342713062
+          },
+          "momentum": {
+            "signals": 444,
+            "entries": 440,
+            "wins": 194,
+            "losses": 246,
+            "net_pnl": -513.5721081608566,
+            "expectancy": -1.1672093367292196,
+            "profit_factor": 0.6764218774345175,
+            "drawdown_contribution": 1587.165733236261
+          },
+          "trend_following": {
+            "signals": 534,
+            "entries": 527,
+            "wins": 210,
+            "losses": 317,
+            "net_pnl": -439.5113560912694,
+            "expectancy": -0.8339873929625605,
+            "profit_factor": 0.7385065405508994,
+            "drawdown_contribution": 1632.671562559315
+          }
+        },
+        "final_equity": 0.10437346115259537,
+        "net_pnl": -9999.895626538848,
+        "return_pct": -0.9999895626538848,
+        "max_drawdown_pct": 0.999989656439895,
+        "performance_timings": {},
+        "timestamp_convention": {
+          "input_timestamp": "candle_open_timestamp",
+          "decision_at_close": "candle_open_timestamp + candle_minutes",
+          "execution_at_next_open": "next candle's candle_open_timestamp",
+          "intrabar_exit": "timestamp identifies the exit candle; exact intrabar time is unknown in OHLC data"
+        }
+      },
+      "signals": 8507,
+      "closed": 8454,
+      "by_strategy": {},
+      "monthly": {
+        "2020-01": {
+          "trades": 101,
+          "wins": 39,
+          "win_rate": 0.38613861386138615,
+          "net_pnl": -1053.0926112642378,
+          "expectancy": -10.426659517467701,
+          "profit_factor": 0.6110651683661777,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-02": {
+          "trades": 144,
+          "wins": 44,
+          "win_rate": 0.3055555555555556,
+          "net_pnl": -2398.5030185894616,
+          "expectancy": -16.656270962426817,
+          "profit_factor": 0.3391844005269963,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-03": {
+          "trades": 151,
+          "wins": 62,
+          "win_rate": 0.4105960264900662,
+          "net_pnl": -719.6640418685271,
+          "expectancy": -4.765987032241902,
+          "profit_factor": 0.7212135575724546,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-04": {
+          "trades": 159,
+          "wins": 50,
+          "win_rate": 0.31446540880503143,
+          "net_pnl": -1513.5671962309634,
+          "expectancy": -9.519290542333103,
+          "profit_factor": 0.4071353021957652,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-05": {
+          "trades": 154,
+          "wins": 58,
+          "win_rate": 0.37662337662337664,
+          "net_pnl": -815.6054007548346,
+          "expectancy": -5.296138965940484,
+          "profit_factor": 0.5306055037322417,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-06": {
+          "trades": 115,
+          "wins": 43,
+          "win_rate": 0.3739130434782609,
+          "net_pnl": -568.8842174584582,
+          "expectancy": -4.946819282247463,
+          "profit_factor": 0.4466879775103032,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-07": {
+          "trades": 135,
+          "wins": 46,
+          "win_rate": 0.34074074074074073,
+          "net_pnl": -553.9795369514638,
+          "expectancy": -4.103552125566399,
+          "profit_factor": 0.4347273073251712,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-08": {
+          "trades": 121,
+          "wins": 52,
+          "win_rate": 0.4297520661157025,
+          "net_pnl": -277.95777963515906,
+          "expectancy": -2.2971717325219756,
+          "profit_factor": 0.6159660427417162,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-09": {
+          "trades": 149,
+          "wins": 51,
+          "win_rate": 0.3422818791946309,
+          "net_pnl": -501.0497285408215,
+          "expectancy": -3.362749855978668,
+          "profit_factor": 0.3947859225460061,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-10": {
+          "trades": 143,
+          "wins": 50,
+          "win_rate": 0.34965034965034963,
+          "net_pnl": -362.26639835905274,
+          "expectancy": -2.533331457056313,
+          "profit_factor": 0.3768678071755731,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-11": {
+          "trades": 165,
+          "wins": 63,
+          "win_rate": 0.38181818181818183,
+          "net_pnl": -211.21669361816262,
+          "expectancy": -1.2801011734434098,
+          "profit_factor": 0.6159177944445281,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2020-12": {
+          "trades": 184,
+          "wins": 77,
+          "win_rate": 0.41847826086956524,
+          "net_pnl": -143.06325319385465,
+          "expectancy": -0.7775176804013839,
+          "profit_factor": 0.7064741775175188,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-01": {
+          "trades": 143,
+          "wins": 54,
+          "win_rate": 0.3776223776223776,
+          "net_pnl": -93.04497440171676,
+          "expectancy": -0.6506641566553619,
+          "profit_factor": 0.7524187690673328,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-02": {
+          "trades": 137,
+          "wins": 49,
+          "win_rate": 0.35766423357664234,
+          "net_pnl": -104.36963979805914,
+          "expectancy": -0.761822188307001,
+          "profit_factor": 0.6667261438391213,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-03": {
+          "trades": 166,
+          "wins": 58,
+          "win_rate": 0.3493975903614458,
+          "net_pnl": -135.6381132470119,
+          "expectancy": -0.8170970677530837,
+          "profit_factor": 0.5731710856187489,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-04": {
+          "trades": 144,
+          "wins": 60,
+          "win_rate": 0.4166666666666667,
+          "net_pnl": -72.11913255383551,
+          "expectancy": -0.5008273094016356,
+          "profit_factor": 0.6431439759837196,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-05": {
+          "trades": 151,
+          "wins": 57,
+          "win_rate": 0.37748344370860926,
+          "net_pnl": -58.627496808367255,
+          "expectancy": -0.3882615682673328,
+          "profit_factor": 0.7076967052021474,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-06": {
+          "trades": 146,
+          "wins": 61,
+          "win_rate": 0.4178082191780822,
+          "net_pnl": -38.44348657123494,
+          "expectancy": -0.26331155185777355,
+          "profit_factor": 0.7653156508944097,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-07": {
+          "trades": 153,
+          "wins": 73,
+          "win_rate": 0.477124183006536,
+          "net_pnl": -39.04076628531349,
+          "expectancy": -0.2551684070935522,
+          "profit_factor": 0.7107710782332658,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-08": {
+          "trades": 171,
+          "wins": 68,
+          "win_rate": 0.39766081871345027,
+          "net_pnl": -62.14497421966596,
+          "expectancy": -0.3634209018693916,
+          "profit_factor": 0.5828521454187239,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-09": {
+          "trades": 158,
+          "wins": 70,
+          "win_rate": 0.4430379746835443,
+          "net_pnl": -24.44979127911541,
+          "expectancy": -0.15474551442478107,
+          "profit_factor": 0.7762533035596676,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-10": {
+          "trades": 129,
+          "wins": 57,
+          "win_rate": 0.4418604651162791,
+          "net_pnl": -19.653024570624837,
+          "expectancy": -0.1523490276792623,
+          "profit_factor": 0.7632236855134681,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-11": {
+          "trades": 157,
+          "wins": 61,
+          "win_rate": 0.3885350318471338,
+          "net_pnl": -37.048483998343535,
+          "expectancy": -0.23597760508499066,
+          "profit_factor": 0.6101493540175229,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2021-12": {
+          "trades": 174,
+          "wins": 68,
+          "win_rate": 0.39080459770114945,
+          "net_pnl": -39.35455652230768,
+          "expectancy": -0.22617561219717058,
+          "profit_factor": 0.5612752811456329,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-01": {
+          "trades": 155,
+          "wins": 61,
+          "win_rate": 0.3935483870967742,
+          "net_pnl": -25.169544123862764,
+          "expectancy": -0.1623841556378243,
+          "profit_factor": 0.6170659407297873,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-02": {
+          "trades": 146,
+          "wins": 57,
+          "win_rate": 0.3904109589041096,
+          "net_pnl": -22.595773113964057,
+          "expectancy": -0.15476556927372642,
+          "profit_factor": 0.5557486720241425,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-03": {
+          "trades": 150,
+          "wins": 55,
+          "win_rate": 0.36666666666666664,
+          "net_pnl": -19.177114407386465,
+          "expectancy": -0.12784742938257643,
+          "profit_factor": 0.5785345519130874,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-04": {
+          "trades": 149,
+          "wins": 56,
+          "win_rate": 0.37583892617449666,
+          "net_pnl": -17.937330379885978,
+          "expectancy": -0.12038476765024146,
+          "profit_factor": 0.4998806983291454,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-05": {
+          "trades": 168,
+          "wins": 71,
+          "win_rate": 0.4226190476190476,
+          "net_pnl": -11.438857215158786,
+          "expectancy": -0.06808843580451658,
+          "profit_factor": 0.6307379545745275,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-06": {
+          "trades": 169,
+          "wins": 60,
+          "win_rate": 0.35502958579881655,
+          "net_pnl": -13.78241858396077,
+          "expectancy": -0.0815527726861584,
+          "profit_factor": 0.5010996836353793,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-07": {
+          "trades": 191,
+          "wins": 72,
+          "win_rate": 0.3769633507853403,
+          "net_pnl": -10.307076763881485,
+          "expectancy": -0.053963752690478976,
+          "profit_factor": 0.5695350263343991,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-08": {
+          "trades": 174,
+          "wins": 61,
+          "win_rate": 0.3505747126436782,
+          "net_pnl": -8.576498759967302,
+          "expectancy": -0.04929022275843277,
+          "profit_factor": 0.5030847100146258,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-09": {
+          "trades": 187,
+          "wins": 75,
+          "win_rate": 0.40106951871657753,
+          "net_pnl": -5.584107492479855,
+          "expectancy": -0.0298615373929404,
+          "profit_factor": 0.5792551091951765,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-10": {
+          "trades": 163,
+          "wins": 69,
+          "win_rate": 0.4233128834355828,
+          "net_pnl": -3.5145761383894127,
+          "expectancy": -0.021561816799935046,
+          "profit_factor": 0.5768041038626655,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-11": {
+          "trades": 147,
+          "wins": 57,
+          "win_rate": 0.3877551020408163,
+          "net_pnl": -3.1481294298769957,
+          "expectancy": -0.02141584646174827,
+          "profit_factor": 0.5711913953106398,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2022-12": {
+          "trades": 179,
+          "wins": 54,
+          "win_rate": 0.3016759776536313,
+          "net_pnl": -4.63947775797584,
+          "expectancy": -0.025918870156289606,
+          "profit_factor": 0.22922501013800384,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-01": {
+          "trades": 153,
+          "wins": 54,
+          "win_rate": 0.35294117647058826,
+          "net_pnl": -2.0888204024400894,
+          "expectancy": -0.013652420930980977,
+          "profit_factor": 0.4656334291586058,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-02": {
+          "trades": 151,
+          "wins": 55,
+          "win_rate": 0.36423841059602646,
+          "net_pnl": -1.8749795950176464,
+          "expectancy": -0.01241708341071289,
+          "profit_factor": 0.4877151215908061,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-03": {
+          "trades": 129,
+          "wins": 52,
+          "win_rate": 0.40310077519379844,
+          "net_pnl": -0.713815555947984,
+          "expectancy": -0.005533453922077395,
+          "profit_factor": 0.7212913385657124,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-04": {
+          "trades": 150,
+          "wins": 50,
+          "win_rate": 0.3333333333333333,
+          "net_pnl": -1.5390877774449898,
+          "expectancy": -0.0102605851829666,
+          "profit_factor": 0.3977727762078544,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-05": {
+          "trades": 157,
+          "wins": 45,
+          "win_rate": 0.28662420382165604,
+          "net_pnl": -1.5308627550876677,
+          "expectancy": -0.009750718185271769,
+          "profit_factor": 0.29890346310848537,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-06": {
+          "trades": 143,
+          "wins": 56,
+          "win_rate": 0.3916083916083916,
+          "net_pnl": -0.5448102576718435,
+          "expectancy": -0.003809861941761144,
+          "profit_factor": 0.5521217458173697,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-07": {
+          "trades": 191,
+          "wins": 62,
+          "win_rate": 0.32460732984293195,
+          "net_pnl": -0.867919122414272,
+          "expectancy": -0.004544079174943832,
+          "profit_factor": 0.3245127263527971,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-08": {
+          "trades": 171,
+          "wins": 45,
+          "win_rate": 0.2631578947368421,
+          "net_pnl": -0.6209908198016487,
+          "expectancy": -0.003631525261997946,
+          "profit_factor": 0.23555432607752244,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-09": {
+          "trades": 173,
+          "wins": 52,
+          "win_rate": 0.30057803468208094,
+          "net_pnl": -0.44411584714188806,
+          "expectancy": -0.0025671436250976187,
+          "profit_factor": 0.29605345046157727,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-10": {
+          "trades": 169,
+          "wins": 67,
+          "win_rate": 0.39644970414201186,
+          "net_pnl": -0.2262217940677811,
+          "expectancy": -0.0013385904974424917,
+          "profit_factor": 0.4580262662851643,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-11": {
+          "trades": 169,
+          "wins": 61,
+          "win_rate": 0.3609467455621302,
+          "net_pnl": -0.20592720911951512,
+          "expectancy": -0.0012185041959734623,
+          "profit_factor": 0.4457241201274255,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2023-12": {
+          "trades": 169,
+          "wins": 60,
+          "win_rate": 0.35502958579881655,
+          "net_pnl": -0.16719316915888666,
+          "expectancy": -0.0009893086932478501,
+          "profit_factor": 0.4445552819229532,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-01": {
+          "trades": 122,
+          "wins": 44,
+          "win_rate": 0.36065573770491804,
+          "net_pnl": -0.0750077896054718,
+          "expectancy": -0.0006148179475858345,
+          "profit_factor": 0.5682859327989622,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-02": {
+          "trades": 151,
+          "wins": 59,
+          "win_rate": 0.39072847682119205,
+          "net_pnl": -0.08117145923471193,
+          "expectancy": -0.0005375593326802115,
+          "profit_factor": 0.5098906070325139,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-05": {
+          "trades": 177,
+          "wins": 79,
+          "win_rate": 0.4463276836158192,
+          "net_pnl": -0.054474093504818875,
+          "expectancy": -0.00030776324014021963,
+          "profit_factor": 0.6432056590202921,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-06": {
+          "trades": 129,
+          "wins": 33,
+          "win_rate": 0.2558139534883721,
+          "net_pnl": -0.08074855979922406,
+          "expectancy": -0.0006259578279009617,
+          "profit_factor": 0.2558242329640224,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-07": {
+          "trades": 179,
+          "wins": 64,
+          "win_rate": 0.3575418994413408,
+          "net_pnl": -0.055107098470837675,
+          "expectancy": -0.0003078608853119423,
+          "profit_factor": 0.4916418201373875,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-08": {
+          "trades": 57,
+          "wins": 15,
+          "win_rate": 0.2631578947368421,
+          "net_pnl": -0.022131390715150367,
+          "expectancy": -0.00038827001254649766,
+          "profit_factor": 0.3141489696152065,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-09": {
+          "trades": 125,
+          "wins": 43,
+          "win_rate": 0.344,
+          "net_pnl": -0.031108694647429377,
+          "expectancy": -0.000248869557179435,
+          "profit_factor": 0.4080894039566846,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2024-10": {
+          "trades": 31,
+          "wins": 8,
+          "win_rate": 0.25806451612903225,
+          "net_pnl": -0.008584343744125825,
+          "expectancy": -0.0002769143143266395,
+          "profit_factor": 0.25168374927216325,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2026-02": {
+          "trades": 11,
+          "wins": 2,
+          "win_rate": 0.18181818181818182,
+          "net_pnl": -0.003919962438140687,
+          "expectancy": -0.00035636022164915336,
+          "profit_factor": 0.14762914002035601,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2026-03": {
+          "trades": 15,
+          "wins": 7,
+          "win_rate": 0.4666666666666667,
+          "net_pnl": -0.0021190048988531207,
+          "expectancy": -0.00014126699325687472,
+          "profit_factor": 0.46228523942025923,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        },
+        "2026-06": {
+          "trades": 4,
+          "wins": 1,
+          "win_rate": 0.25,
+          "net_pnl": -0.0012889490949377891,
+          "expectancy": -0.0003222372737344473,
+          "profit_factor": 0.11595726268803838,
+          "fees": 0,
+          "slippage": 0,
+          "funding_paid": 0
+        }
+      }
+    }
+  },
+  "methodology": {
+    "research_flag": "--research-mode",
+    "implementation": "CLI maps this flag to KillSwitchMode.OBSERVATIONAL; normal mode remains KillSwitchMode.SAFETY. In observational mode threshold events are recorded as would-trigger events while entry blocking is bypassed.",
+    "research_is_executable_portfolio": false,
+    "limitations": "Research equity can collapse toward zero; subsequent sizing therefore differs materially from safety mode. The research diagnostic export is lifecycle-event based, so detailed per-strategy and monthly net P&L are available only for safety ledger here; research event-level monthly closes are included."
+  }
+}
