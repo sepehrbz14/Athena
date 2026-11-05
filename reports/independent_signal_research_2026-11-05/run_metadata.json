@@ -1,0 +1,16 @@
+{
+  "source": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "candles": 232608,
+  "signals": 51292,
+  "signals_per_strategy": {
+    "mean_reversion": 27969,
+    "breakout": 16288,
+    "trend_following": 2226,
+    "momentum": 4809
+  },
+  "load_seconds": 1.2422693000007712,
+  "capture_seconds": 16.304976100000204,
+  "total_seconds": 17.547245400000975,
+  "signal_time_semantics": "timestamp is candle open; available_at is its close; forward outcomes begin at/after available_at",
+  "gap_policy": "reset feature state at every missing 15m interval; forward outcomes censored at first gap"
+}

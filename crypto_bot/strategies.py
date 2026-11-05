@@ -196,9 +196,13 @@ class StrategyEnsemble:
         self.minimum_confidence = minimum_confidence
 
     def decide(self, market: MarketSnapshot) -> EnsembleDecision:
+        raw = self.raw_signals(market)
+        return self.select_from_raw(market, raw)
+
+    def select_from_raw(self, market: MarketSnapshot, raw: dict[str, Signal | None]) -> EnsembleDecision:
         allowed = [strategy for strategy in self.strategies if market.regime.primary in strategy.allowed_regimes]
         rejected = tuple(strategy.name for strategy in self.strategies if strategy not in allowed)
-        candidates = [signal for strategy in allowed if (signal := strategy.signal(market)) is not None]
+        candidates = [raw[strategy.name] for strategy in allowed if raw[strategy.name] is not None]
         if not candidates:
             return EnsembleDecision(None, tuple(s.name for s in allowed), rejected)
         score = {
@@ -215,3 +219,7 @@ class StrategyEnsemble:
         if opposing > score[chosen_side] * 0.8:
             return EnsembleDecision(None, tuple(s.name for s in allowed), rejected)
         return EnsembleDecision(chosen, tuple(s.name for s in allowed), rejected)
+
+    def raw_signals(self, market: MarketSnapshot) -> dict[str, Signal | None]:
+        """Evaluate every component on this snapshot, independent of regime gating."""
+        return {strategy.name: strategy.signal(market) for strategy in self.strategies}

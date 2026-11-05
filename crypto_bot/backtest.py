@@ -601,6 +601,10 @@ class _IncrementalMarketData:
         self.regime = self._unknown_regime()
         self.features = MarketFeatures(None, None, None, None, None, None, None, None, None)
 
+    def reset_after_discontinuity(self) -> None:
+        """Start a fresh feature warm-up segment; never bridge a missing interval."""
+        self.__init__()
+
     def update(self, candle: Candle) -> None:
         self.candles_15m.append(candle)
         self._state_1h = self._update_series(candle, 60, self.candles_1h, self._state_1h)
