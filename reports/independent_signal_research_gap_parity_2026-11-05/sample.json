@@ -1,0 +1,722 @@
+[
+  {
+    "signal_id": 1,
+    "candle_index": 58,
+    "timestamp": "2019-12-31T14:30:00+00:00",
+    "available_at": "2019-12-31T14:45:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "short",
+    "confidence": 0.85,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7282.27,
+    "features": {
+      "execution_atr": 14.59214285714292,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7251.78,
+      "previous_low_15m": 7211.3,
+      "baseline_volume_15m": 574.13765,
+      "momentum_15m": 0.004819699365560259,
+      "mean_15m": 7238.659,
+      "deviation_15m": 12.256432963958247
+    },
+    "stop_price": 7304.158214285715,
+    "take_profit": 7238.659,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T14:45:00+00:00",
+        "direction_adjusted_return_pct": 0.0067039535749156,
+        "mfe_pct": 0.008217217982854241,
+        "mae_pct": -0.005043756960398271
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T15:30:00+00:00",
+        "direction_adjusted_return_pct": 0.009741467976331575,
+        "mfe_pct": 0.01379926863464287,
+        "mae_pct": -0.005043756960398271
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T18:30:00+00:00",
+        "direction_adjusted_return_pct": 0.01599226614778082,
+        "mfe_pct": 0.019399170862931525,
+        "mae_pct": -0.005043756960398271
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T14:30:00+00:00",
+        "direction_adjusted_return_pct": 0.008181514829853964,
+        "mfe_pct": 0.019399170862931525,
+        "mae_pct": -0.005043756960398271
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 2,
+    "candle_index": 58,
+    "timestamp": "2019-12-31T14:30:00+00:00",
+    "available_at": "2019-12-31T14:45:00+00:00",
+    "strategy": "breakout",
+    "direction": "long",
+    "confidence": 0.7,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7282.27,
+    "features": {
+      "execution_atr": 14.59214285714292,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7251.78,
+      "previous_low_15m": 7211.3,
+      "baseline_volume_15m": 574.13765,
+      "momentum_15m": 0.004819699365560259,
+      "mean_15m": 7238.659,
+      "deviation_15m": 12.256432963958247
+    },
+    "stop_price": 7256.73375,
+    "take_profit": 7320.574375,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T14:45:00+00:00",
+        "direction_adjusted_return_pct": -0.0067039535749156,
+        "mfe_pct": 0.005043756960398271,
+        "mae_pct": -0.008217217982854241
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T15:30:00+00:00",
+        "direction_adjusted_return_pct": -0.009741467976331575,
+        "mfe_pct": 0.005043756960398271,
+        "mae_pct": -0.01379926863464287
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T18:30:00+00:00",
+        "direction_adjusted_return_pct": -0.01599226614778082,
+        "mfe_pct": 0.005043756960398271,
+        "mae_pct": -0.019399170862931525
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T14:30:00+00:00",
+        "direction_adjusted_return_pct": -0.008181514829853964,
+        "mfe_pct": 0.005043756960398271,
+        "mae_pct": -0.019399170862931525
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 3,
+    "candle_index": 63,
+    "timestamp": "2019-12-31T15:45:00+00:00",
+    "available_at": "2019-12-31T16:00:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "long",
+    "confidence": 0.7980853103366901,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7191.81,
+    "features": {
+      "execution_atr": 26.645714285714284,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7319.0,
+      "previous_low_15m": 7181.78,
+      "baseline_volume_15m": 1429.19105,
+      "momentum_15m": -0.007144277123403375,
+      "mean_15m": 7234.549000000001,
+      "deviation_15m": 17.227541583174382
+    },
+    "stop_price": 7151.841428571429,
+    "take_profit": 7234.549000000001,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T16:00:00+00:00",
+        "direction_adjusted_return_pct": 0.0014711178409885228,
+        "mfe_pct": 0.0035596046057946307,
+        "mae_pct": -0.0010219958536168416
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T16:45:00+00:00",
+        "direction_adjusted_return_pct": 0.00221084817313022,
+        "mfe_pct": 0.004163068824120764,
+        "mae_pct": -0.0010219958536168416
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T19:45:00+00:00",
+        "direction_adjusted_return_pct": -0.003277339084319597,
+        "mfe_pct": 0.004163068824120764,
+        "mae_pct": -0.007064980860172931
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T15:45:00+00:00",
+        "direction_adjusted_return_pct": 0.005239293029153824,
+        "mfe_pct": 0.009541408908188664,
+        "mae_pct": -0.007064980860172931
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 4,
+    "candle_index": 70,
+    "timestamp": "2019-12-31T17:30:00+00:00",
+    "available_at": "2019-12-31T17:45:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "long",
+    "confidence": 0.7550470851786091,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7173.84,
+    "features": {
+      "execution_atr": 32.39428571428574,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7319.0,
+      "previous_low_15m": 7181.78,
+      "baseline_volume_15m": 1627.76945,
+      "momentum_15m": -0.014889587999346365,
+      "mean_15m": 7222.4705,
+      "deviation_15m": 23.716747769245277
+    },
+    "stop_price": 7125.248571428571,
+    "take_profit": 7222.4705,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T17:45:00+00:00",
+        "direction_adjusted_return_pct": -0.001426014519420593,
+        "mfe_pct": 0.00010036465825846719,
+        "mae_pct": -0.003779008174143894
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T18:30:00+00:00",
+        "direction_adjusted_return_pct": -0.0011193447302978443,
+        "mfe_pct": 0.00010036465825846719,
+        "mae_pct": -0.0045777435794498444
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T21:30:00+00:00",
+        "direction_adjusted_return_pct": 0.00103570751508264,
+        "mfe_pct": 0.001465045219854355,
+        "mae_pct": -0.0045777435794498444
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T17:30:00+00:00",
+        "direction_adjusted_return_pct": 0.00795947498132099,
+        "mfe_pct": 0.01207024410915225,
+        "mae_pct": -0.0045777435794498444
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 5,
+    "candle_index": 70,
+    "timestamp": "2019-12-31T17:30:00+00:00",
+    "available_at": "2019-12-31T17:45:00+00:00",
+    "strategy": "breakout",
+    "direction": "short",
+    "confidence": 0.7,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7173.84,
+    "features": {
+      "execution_atr": 32.39428571428574,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7319.0,
+      "previous_low_15m": 7181.78,
+      "baseline_volume_15m": 1627.76945,
+      "momentum_15m": -0.014889587999346365,
+      "mean_15m": 7222.4705,
+      "deviation_15m": 23.716747769245277
+    },
+    "stop_price": 7230.530000000001,
+    "take_profit": 7088.805,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T17:45:00+00:00",
+        "direction_adjusted_return_pct": 0.001426014519420593,
+        "mfe_pct": 0.003779008174143894,
+        "mae_pct": -0.00010036465825846719
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T18:30:00+00:00",
+        "direction_adjusted_return_pct": 0.0011193447302978443,
+        "mfe_pct": 0.0045777435794498444,
+        "mae_pct": -0.00010036465825846719
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T21:30:00+00:00",
+        "direction_adjusted_return_pct": -0.00103570751508264,
+        "mfe_pct": 0.0045777435794498444,
+        "mae_pct": -0.001465045219854355
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T17:30:00+00:00",
+        "direction_adjusted_return_pct": -0.00795947498132099,
+        "mfe_pct": 0.0045777435794498444,
+        "mae_pct": -0.01207024410915225
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 6,
+    "candle_index": 71,
+    "timestamp": "2019-12-31T17:45:00+00:00",
+    "available_at": "2019-12-31T18:00:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "long",
+    "confidence": 0.757734873581822,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7163.61,
+    "features": {
+      "execution_atr": 33.570000000000036,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7319.0,
+      "previous_low_15m": 7152.39,
+      "baseline_volume_15m": 1757.6785,
+      "momentum_15m": -0.009655143811044598,
+      "mean_15m": 7218.473,
+      "deviation_15m": 26.41010584984471
+    },
+    "stop_price": 7113.254999999999,
+    "take_profit": 7218.473,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T18:00:00+00:00",
+        "direction_adjusted_return_pct": -0.001221451195696055,
+        "mfe_pct": 5.583776894635406e-06,
+        "mae_pct": -0.0031562298896784524
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T18:45:00+00:00",
+        "direction_adjusted_return_pct": 0.00018984841441693767,
+        "mfe_pct": 0.0007244950520757243,
+        "mae_pct": -0.0031562298896784524
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T21:45:00+00:00",
+        "direction_adjusted_return_pct": 0.002449882112510293,
+        "mfe_pct": 0.0028951883198555795,
+        "mae_pct": -0.0031562298896784524
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T17:45:00+00:00",
+        "direction_adjusted_return_pct": 0.009798132505817625,
+        "mfe_pct": 0.013515531973404604,
+        "mae_pct": -0.0031562298896784524
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 7,
+    "candle_index": 72,
+    "timestamp": "2019-12-31T18:00:00+00:00",
+    "available_at": "2019-12-31T18:15:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "long",
+    "confidence": 0.752324879642178,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7154.86,
+    "features": {
+      "execution_atr": 31.549285714285684,
+      "trend_fast_1h": null,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7319.0,
+      "previous_low_15m": 7146.73,
+      "baseline_volume_15m": 1876.5976999999998,
+      "momentum_15m": -0.008733842253286994,
+      "mean_15m": 7214.3205,
+      "deviation_15m": 29.38862492104733
+    },
+    "stop_price": 7107.536071428571,
+    "take_profit": 7214.3205,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T18:15:00+00:00",
+        "direction_adjusted_return_pct": 0.0012760557159749997,
+        "mfe_pct": 0.0015513930391370945,
+        "mae_pct": -0.001790391426247262
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T19:00:00+00:00",
+        "direction_adjusted_return_pct": 8.94496887431373e-05,
+        "mfe_pct": 0.0019483260329342666,
+        "mae_pct": -0.001790391426247262
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2019-12-31T22:00:00+00:00",
+        "direction_adjusted_return_pct": 0.00437464884008909,
+        "mfe_pct": 0.004851247962923022,
+        "mae_pct": -0.001790391426247262
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T18:00:00+00:00",
+        "direction_adjusted_return_pct": 0.011856276712612024,
+        "mfe_pct": 0.014755005688441125,
+        "mae_pct": -0.001790391426247262
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": false,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 8,
+    "candle_index": 91,
+    "timestamp": "2019-12-31T22:45:00+00:00",
+    "available_at": "2019-12-31T23:00:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "short",
+    "confidence": 0.7553059981613084,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7194.99,
+    "features": {
+      "execution_atr": 11.624285714285634,
+      "trend_fast_1h": 7207.208833948165,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7194.0,
+      "previous_low_15m": 7141.0,
+      "baseline_volume_15m": 844.8234,
+      "momentum_15m": 0.003731738892670977,
+      "mean_15m": 7173.286999999999,
+      "deviation_15m": 10.571050137048815
+    },
+    "stop_price": 7212.426428571428,
+    "take_profit": 7173.286999999999,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2019-12-31T23:00:00+00:00",
+        "direction_adjusted_return_pct": -3.474639992551154e-05,
+        "mfe_pct": 0.0010576804137323315,
+        "mae_pct": -0.0005309249908618252
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2019-12-31T23:45:00+00:00",
+        "direction_adjusted_return_pct": 0.0008325237422149856,
+        "mfe_pct": 0.0021862434833126443,
+        "mae_pct": -0.0006935381425130505
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2020-01-01T02:45:00+00:00",
+        "direction_adjusted_return_pct": -0.0059763807871866526,
+        "mfe_pct": 0.003452402296598045,
+        "mae_pct": -0.006158451922796404
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-01T22:45:00+00:00",
+        "direction_adjusted_return_pct": -2.779711994138623e-06,
+        "mfe_pct": 0.003452402296598045,
+        "mae_pct": -0.009095217644499831
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": true,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 9,
+    "candle_index": 101,
+    "timestamp": "2020-01-01T01:15:00+00:00",
+    "available_at": "2020-01-01T01:30:00+00:00",
+    "strategy": "mean_reversion",
+    "direction": "short",
+    "confidence": 0.797249150974274,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7205.9,
+    "features": {
+      "execution_atr": 12.830000000000057,
+      "trend_fast_1h": 7202.591954653975,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7199.98,
+      "previous_low_15m": 7162.38,
+      "baseline_volume_15m": 507.73905,
+      "momentum_15m": 0.0025432618864102974,
+      "mean_15m": 7183.248,
+      "deviation_15m": 9.16160881068383
+    },
+    "stop_price": 7225.1449999999995,
+    "take_profit": 7183.248,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2020-01-01T01:30:00+00:00",
+        "direction_adjusted_return_pct": -0.00010130587435308591,
+        "mfe_pct": 0.0006744473278840202,
+        "mae_pct": -0.00265060575361864
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2020-01-01T02:15:00+00:00",
+        "direction_adjusted_return_pct": -0.002164892657405826,
+        "mfe_pct": 0.0008187735050444456,
+        "mae_pct": -0.0037594193646872665
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2020-01-01T05:15:00+00:00",
+        "direction_adjusted_return_pct": -0.0013974659653894772,
+        "mfe_pct": 0.0008187735050444456,
+        "mae_pct": -0.004696151764526313
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-02T01:15:00+00:00",
+        "direction_adjusted_return_pct": 0.0026061976991076374,
+        "mfe_pct": 0.00442692793405397,
+        "mae_pct": -0.00756741003899597
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": true,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  },
+  {
+    "signal_id": 10,
+    "candle_index": 101,
+    "timestamp": "2020-01-01T01:15:00+00:00",
+    "available_at": "2020-01-01T01:30:00+00:00",
+    "strategy": "breakout",
+    "direction": "long",
+    "confidence": 0.7,
+    "regime": "unknown",
+    "regime_allowed": false,
+    "ensemble_selected": false,
+    "reference_price": 7205.9,
+    "features": {
+      "execution_atr": 12.830000000000057,
+      "trend_fast_1h": 7202.591954653975,
+      "trend_slow_1h": null,
+      "previous_high_15m": 7199.98,
+      "previous_low_15m": 7162.38,
+      "baseline_volume_15m": 507.73905,
+      "momentum_15m": 0.0025432618864102974,
+      "mean_15m": 7183.248,
+      "deviation_15m": 9.16160881068383
+    },
+    "stop_price": 7183.447499999999,
+    "take_profit": 7239.57875,
+    "forward_outcomes": {
+      "1": {
+        "status": "complete",
+        "bars_observed": 1,
+        "timestamp": "2020-01-01T01:30:00+00:00",
+        "direction_adjusted_return_pct": 0.00010130587435308591,
+        "mfe_pct": 0.00265060575361864,
+        "mae_pct": -0.0006744473278840202
+      },
+      "4": {
+        "status": "complete",
+        "bars_observed": 4,
+        "timestamp": "2020-01-01T02:15:00+00:00",
+        "direction_adjusted_return_pct": 0.002164892657405826,
+        "mfe_pct": 0.0037594193646872665,
+        "mae_pct": -0.0008187735050444456
+      },
+      "16": {
+        "status": "complete",
+        "bars_observed": 16,
+        "timestamp": "2020-01-01T05:15:00+00:00",
+        "direction_adjusted_return_pct": 0.0013974659653894772,
+        "mfe_pct": 0.004696151764526313,
+        "mae_pct": -0.0008187735050444456
+      },
+      "96": {
+        "status": "complete",
+        "bars_observed": 96,
+        "timestamp": "2020-01-02T01:15:00+00:00",
+        "direction_adjusted_return_pct": -0.0026061976991076374,
+        "mfe_pct": 0.00756741003899597,
+        "mae_pct": -0.00442692793405397
+      }
+    },
+    "gap_before_signal": false,
+    "gap_id": null,
+    "gap_previous_observed_timestamp": null,
+    "gap_next_observed_timestamp": null,
+    "gap_missing_intervals": 0,
+    "post_gap_warmup_progress_candles": null,
+    "feature_readiness": {
+      "atr_15m": true,
+      "trend_1h_fast": true,
+      "trend_1h_slow": false,
+      "regime_known": false
+    }
+  }
+]

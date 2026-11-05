@@ -32,18 +32,33 @@ def capture_signals(candles: Sequence[Candle], *, candle_minutes: int = 15,
     market = _IncrementalMarketData()
     all_rows: list[dict[str, object]] = []
     prior: Candle | None = None
+    gap_id = 0
+    gap_previous = gap_next = None
+    gap_missing = 0
+    post_gap_progress = 0
     for index, candle in enumerate(candles):
         gap = prior is not None and candle.timestamp - prior.timestamp > timedelta(minutes=candle_minutes)
         if gap:
+            gap_id += 1
+            gap_previous, gap_next = prior.timestamp.isoformat(), candle.timestamp.isoformat()
+            gap_missing = max(0, int((candle.timestamp-prior.timestamp).total_seconds() // (candle_minutes*60))-1)
+            post_gap_progress = 0
             market.reset_after_discontinuity()
+        if gap_id:
+            post_gap_progress += 1
         market.update(candle)
         market.refresh_1h_features()
         market.refresh_4h_features(engine.regime_classifier)
         market.refresh_15m_features()
         snapshot = engine._snapshot_from_market_data(market)
-        raw = ensemble.raw_signals(snapshot)
-        selected = ensemble.select_from_raw(snapshot, raw)
+        raw, selected = ensemble.evaluate(snapshot)
         available = candle.timestamp + timedelta(minutes=candle_minutes)
+        readiness = {
+            "atr_15m": market.features.execution_atr is not None,
+            "trend_1h_fast": market.features.trend_fast_1h is not None,
+            "trend_1h_slow": market.features.trend_slow_1h is not None,
+            "regime_known": market.regime.primary.value != "unknown",
+        }
         for strategy, signal in raw.items():
             if signal is None:
                 continue
@@ -54,6 +69,7 @@ def capture_signals(candles: Sequence[Candle], *, candle_minutes: int = 15,
                 "available_at": available.isoformat(),
                 "strategy": strategy,
                 "direction": signal.side.value,
+                "confidence": signal.confidence,
                 "regime": market.regime.primary.value,
                 "regime_allowed": market.regime.primary in next(s.allowed_regimes for s in ensemble.strategies if s.name == strategy),
                 "ensemble_selected": selected.signal is not None and selected.signal.strategy == strategy and selected.signal.side == signal.side,
@@ -64,6 +80,12 @@ def capture_signals(candles: Sequence[Candle], *, candle_minutes: int = 15,
                 "forward_outcomes": causal_forward_outcomes(candles, index, signal.side.sign,
                                                             candle.close, candle_minutes, horizons),
                 "gap_before_signal": gap,
+                "gap_id": gap_id if gap_id else None,
+                "gap_previous_observed_timestamp": gap_previous,
+                "gap_next_observed_timestamp": gap_next,
+                "gap_missing_intervals": gap_missing if gap_id else 0,
+                "post_gap_warmup_progress_candles": post_gap_progress if gap_id else None,
+                "feature_readiness": readiness,
             })
         prior = candle
     # Runtime is exposed by the caller for reproducibility without contaminating rows.
@@ -116,9 +138,11 @@ def export_signal_dataset(rows: Sequence[dict[str, object]], path: str | Path) -
     """Write reproducible flat CSV; nested JSON-valued columns remain machine readable."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    columns = ["signal_id", "candle_index", "timestamp", "available_at", "strategy", "direction",
+    columns = ["signal_id", "candle_index", "timestamp", "available_at", "strategy", "direction", "confidence",
                "regime", "regime_allowed", "ensemble_selected", "reference_price", "features",
-               "stop_price", "take_profit", "forward_outcomes", "gap_before_signal"]
+               "stop_price", "take_profit", "forward_outcomes", "gap_before_signal", "gap_id",
+               "gap_previous_observed_timestamp", "gap_next_observed_timestamp", "gap_missing_intervals",
+               "post_gap_warmup_progress_candles", "feature_readiness"]
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=columns)
         writer.writeheader()

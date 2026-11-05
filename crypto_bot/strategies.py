@@ -196,8 +196,12 @@ class StrategyEnsemble:
         self.minimum_confidence = minimum_confidence
 
     def decide(self, market: MarketSnapshot) -> EnsembleDecision:
+        return self.evaluate(market)[1]
+
+    def evaluate(self, market: MarketSnapshot) -> tuple[dict[str, Signal | None], EnsembleDecision]:
+        """Shared normal/research evaluation for identical market snapshots."""
         raw = self.raw_signals(market)
-        return self.select_from_raw(market, raw)
+        return raw, self.select_from_raw(market, raw)
 
     def select_from_raw(self, market: MarketSnapshot, raw: dict[str, Signal | None]) -> EnsembleDecision:
         allowed = [strategy for strategy in self.strategies if market.regime.primary in strategy.allowed_regimes]

@@ -1,0 +1,19 @@
+{
+  "source": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+  "candles": 232608,
+  "signals": 51292,
+  "signals_per_strategy": {
+    "mean_reversion": 27969,
+    "breakout": 16288,
+    "trend_following": 2226,
+    "momentum": 4809
+  },
+  "load_seconds": 1.2000884999943082,
+  "capture_seconds": 16.61205680000421,
+  "total_seconds": 17.81214529999852,
+  "gap_rows": 7897,
+  "gap_ids": [
+    1
+  ],
+  "policy": "reset feature history at discontinuity; preserve positions and pending orders in portfolio backtest; censor forward outcomes at first gap"
+}

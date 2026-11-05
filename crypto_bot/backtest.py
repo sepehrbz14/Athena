@@ -112,6 +112,8 @@ class IntrabarBacktester:
         # Match indicator warm-up policy for ATR safety checks too. Historical
         # candles seed the calculation but are never observed by the switch.
         atr_history = list(warmup_candles)
+        feature_segment_start = 0
+        gap_id = 0
 
         # Historical context seeds indicators and higher-timeframe bars only.
         # It is deliberately excluded from account state, diagnostics, signal
@@ -131,11 +133,22 @@ class IntrabarBacktester:
         for index, candle in enumerate(candles):
             diagnostics.counts["candles_processed"] += 1
             if index and candle.timestamp - candles[index - 1].timestamp > timedelta(minutes=self.config.candle_minutes):
+                gap_id += 1
+                missing_intervals = max(0, int((candle.timestamp-candles[index-1].timestamp).total_seconds() // (self.config.candle_minutes*60))-1)
                 diagnostics.record("DATA_DISCONTINUITY", timestamp=candle.timestamp,
+                                   gap_id=gap_id,
                                    previous_candle_timestamp=candles[index - 1].timestamp,
-                                   missing_intervals=max(0, int((candle.timestamp-candles[index-1].timestamp).total_seconds() // (self.config.candle_minutes*60))-1),
+                                   next_candle_timestamp=candle.timestamp,
+                                   missing_intervals=missing_intervals,
                                    elapsed_seconds=(candle.timestamp-candles[index-1].timestamp).total_seconds(),
+                                   feature_policy="reset_and_warm_up_from_observed_post_gap_bars",
+                                   portfolio_policy="preserve_open_position_and_pending_entry",
                                    synthetic_prices_created=False)
+                # Reset only market-derived history. Existing portfolio state is
+                # deliberately retained and processed below at the observed bar.
+                market_data.reset_after_discontinuity()
+                atr_history.clear()
+                feature_segment_start = index
             atr_history.append(candle)
             with timings.measure("market_data_update"):
                 market_data.update(candle)
@@ -234,7 +247,8 @@ class IntrabarBacktester:
                 if self.config.legacy_snapshot_mode:
                     # Retained only as a regression oracle for the optimized path.
                     with timings.measure("15m_history_materialization"):
-                        history = [*warmup_candles, *candles[: index + 1]]
+                        history = ([*warmup_candles, *candles[: index + 1]] if feature_segment_start == 0
+                                   else candles[feature_segment_start:index + 1])
                     snapshot = self._snapshot(history)
                 else:
                     snapshot = self._snapshot_from_market_data(market_data)
