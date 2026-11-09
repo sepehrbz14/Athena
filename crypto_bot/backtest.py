@@ -160,9 +160,11 @@ class IntrabarBacktester:
                 with timings.measure("15m_feature_update"):
                     market_data.refresh_15m_features()
             if pending is not None:
-                previous_volume = candles[index - 1].volume if index > 0 else None
+                discontinuity = index > 0 and candle.timestamp - candles[index - 1].timestamp > timedelta(minutes=self.config.candle_minutes)
+                previous_volume = candles[index - 1].volume if index > 0 and not discontinuity else None
                 position, keep_pending = self._enter(
                     pending, candle, previous_volume, closed_equity, result, diagnostics, index, position, timings,
+                    stale_volume_after_gap=discontinuity,
                 )
                 if not keep_pending:
                     pending = None
@@ -354,6 +356,7 @@ class IntrabarBacktester:
         index: int,
         position: Position | None,
         timings: PerformanceTimings,
+        stale_volume_after_gap: bool = False,
     ) -> tuple[Position | None, bool]:
         signal, signal_id = pending.signal, pending.signal_id
         order_id, trade_id = pending.order_id, pending.trade_id
@@ -399,7 +402,8 @@ class IntrabarBacktester:
         if quantity <= 0:
             diagnostics.order("ORDER_WAITING_FOR_LIQUIDITY", timestamp=candle.timestamp, **time_fields,
                               signal_id=signal_id, order_id=order_id, trade_id=trade_id,
-                              remaining_quantity=pending.remaining_quantity, prior_candle_volume=previous_volume)
+                              remaining_quantity=pending.remaining_quantity, prior_candle_volume=previous_volume,
+                              liquidity_status="stale_volume_after_gap" if stale_volume_after_gap else "no_valid_completed_prior_volume")
             return position, True
 
         if not pending.accepted_logged:

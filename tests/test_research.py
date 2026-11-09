@@ -97,12 +97,32 @@ class ResearchInfrastructureTests(unittest.TestCase):
             name='always'; allowed_regimes=set(MarketRegime)
             def signal(self, market): return Signal(Side.LONG,90,None,.8,self.name,'test')
         t0=datetime(2025,1,1,tzinfo=timezone.utc)
-        bars=[Candle(t0,100,101,99,100,1000),Candle(t0+timedelta(minutes=45),100,101,99,100,1000)]
+        bars=[Candle(t0,100,101,99,100,1000),Candle(t0+timedelta(minutes=45),100,101,99,100,1000),
+              Candle(t0+timedelta(hours=1),100,101,99,100,1000)]
         with tempfile.TemporaryDirectory() as tmp:
             result=IntrabarBacktester(BacktestConfig(diagnostic_mode=True,diagnostics_dir=tmp,force_close_at_end=True)).run(bars,StrategyEnsemble([Always()]))
             events=[json.loads(line) for line in (Path(tmp)/'events.jsonl').read_text().splitlines()]
         self.assertEqual(result.diagnostics['trades_opened'],1)
         self.assertTrue(any(e.get('event_type')=='DATA_DISCONTINUITY' for e in events))
+
+    def test_pending_entry_after_multi_hour_gap_waits_for_fresh_volume(self):
+        class Always:
+            name='always'; allowed_regimes=set(MarketRegime)
+            def signal(self, market): return Signal(Side.LONG,90,None,.8,self.name,'test')
+        t0=datetime(2025,1,1,tzinfo=timezone.utc)
+        bars=[Candle(t0,100,101,99,100,1000),
+              Candle(t0+timedelta(hours=4),100,101,99,100,1000),
+              Candle(t0+timedelta(hours=4,minutes=15),100,101,99,100,1000)]
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg=BacktestConfig(diagnostic_mode=True,diagnostics_dir=tmp,force_close_at_end=True,max_participation_rate=.05)
+            result=IntrabarBacktester(cfg).run(bars,StrategyEnsemble([Always()]))
+            events=[json.loads(line) for line in (Path(tmp)/'events.jsonl').read_text().splitlines()]
+        waits=[e for e in events if e.get('event_type')=='ORDER_WAITING_FOR_LIQUIDITY']
+        fills=[e for e in events if e.get('event_type')=='ORDER_FILLED']
+        self.assertEqual(waits[0]['liquidity_status'],'stale_volume_after_gap')
+        self.assertEqual(waits[0]['prior_candle_volume'],None)
+        self.assertEqual(fills[0]['timestamp'],bars[2].timestamp.isoformat())
+        self.assertEqual(result.diagnostics['trades_opened'],1)
 
     def test_backtest_preserves_open_position_across_gap(self):
         class Always:
