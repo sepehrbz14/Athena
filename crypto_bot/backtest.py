@@ -14,6 +14,20 @@ from .risk import PositionSizer, RiskConfig
 from .strategies import EnsembleDecision, MarketFeatures, MarketSnapshot, StrategyEnsemble
 
 
+def valid_prior_volume(candles: Sequence[Candle], index: int, candle_minutes: int = 15) -> tuple[float | None, bool]:
+    """Return the immediately prior completed bar's volume only if contiguous.
+
+    The bool marks a stale prior bar after a discontinuity. Both the portfolio
+    backtester and independent research evaluator use this liquidity policy.
+    """
+    if index <= 0:
+        return None, False
+    prior, current = candles[index - 1], candles[index]
+    if current.timestamp-prior.timestamp != timedelta(minutes=candle_minutes):
+        return None, True
+    return prior.volume, False
+
+
 @dataclass(frozen=True, slots=True)
 class BacktestConfig:
     initial_equity: float = 10_000.0
@@ -160,8 +174,7 @@ class IntrabarBacktester:
                 with timings.measure("15m_feature_update"):
                     market_data.refresh_15m_features()
             if pending is not None:
-                discontinuity = index > 0 and candle.timestamp - candles[index - 1].timestamp > timedelta(minutes=self.config.candle_minutes)
-                previous_volume = candles[index - 1].volume if index > 0 and not discontinuity else None
+                previous_volume, discontinuity = valid_prior_volume(candles,index,self.config.candle_minutes)
                 position, keep_pending = self._enter(
                     pending, candle, previous_volume, closed_equity, result, diagnostics, index, position, timings,
                     stale_volume_after_gap=discontinuity,

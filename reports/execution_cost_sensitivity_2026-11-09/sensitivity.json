@@ -1,0 +1,605 @@
+{
+  "purpose": "execution-cost sensitivity only; no scenario selected or recommended",
+  "scenarios": [
+    {
+      "fee_bps_per_side": 0,
+      "slippage_bps_per_side": 0,
+      "funding_bps_8h": 1.0
+    },
+    {
+      "fee_bps_per_side": 2,
+      "slippage_bps_per_side": 2,
+      "funding_bps_8h": 1.0
+    },
+    {
+      "fee_bps_per_side": 5,
+      "slippage_bps_per_side": 5,
+      "funding_bps_8h": 1.0
+    },
+    {
+      "fee_bps_per_side": 10,
+      "slippage_bps_per_side": 10,
+      "funding_bps_8h": 1.0
+    }
+  ],
+  "seed": 20261105,
+  "bootstrap_iterations": 2000,
+  "results": [
+    {
+      "scenario": "fee0_slip0",
+      "fee_bps_per_side": 0,
+      "slippage_bps_per_side": 0,
+      "funding_bps_8h": 1.0,
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "wins": 11044,
+      "win_rate": 0.3948657442168115,
+      "gross_pnl": -24906.731133342677,
+      "execution_gross_pnl": -24906.731133342677,
+      "fees": 0.0,
+      "slippage": 0.0,
+      "funding_paid": -176.1249775724644,
+      "net_pnl": -24730.606155770212,
+      "expectancy": -0.8842148863302304,
+      "profit_factor": 0.9655364658917652,
+      "win_rate_wilson_95": [
+        0.38915180267193145,
+        0.4006085615492893
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -1.6600233949541672,
+          -0.07691019801528144
+        ],
+        "profit_factor_ci_95": [
+          0.9359528665502892,
+          0.9970087338017373
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 2.5025978074362554
+    },
+    {
+      "scenario": "fee0_slip0",
+      "fee_bps_per_side": 0,
+      "slippage_bps_per_side": 0,
+      "funding_bps_8h": 1.0,
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "wins": 6481,
+      "win_rate": 0.3979002946954813,
+      "gross_pnl": -485.5802670763912,
+      "execution_gross_pnl": -485.5802670763912,
+      "fees": 0.0,
+      "slippage": 0.0,
+      "funding_paid": 263.10723801797457,
+      "net_pnl": -748.6875050943654,
+      "expectancy": -0.04596558847583285,
+      "profit_factor": 0.998276807555193,
+      "win_rate_wilson_95": [
+        0.39040837232296977,
+        0.4054403653162464
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -0.9507054338234461,
+          0.7456811504589557
+        ],
+        "profit_factor_ci_95": [
+          0.9646161997812056,
+          1.0283036219164883
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 0.57437753272762
+    },
+    {
+      "scenario": "fee0_slip0",
+      "fee_bps_per_side": 0,
+      "slippage_bps_per_side": 0,
+      "funding_bps_8h": 1.0,
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "wins": 867,
+      "win_rate": 0.3894878706199461,
+      "gross_pnl": -2733.3944914481212,
+      "execution_gross_pnl": -2733.3944914481212,
+      "fees": 0.0,
+      "slippage": 0.0,
+      "funding_paid": 258.3306158958411,
+      "net_pnl": -2991.7251073439625,
+      "expectancy": -1.3439915127331368,
+      "profit_factor": 0.9540002300909145,
+      "win_rate_wilson_95": [
+        0.3694376066336984,
+        0.4099189040932095
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -4.430627485927677,
+          1.6229179448400275
+        ],
+        "profit_factor_ci_95": [
+          0.8536528898909083,
+          1.0581533536733412
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 0.439319166693619
+    },
+    {
+      "scenario": "fee0_slip0",
+      "fee_bps_per_side": 0,
+      "slippage_bps_per_side": 0,
+      "funding_bps_8h": 1.0,
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "wins": 1983,
+      "win_rate": 0.41235184029943855,
+      "gross_pnl": 7463.414798157366,
+      "execution_gross_pnl": 7463.414798157366,
+      "fees": 0.0,
+      "slippage": 0.0,
+      "funding_paid": 611.2432436361186,
+      "net_pnl": 6852.171554521247,
+      "expectancy": 1.4248641202996981,
+      "profit_factor": 1.0484075156745336,
+      "win_rate_wilson_95": [
+        0.3985144136521433,
+        0.4263291829606229
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -2.131531889411966,
+          5.078359793734054
+        ],
+        "profit_factor_ci_95": [
+          0.9309144965108694,
+          1.1815302814718103
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 0.4619886552406611
+    },
+    {
+      "scenario": "fee2_slip2",
+      "fee_bps_per_side": 2,
+      "slippage_bps_per_side": 2,
+      "funding_bps_8h": 1.0,
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "wins": 11034,
+      "win_rate": 0.39450820551324683,
+      "gross_pnl": -23188.967097968416,
+      "execution_gross_pnl": -109048.35524483943,
+      "fees": 85859.38907443923,
+      "slippage": 85859.38814687102,
+      "funding_paid": -175.18272473779945,
+      "net_pnl": -194732.56159454086,
+      "expectancy": -6.962442761433761,
+      "profit_factor": 0.747384614327886,
+      "win_rate_wilson_95": [
+        0.38879521569388237,
+        0.400250169320473
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -7.684013184719435,
+          -6.210804070022873
+        ],
+        "profit_factor_ci_95": [
+          0.7248959534670075,
+          0.7725152909240866
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 19.222318306324652
+    },
+    {
+      "scenario": "fee2_slip2",
+      "fee_bps_per_side": 2,
+      "slippage_bps_per_side": 2,
+      "funding_bps_8h": 1.0,
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "wins": 6479,
+      "win_rate": 0.39777750491159136,
+      "gross_pnl": -983.5888981234383,
+      "execution_gross_pnl": -46767.98793635739,
+      "fees": 45784.39907758255,
+      "slippage": 45784.399038233954,
+      "funding_paid": 248.64417651443702,
+      "net_pnl": -92801.03119045439,
+      "expectancy": -5.69750928232161,
+      "profit_factor": 0.7977880953797524,
+      "win_rate_wilson_95": [
+        0.39028600494773796,
+        0.4053172110289878
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -6.563034972316455,
+          -4.909625500249222
+        ],
+        "profit_factor_ci_95": [
+          0.7692516039267568,
+          0.824339627617027
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 9.144929791427142
+    },
+    {
+      "scenario": "fee2_slip2",
+      "fee_bps_per_side": 2,
+      "slippage_bps_per_side": 2,
+      "funding_bps_8h": 1.0,
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "wins": 867,
+      "win_rate": 0.3894878706199461,
+      "gross_pnl": -2572.19821786519,
+      "execution_gross_pnl": -7944.480384525139,
+      "fees": 5372.2822695484565,
+      "slippage": 5372.282166659949,
+      "funding_paid": 238.86870749057024,
+      "net_pnl": -13555.631361564167,
+      "expectancy": -6.089681653892258,
+      "profit_factor": 0.7970413161412396,
+      "win_rate_wilson_95": [
+        0.3694376066336984,
+        0.4099189040932095
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -9.036274584081216,
+          -3.2899577616601157
+        ],
+        "profit_factor_ci_95": [
+          0.7104601174966754,
+          0.8857472473965696
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 1.3541155025095108
+    },
+    {
+      "scenario": "fee2_slip2",
+      "fee_bps_per_side": 2,
+      "slippage_bps_per_side": 2,
+      "funding_bps_8h": 1.0,
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "wins": 1983,
+      "win_rate": 0.41235184029943855,
+      "gross_pnl": 7189.858351460918,
+      "execution_gross_pnl": -998.0273735527564,
+      "fees": 8187.8854374202665,
+      "slippage": 8187.885725013675,
+      "funding_paid": 570.791736329365,
+      "net_pnl": -9756.704547302388,
+      "expectancy": -2.028842700624327,
+      "profit_factor": 0.9310915865860059,
+      "win_rate_wilson_95": [
+        0.3985144136521433,
+        0.4263291829606229
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -5.443760665503804,
+          1.4802633877946867
+        ],
+        "profit_factor_ci_95": [
+          0.8236178231900418,
+          1.0529139173493867
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 0.9915606282264563
+    },
+    {
+      "scenario": "fee5_slip5",
+      "fee_bps_per_side": 5,
+      "slippage_bps_per_side": 5,
+      "funding_bps_8h": 1.0,
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "wins": 10607,
+      "win_rate": 0.3792413028710358,
+      "gross_pnl": -20889.362197772567,
+      "execution_gross_pnl": -213552.95776340642,
+      "fees": 192663.6007879956,
+      "slippage": 192663.59556563385,
+      "funding_paid": -154.20766029995008,
+      "net_pnl": -406062.35089110205,
+      "expectancy": -14.518300650402304,
+      "profit_factor": 0.5077201943741854,
+      "win_rate_wilson_95": [
+        0.3735719648336233,
+        0.3849438080475782
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -15.186925900203947,
+          -13.81437088827303
+        ],
+        "profit_factor_ci_95": [
+          0.4881481434890129,
+          0.5282719174772179
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 40.59765316751139
+    },
+    {
+      "scenario": "fee5_slip5",
+      "fee_bps_per_side": 5,
+      "slippage_bps_per_side": 5,
+      "funding_bps_8h": 1.0,
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "wins": 6408,
+      "win_rate": 0.3934184675834971,
+      "gross_pnl": -1355.2388676717385,
+      "execution_gross_pnl": -103427.82670676068,
+      "fees": 102072.58817790984,
+      "slippage": 102072.58783908894,
+      "funding_paid": 218.41026750660993,
+      "net_pnl": -205718.82515217713,
+      "expectancy": -12.630085041268243,
+      "profit_factor": 0.5729258183007018,
+      "win_rate_wilson_95": [
+        0.38594228346482784,
+        0.40094491349348804
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -13.482852400670795,
+          -11.810444695181845
+        ],
+        "profit_factor_ci_95": [
+          0.5483854605374787,
+          0.5968703089436717
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 20.595582544008728
+    },
+    {
+      "scenario": "fee5_slip5",
+      "fee_bps_per_side": 5,
+      "slippage_bps_per_side": 5,
+      "funding_bps_8h": 1.0,
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "wins": 866,
+      "win_rate": 0.3890386343216532,
+      "gross_pnl": -2215.7589074846737,
+      "execution_gross_pnl": -14066.447041458881,
+      "fees": 11850.688687915212,
+      "slippage": 11850.688133974209,
+      "funding_paid": 210.7178260881328,
+      "net_pnl": -26127.85355546223,
+      "expectancy": -11.73758021359489,
+      "profit_factor": 0.6158261356303101,
+      "win_rate_wilson_95": [
+        0.3689933715360058,
+        0.4094662144377595
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -14.471806618424425,
+          -9.165554546386922
+        ],
+        "profit_factor_ci_95": [
+          0.5456214256805568,
+          0.6891731709847783
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 2.612785355546224
+    },
+    {
+      "scenario": "fee5_slip5",
+      "fee_bps_per_side": 5,
+      "slippage_bps_per_side": 5,
+      "funding_bps_8h": 1.0,
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "wins": 1983,
+      "win_rate": 0.41235184029943855,
+      "gross_pnl": 6803.351754680537,
+      "execution_gross_pnl": -11620.232676477272,
+      "fees": 18423.582730321858,
+      "slippage": 18423.584431157808,
+      "funding_paid": 519.7968381712062,
+      "net_pnl": -30563.612244970336,
+      "expectancy": -6.355502650232967,
+      "profit_factor": 0.7841050750093147,
+      "win_rate_wilson_95": [
+        0.3985144136521433,
+        0.4263291829606229
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -9.577767532054041,
+          -3.097317528966738
+        ],
+        "profit_factor_ci_95": [
+          0.6894542430859385,
+          0.8892591144102527
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 2.8663322931407365
+    },
+    {
+      "scenario": "fee10_slip10",
+      "fee_bps_per_side": 10,
+      "slippage_bps_per_side": 10,
+      "funding_bps_8h": 1.0,
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "wins": 8760,
+      "win_rate": 0.31320390432264295,
+      "gross_pnl": -16706.065138588037,
+      "execution_gross_pnl": -322688.97180812503,
+      "fees": 305982.92337561876,
+      "slippage": 305982.90666953695,
+      "funding_paid": -96.86824461449054,
+      "net_pnl": -628575.0269391293,
+      "expectancy": -22.47399002249381,
+      "profit_factor": 0.276523226670967,
+      "win_rate_wilson_95": [
+        0.307794399248559,
+        0.31866471412459796
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -23.16471025726361,
+          -21.765360165380457
+        ],
+        "profit_factor_ci_95": [
+          0.25978472525470037,
+          0.2940222989640459
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 62.85800618401431
+    },
+    {
+      "scenario": "fee10_slip10",
+      "fee_bps_per_side": 10,
+      "slippage_bps_per_side": 10,
+      "funding_bps_8h": 1.0,
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "wins": 5955,
+      "win_rate": 0.3656065815324165,
+      "gross_pnl": -1001.4400714337824,
+      "execution_gross_pnl": -164266.84374883576,
+      "fees": 163265.4046788509,
+      "slippage": 163265.40367740198,
+      "funding_paid": 172.703542540834,
+      "net_pnl": -327704.95197022747,
+      "expectancy": -20.11941011605031,
+      "profit_factor": 0.33834806515656646,
+      "win_rate_wilson_95": [
+        0.35824301224334726,
+        0.3730335281608885
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -20.97440848163142,
+          -19.294570661040847
+        ],
+        "profit_factor_ci_95": [
+          0.3170400882058699,
+          0.35993282539001786
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 32.785623810587765
+    },
+    {
+      "scenario": "fee10_slip10",
+      "fee_bps_per_side": 10,
+      "slippage_bps_per_side": 10,
+      "funding_bps_8h": 1.0,
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "wins": 850,
+      "win_rate": 0.38185085354896675,
+      "gross_pnl": -1733.7541933710454,
+      "execution_gross_pnl": -20979.633629468688,
+      "fees": 19245.88116985291,
+      "slippage": 19245.879436097643,
+      "funding_paid": 172.8250417431066,
+      "net_pnl": -40398.339841064706,
+      "expectancy": -18.148400647378573,
+      "profit_factor": 0.4087345873262007,
+      "win_rate_wilson_95": [
+        0.3618880709789905,
+        0.40222071894449235
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -20.60622404545543,
+          -15.795906641152254
+        ],
+        "profit_factor_ci_95": [
+          0.353660832070474,
+          0.46711341983210414
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 4.039833984106467
+    },
+    {
+      "scenario": "fee10_slip10",
+      "fee_bps_per_side": 10,
+      "slippage_bps_per_side": 10,
+      "funding_bps_8h": 1.0,
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "wins": 1983,
+      "win_rate": 0.41235184029943855,
+      "gross_pnl": 6228.833705472591,
+      "execution_gross_pnl": -25436.03027626544,
+      "fees": 31664.857752906068,
+      "slippage": 31664.86398173803,
+      "funding_paid": 453.69299205324137,
+      "net_pnl": -57554.58102122475,
+      "expectancy": -11.968097529886618,
+      "profit_factor": 0.5933434286918551,
+      "win_rate_wilson_95": [
+        0.3985144136521433,
+        0.4263291829606229
+      ],
+      "weekly_block_bootstrap": {
+        "seed": 20261105,
+        "iterations": 2000,
+        "block_unit": "ISO week sampled with replacement; trades within week stay clustered",
+        "expectancy_ci_95": [
+          -14.916934913983312,
+          -9.048630819252933
+        ],
+        "profit_factor_ci_95": [
+          0.5162811351401905,
+          0.6758719844391212
+        ]
+      },
+      "diagnostic_max_drawdown_pct": 5.433854461931634
+    }
+  ]
+}

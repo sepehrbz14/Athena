@@ -1,0 +1,37 @@
+{
+  "source_signal_dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\signals.csv",
+  "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+  "dataset_timestamp_start": "2019-12-31T00:00:00+00:00",
+  "dataset_timestamp_end": "2026-08-19T23:45:00+00:00",
+  "candle_count": 232608,
+  "signal_rows": 51292,
+  "configuration": {
+    "reference_equity": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "risk_budget": 50.0,
+    "leverage": 2.0,
+    "fee_bps": 5.0,
+    "slippage_bps": 5.0,
+    "funding_bps_8h": 1.0,
+    "max_position_notional_pct": 1.0,
+    "max_margin_fraction": 0.8,
+    "max_participation_rate": 0.05,
+    "min_quantity": 1e-06,
+    "candle_minutes": 15,
+    "stop_target_policy": "existing stops/targets; adverse stop first; gap through stop fills at open",
+    "sizing_policy": "$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown",
+    "overlap_policy": "each signal is a separate independent counterfactual trade; no shared capital or aggregate liquidity; overlaps retained"
+  },
+  "code_commit_sha": "bfa6eedbecefb5ebedebf5b9ca7b37b75ea39aa7",
+  "code_worktree_dirty": false,
+  "code_file_sha256": {
+    "research_evaluation.py": "fabadb72451fee6e419e798d863d01893d4073e4ad9f69e3b838a14a03e39cea",
+    "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+    "run_fixed_reference_research.py": "882f3a4e3904d62aa6e7ec4657a1ad663bf923a0963f8dcb87464b1ce38d714c"
+  },
+  "random_seed": 20261105,
+  "bootstrap_iterations": 2000,
+  "evaluation_timestamp_utc": "2026-11-09T19:26:45.850453+00:00",
+  "excluded_signals": {},
+  "trades": 51292
+}

@@ -13,6 +13,7 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
+from .backtest import valid_prior_volume
 from .models import Candle, Side
 
 
@@ -31,15 +32,24 @@ def _costed_trade(signal: dict[str, Any], candles: list[Candle], index_by_time: 
     expected=candles[i].timestamp+timedelta(minutes=cfg['candle_minutes'])
     # After a gap, prior observed volume is stale. Wait until one post-gap
     # candle completes, then enter at the next observed open.
-    if candles[entry_i].timestamp != expected:
-        if entry_i+1>=len(candles): return None,'gap_without_fresh_completed_volume'
-        entry_i+=1
-    entry_bar=candles[entry_i]
     side=Side(signal['direction']); sign=side.sign
+    stop=float(signal['stop_price']); target=float(signal['take_profit']) if signal.get('take_profit') not in ('',None) else None
+    prior_volume=None
+    # Pending remains live across gaps, but each candidate open must have a
+    # fresh, contiguous completed prior candle, matching IntrabarBacktester.
+    while entry_i<len(candles):
+        candidate=candles[entry_i]
+        prior_volume,_stale=valid_prior_volume(candles,entry_i,cfg['candle_minutes'])
+        candidate_exec=candidate.open*(1+sign*cfg['slippage_bps']/10000)
+        if (side is Side.LONG and stop>=candidate_exec) or (side is Side.SHORT and stop<=candidate_exec):
+            return None,'entry_gap_invalidates_stop'
+        if prior_volume is not None and prior_volume>0:
+            break
+        entry_i+=1
+    if entry_i>=len(candles): return None,'insufficient_fresh_volume_after_gap'
+    entry_bar=candles[entry_i]
     raw_entry=entry_bar.open; slip=cfg['slippage_bps']/10000; fee=cfg['fee_bps']/10000
     entry_exec=raw_entry*(1+sign*slip)
-    stop=float(signal['stop_price']); target=float(signal['take_profit']) if signal.get('take_profit') not in ('',None) else None
-    if (side is Side.LONG and stop>=entry_exec) or (side is Side.SHORT and stop<=entry_exec): return None,'entry_gap_invalidates_stop'
     stop_exec=stop*(1-sign*slip)
     # Stop-risk budget includes price distance, expected adverse slippage and
     # both fees. Funding is separately accrued by actual elapsed holding time;
@@ -50,7 +60,7 @@ def _costed_trade(signal: dict[str, Any], candles: list[Candle], index_by_time: 
     q=min(q,cfg['reference_equity']*cfg['max_position_notional_pct']/entry_exec,
           cfg['reference_equity']*cfg['max_margin_fraction']*cfg['leverage']/entry_exec)
     if q<cfg['min_quantity']: return None,'below_minimum_contract_quantity'
-    prior_volume=candles[entry_i-1].volume or 0
+    prior_volume=prior_volume or 0
     q=min(q,prior_volume*cfg['max_participation_rate'])
     if q<cfg['min_quantity']: return None,'insufficient_fresh_volume'
     entry_fee=entry_exec*q*fee
@@ -126,11 +136,12 @@ def _bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)->dict[str,Any]:
             'expectancy_ci_95':ci(expectancy),'profit_factor_ci_95':ci(pf)}
 
 
-def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=20261105,iterations:int=2000)->dict[str,Any]:
+def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=20261105,iterations:int=2000,
+             fee_bps:float=5.0,slippage_bps:float=5.0,funding_bps_8h:float=1.0)->dict[str,Any]:
     with signal_csv.open(encoding='utf-8',newline='') as f: signals=list(csv.DictReader(f))
     index={c.timestamp.isoformat():i for i,c in enumerate(candles)}
     cfg={'reference_equity':10000.0,'risk_per_trade_pct':0.005,'risk_budget':50.0,'leverage':2.0,
-         'fee_bps':5.0,'slippage_bps':5.0,'funding_bps_8h':1.0,
+         'fee_bps':fee_bps,'slippage_bps':slippage_bps,'funding_bps_8h':funding_bps_8h,
          'max_position_notional_pct':1.0,'max_margin_fraction':0.8,'max_participation_rate':0.05,
          'min_quantity':0.000001,'candle_minutes':15,'stop_target_policy':'existing stops/targets; adverse stop first; gap through stop fills at open',
          'sizing_policy':'$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown',
@@ -206,7 +217,7 @@ def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=2026110
         monthly_totals[strat]={'trade_ledger_net_pnl':trade_total,'monthly_net_pnl':month_total,'delta':trade_total-month_total}
         if abs(trade_total-month_total)>1e-7: raise AssertionError(f'monthly ledger does not reconcile for {strat}')
     summary['monthly_reconciliation']=monthly_totals
-    code_files=[Path(__file__),Path(__file__).with_name('research.py'),Path(__file__).resolve().parents[1]/'tools'/'run_fixed_reference_research.py']
+    code_files=[Path(__file__),Path(__file__).with_name('research.py'),Path(__file__).resolve().parents[1]/'tools'/'run_fixed_reference_research.py',Path(__file__).resolve().parents[1]/'tools'/'run_execution_cost_sensitivity.py']
     dirty=bool(subprocess.check_output(['git','status','--porcelain'],text=True).strip())
     meta={'source_signal_dataset':str(signal_csv.resolve()),'source_signal_sha256':sha256(signal_csv),
       'dataset_timestamp_start':candles[0].timestamp.isoformat(),'dataset_timestamp_end':candles[-1].timestamp.isoformat(),
