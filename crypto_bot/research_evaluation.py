@@ -131,6 +131,29 @@ def _moving_block_indices(week_count:int,block_length_weeks:int,rng:random.Rando
     return out[:week_count]
 
 
+def _calendar_week_trade_values(rows:list[dict[str,Any]])->tuple[list[str],list[list[float]],int]:
+    """Return contiguous ISO weeks (including empty weeks) and trade clusters."""
+    from datetime import date
+    by_week=defaultdict(list)
+    for row in rows:
+        by_week[datetime.fromisoformat(row['entry_timestamp']).date().strftime('%G-W%V')].append(float(row['net_pnl']))
+    if not by_week:return [],[],0
+    ordered=sorted(by_week)
+    year,week=map(int,ordered[0].split('-W')); end_year,end_week=map(int,ordered[-1].split('-W'))
+    cursor=date.fromisocalendar(year,week,1); end=date.fromisocalendar(end_year,end_week,1)
+    keys=[]; clusters=[]
+    while cursor<=end:
+        iso=cursor.isocalendar(); key=f'{iso.year}-W{iso.week:02d}'
+        keys.append(key); clusters.append(by_week.get(key,[])); cursor+=timedelta(days=7)
+    return keys,clusters,len(by_week)
+
+
+def _ci_bounds(values:list[float])->list[float|str]:
+    values.sort()
+    bounds=[values[int(.025*(len(values)-1))],values[int(.975*(len(values)-1))]]
+    return ['Infinity' if math.isinf(x) and x>0 else '-Infinity' if math.isinf(x) else x for x in bounds]
+
+
 def _weekly_cluster_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)->dict[str,Any]:
     """Legacy independent ISO-week cluster resampling, retained for comparison."""
     weeks=defaultdict(list)
@@ -143,29 +166,20 @@ def _weekly_cluster_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)-
         expectancy.append(sum(sample)/len(sample) if sample else 0)
         pf.append(sum(w)/abs(sum(l)) if l else (float('inf') if w else 0))
     def ci(vals):
-        vals.sort(); return [vals[int(.025*(len(vals)-1))],vals[int(.975*(len(vals)-1))]]
+        return _ci_bounds(vals)
     return {'seed':seed,'iterations':iterations,'block_unit':'ISO week sampled with replacement; trades within week stay clustered',
             'expectancy_ci_95':ci(expectancy),'profit_factor_ci_95':ci(pf)}
 
 
 def _moving_block_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int,block_length_weeks:int=4)->dict[str,Any]:
     """Moving-block bootstrap of consecutive calendar-week trade clusters."""
-    from datetime import date
-    by_week=defaultdict(list)
-    for row in rows:
-        by_week[datetime.fromisoformat(row['entry_timestamp']).date().strftime('%G-W%V')].append(float(row['net_pnl']))
-    if not by_week:
+    calendar,clusters,unique_trade_weeks=_calendar_week_trade_values(rows)
+    if not calendar:
         return {'method':'moving_block_bootstrap','seed':seed,'iterations':iterations,'block_length_weeks':block_length_weeks,
                 'expectancy_ci_95':None,'profit_factor_ci_95':None,'unique_trade_weeks':0}
-    years_weeks=sorted(by_week)
-    first_year,first_week=map(int,years_weeks[0].split('-W')); last_year,last_week=map(int,years_weeks[-1].split('-W'))
-    first=date.fromisocalendar(first_year,first_week,1); last=date.fromisocalendar(last_year,last_week,1)
-    calendar=[]; cursor=first
-    while cursor<=last:
-        iso=cursor.isocalendar(); calendar.append(f'{iso.year}-W{iso.week:02d}'); cursor+=timedelta(days=7)
     weekly=[]
-    for key in calendar:
-        vals=by_week.get(key,[]); winners=sum(x for x in vals if x>0); losers=sum(x for x in vals if x<0)
+    for vals in clusters:
+        winners=sum(x for x in vals if x>0); losers=sum(x for x in vals if x<0)
         weekly.append((sum(vals),winners,losers,len(vals)))
     rng=random.Random(seed); expectancy=[]; profit_factors=[]
     for _ in range(iterations):
@@ -176,10 +190,10 @@ def _moving_block_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int,blo
         expectancy.append(pnl/count if count else 0.0)
         profit_factors.append(wins/abs(losses) if losses else (float('inf') if wins else 0.0))
     def ci(vals):
-        vals.sort(); return [vals[int(.025*(len(vals)-1))],vals[int(.975*(len(vals)-1))]]
+        return _ci_bounds(vals)
     return {'method':'moving_block_bootstrap','seed':seed,'iterations':iterations,
         'block_length_weeks':min(max(1,block_length_weeks),len(weekly)),
-        'source_calendar_weeks':len(weekly),'unique_trade_weeks':len(by_week),
+        'source_calendar_weeks':len(weekly),'unique_trade_weeks':unique_trade_weeks,
         'methodology':'sample consecutive, non-circular calendar-week blocks with replacement; retain trade clusters within each week; concatenate and truncate to source span',
         'expectancy_ci_95':ci(expectancy),'profit_factor_ci_95':ci(profit_factors)}
 

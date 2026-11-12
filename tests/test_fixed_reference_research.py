@@ -7,7 +7,7 @@ from crypto_bot.models import Candle, Signal, Side
 from crypto_bot.regimes import MarketRegime
 from crypto_bot.research import capture_signals
 from crypto_bot.research_evaluation import (_costed_trade, _weekly_cluster_bootstrap,
-    _moving_block_bootstrap, _moving_block_indices, evaluate)
+    _moving_block_bootstrap, _moving_block_indices, _calendar_week_trade_values, evaluate)
 from crypto_bot.strategies import StrategyEnsemble
 
 
@@ -117,6 +117,46 @@ class FixedReferenceResearchTests(unittest.TestCase):
         for offset in range(0,9,3):
             self.assertEqual(indexes[offset+1],indexes[offset]+1)
             self.assertEqual(indexes[offset+2],indexes[offset]+2)
+
+    def test_moving_blocks_are_non_circular_at_right_boundary(self):
+        class LastStart:
+            def randint(self, low, high): return high
+        indexes=_moving_block_indices(7,3,LastStart())
+        self.assertEqual(indexes[:3],[4,5,6])
+        self.assertEqual(indexes[3:6],[4,5,6])
+        self.assertNotIn(0,indexes[:3])
+
+    def test_calendar_weeks_handle_iso_year_transition(self):
+        rows=[{'entry_timestamp':datetime(2024,12,29,tzinfo=timezone.utc).isoformat(),'net_pnl':1},
+              {'entry_timestamp':datetime(2024,12,30,tzinfo=timezone.utc).isoformat(),'net_pnl':2},
+              {'entry_timestamp':datetime(2025,1,6,tzinfo=timezone.utc).isoformat(),'net_pnl':3}]
+        weeks,clusters,count=_calendar_week_trade_values(rows)
+        self.assertEqual(weeks,['2024-W52','2025-W01','2025-W02'])
+        self.assertEqual(count,3); self.assertEqual(clusters,[[1.0],[2.0],[3.0]])
+
+    def test_zero_trade_weeks_are_retained_inside_calendar_span(self):
+        rows=[{'entry_timestamp':datetime(2025,1,6,tzinfo=timezone.utc).isoformat(),'net_pnl':1},
+              {'entry_timestamp':datetime(2025,1,20,tzinfo=timezone.utc).isoformat(),'net_pnl':-1}]
+        weeks,clusters,count=_calendar_week_trade_values(rows)
+        self.assertEqual(weeks,['2025-W02','2025-W03','2025-W04'])
+        self.assertEqual(clusters,[[1.0],[],[-1.0]])
+        self.assertEqual(count,2)
+
+    def test_moving_bootstrap_handles_empty_and_single_week_data(self):
+        empty=_moving_block_bootstrap([],3,20,4)
+        self.assertIsNone(empty['expectancy_ci_95'])
+        row=[{'entry_timestamp':datetime(2025,3,3,tzinfo=timezone.utc).isoformat(),'net_pnl':-2.0}]
+        short=_moving_block_bootstrap(row,3,20,4)
+        self.assertEqual(short['source_calendar_weeks'],1)
+        self.assertEqual(short['block_length_weeks'],1)
+        self.assertEqual(short['expectancy_ci_95'],[-2.0,-2.0])
+
+    def test_infinite_profit_factor_bootstrap_is_json_serializable(self):
+        rows=[{'entry_timestamp':datetime(2025,3,3,tzinfo=timezone.utc).isoformat(),'net_pnl':1.0},
+              {'entry_timestamp':datetime(2025,3,4,tzinfo=timezone.utc).isoformat(),'net_pnl':2.0}]
+        result=_moving_block_bootstrap(rows,5,40,2)
+        encoded=json.dumps(result,allow_nan=False)
+        self.assertIn('Infinity',encoded)
 
     def test_incomplete_higher_timeframe_features_have_no_future_leakage(self):
         class Always:
