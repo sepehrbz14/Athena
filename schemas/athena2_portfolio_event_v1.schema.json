@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/portfolio-event-v1.schema.json",
+  "title": "Athena 2.0 portfolio event v1",
+  "description": "Append-only canonical portfolio lifecycle event. Monetary payload values are IEEE-754 binary64 numbers serialized as JSON numbers; no exchange tick rounding is implied.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "event_time",
+    "phase",
+    "account_id",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": { "const": "athena.portfolio.event.v1" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "DATA_GAP",
+        "SIGNAL_CAPTURED",
+        "SIGNAL_FILTERED",
+        "ORDER_CREATED",
+        "ORDER_RESERVED",
+        "ORDER_ACCEPTED",
+        "ORDER_REJECTED",
+        "ORDER_WAITING_FOR_LIQUIDITY",
+        "ORDER_PARTIALLY_FILLED",
+        "ORDER_FILLED",
+        "ORDER_CANCELLED",
+        "MARGIN_RESERVED",
+        "MARGIN_RELEASED",
+        "FEE_POSTED",
+        "FUNDING_POSTED",
+        "POSITION_OPENED",
+        "POSITION_MARKED",
+        "POSITION_CLOSED",
+        "STOP_TRIGGERED",
+        "TARGET_TRIGGERED",
+        "KILL_SWITCH_ACTIVATED",
+        "MAINTENANCE_BREACH",
+        "FORCED_LIQUIDATION",
+        "INSOLVENCY_DECLARED",
+        "ACCOUNT_MARKED",
+        "END_OF_DATA"
+      ]
+    },
+    "event_time": { "type": "string", "format": "date-time" },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "input",
+        "bar_open_exit",
+        "pending_order_execution",
+        "intrabar_exit",
+        "close_accounting",
+        "safety_and_margin",
+        "signal_batch",
+        "end_of_data"
+      ]
+    },
+    "account_id": { "type": "string", "minLength": 1 },
+    "instrument_id": { "type": ["string", "null"] },
+    "source_signal_id": { "type": ["string", "integer", "null"] },
+    "order_id": { "type": ["string", "integer", "null"] },
+    "position_id": { "type": ["string", "integer", "null"] },
+    "reason_code": { "type": ["string", "null"] },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

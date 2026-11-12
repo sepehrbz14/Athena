@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/cash-journal-entry-v1.schema.json",
+  "title": "Athena 2.0 USDT cash journal entry v1",
+  "description": "Append-only cash movement journal. Reservations and margin encumbrances are not cash movements and must not appear as amounts here.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "entry_id",
+    "event_id",
+    "event_time",
+    "account_id",
+    "asset",
+    "entry_type",
+    "amount_usdt",
+    "cash_after_usdt"
+  ],
+  "properties": {
+    "schema_version": { "const": "athena.cash_journal_entry.v1" },
+    "entry_id": { "type": "string", "minLength": 1 },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_time": { "type": "string", "format": "date-time" },
+    "account_id": { "type": "string", "minLength": 1 },
+    "asset": { "const": "USDT" },
+    "entry_type": {
+      "type": "string",
+      "enum": ["INITIAL_DEPOSIT", "DEPOSIT", "WITHDRAWAL", "REALIZED_PNL", "ENTRY_FEE", "EXIT_FEE", "FUNDING"]
+    },
+    "amount_usdt": { "type": "number" },
+    "cash_after_usdt": { "type": "number" },
+    "instrument_id": { "type": ["string", "null"] },
+    "source_signal_id": { "type": ["string", "integer", "null"] },
+    "order_id": { "type": ["string", "integer", "null"] },
+    "position_id": { "type": ["string", "integer", "null"] },
+    "trade_id": { "type": ["string", "integer", "null"] },
+    "memo": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}

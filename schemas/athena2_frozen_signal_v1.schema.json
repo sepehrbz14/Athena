@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/frozen-signal-v1.schema.json",
+  "title": "Athena 2.0 normalized frozen selected signal v1",
+  "description": "Read-only normalized row from the frozen independent signal capture. The source CSV itself may contain additional research fields; the simulator consumes no forward outcome fields.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "source_signal_sha256",
+    "source_candle_sha256",
+    "instrument_id",
+    "signal_id",
+    "candle_open_time",
+    "available_at",
+    "strategy",
+    "direction",
+    "confidence",
+    "reference_price",
+    "stop_price",
+    "take_profit"
+  ],
+  "properties": {
+    "schema_version": { "const": "athena.frozen_signal.v1" },
+    "source_signal_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source_candle_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "instrument_id": { "const": "BTCUSDT" },
+    "signal_id": { "type": "integer", "minimum": 1 },
+    "candle_open_time": { "type": "string", "format": "date-time" },
+    "available_at": { "type": "string", "format": "date-time" },
+    "strategy": { "type": "string", "minLength": 1 },
+    "direction": { "enum": ["long", "short"] },
+    "confidence": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "reference_price": { "type": "number", "exclusiveMinimum": 0 },
+    "stop_price": { "type": "number", "exclusiveMinimum": 0 },
+    "take_profit": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+  },
+  "additionalProperties": false
+}

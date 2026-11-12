@@ -1,0 +1,241 @@
+{
+  "fixture_version": "athena.legacy_backtest_golden.v1",
+  "provenance": {
+    "engine": "crypto_bot.backtest.IntrabarBacktester",
+    "capture": "generated from current repository engine before any execution refactor",
+    "scenario": "BTCUSDT synthetic long, next-open fill, elapsed funding, stop gap through stop"
+  },
+  "config": {
+    "initial_equity": 10000.0,
+    "fee_rate": 0.0005,
+    "slippage_bps": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "max_participation_rate": 1.0,
+    "force_close_at_end": true,
+    "risk_per_trade_pct": 0.01,
+    "max_position_notional_pct": 2.0,
+    "max_margin_fraction": 1.0,
+    "leverage": 2.0,
+    "estimated_round_trip_cost_pct": 0.0
+  },
+  "signal": {
+    "side": "long",
+    "stop_price": 95.0,
+    "take_profit": 110.0,
+    "confidence": 0.75,
+    "strategy": "fixture",
+    "rationale": "parity fixture"
+  },
+  "candles": [
+    {
+      "timestamp": "2025-01-01T00:00:00+00:00",
+      "open": 100,
+      "high": 101,
+      "low": 99,
+      "close": 100,
+      "volume": 100
+    },
+    {
+      "timestamp": "2025-01-01T00:15:00+00:00",
+      "open": 100,
+      "high": 102,
+      "low": 99,
+      "close": 101,
+      "volume": 100
+    },
+    {
+      "timestamp": "2025-01-01T00:30:00+00:00",
+      "open": 101,
+      "high": 103,
+      "low": 100,
+      "close": 102,
+      "volume": 100
+    },
+    {
+      "timestamp": "2025-01-01T00:45:00+00:00",
+      "open": 94,
+      "high": 96,
+      "low": 93,
+      "close": 94,
+      "volume": 100
+    }
+  ],
+  "expected": {
+    "initial_equity": 10000,
+    "final_equity": 9877.328126237624,
+    "trade": {
+      "side": "long",
+      "quantity": 19.801980198019812,
+      "entry_time": "2025-01-01T00:15:00+00:00",
+      "exit_time": "2025-01-01T00:45:00+00:00",
+      "entry_price": 100.05,
+      "exit_price": 93.953,
+      "stop_price": 95,
+      "take_profit": 110,
+      "strategy": "fixture",
+      "exit_reason": "stop_loss",
+      "gross_pnl": -120.73267326732667,
+      "entry_fee": 0.990594059405941,
+      "exit_fee": 0.9302277227722777,
+      "funding_paid": 0.018378712871287138,
+      "net_pnl": -122.67187376237617,
+      "trade_id": 1,
+      "signal_id": 1,
+      "order_id": 1
+    },
+    "equity_curve": [
+      {
+        "timestamp": "2025-01-01T00:00:00+00:00",
+        "equity": 10000,
+        "drawdown_pct": 0.0
+      },
+      {
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "equity": 10017.815037128714,
+        "drawdown_pct": 0.0
+      },
+      {
+        "timestamp": "2025-01-01T00:30:00+00:00",
+        "equity": 10037.610705445544,
+        "drawdown_pct": 0.0
+      },
+      {
+        "timestamp": "2025-01-01T00:45:00+00:00",
+        "equity": 9877.328126237624,
+        "drawdown_pct": 0.01596820039264568
+      }
+    ],
+    "event_types": [
+      "EQUITY_MARKED",
+      "SIGNAL",
+      "ENTRY_REQUEST",
+      "ENTRY_ACCEPTED",
+      "ORDER_FILLED",
+      "POSITION_OPENED",
+      "FUNDING_CHARGED",
+      "EQUITY_MARKED",
+      "FUNDING_CHARGED",
+      "EQUITY_MARKED",
+      "FUNDING_CHARGED",
+      "EXIT_EXECUTED",
+      "POSITION_CLOSED",
+      "EQUITY_MARKED"
+    ],
+    "event_details": [
+      {
+        "event_type": "EQUITY_MARKED",
+        "timestamp": "2025-01-01T00:00:00+00:00",
+        "trade_id": null
+      },
+      {
+        "event_type": "SIGNAL",
+        "timestamp": "2025-01-01T00:00:00+00:00",
+        "signal_id": 1,
+        "price": 100
+      },
+      {
+        "event_type": "ENTRY_REQUEST",
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "side": "long",
+        "price": 100
+      },
+      {
+        "event_type": "ENTRY_ACCEPTED",
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "price": 100.05,
+        "quantity": 19.801980198019812
+      },
+      {
+        "event_type": "ORDER_FILLED",
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "price": 100.05,
+        "reference_price": 100,
+        "fill_quantity": 19.801980198019812,
+        "fee": 0.990594059405941
+      },
+      {
+        "event_type": "POSITION_OPENED",
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "price": 100.05,
+        "quantity": 19.801980198019812
+      },
+      {
+        "event_type": "FUNDING_CHARGED",
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "side": "long",
+        "quantity": 19.801980198019812,
+        "funding_charge": 0.006250000000000004
+      },
+      {
+        "event_type": "EQUITY_MARKED",
+        "timestamp": "2025-01-01T00:15:00+00:00",
+        "trade_id": 1
+      },
+      {
+        "event_type": "FUNDING_CHARGED",
+        "timestamp": "2025-01-01T00:30:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "side": "long",
+        "quantity": 19.801980198019812,
+        "funding_charge": 0.006311881188118816
+      },
+      {
+        "event_type": "EQUITY_MARKED",
+        "timestamp": "2025-01-01T00:30:00+00:00",
+        "trade_id": 1
+      },
+      {
+        "event_type": "FUNDING_CHARGED",
+        "timestamp": "2025-01-01T00:45:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "side": "long",
+        "quantity": 19.801980198019812,
+        "funding_charge": 0.00581683168316832
+      },
+      {
+        "event_type": "EXIT_EXECUTED",
+        "timestamp": "2025-01-01T00:45:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "reason": "stop_loss",
+        "price": 93.953,
+        "reference_price": 94,
+        "fee": 0.9302277227722777
+      },
+      {
+        "event_type": "POSITION_CLOSED",
+        "timestamp": "2025-01-01T00:45:00+00:00",
+        "signal_id": 1,
+        "order_id": 1,
+        "trade_id": 1,
+        "reason": "stop_loss",
+        "net_pnl": -122.67187376237617
+      },
+      {
+        "event_type": "EQUITY_MARKED",
+        "timestamp": "2025-01-01T00:45:00+00:00",
+        "trade_id": null
+      }
+    ]
+  }
+}
