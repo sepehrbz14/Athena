@@ -1,0 +1,344 @@
+{
+  "baseline_version": "athena.pre_refactor_execution_baseline.v1",
+  "git_commit": "749a0db",
+  "captured_at_utc": "2026-11-12T10:00:41.383128+00:00",
+  "suite": {
+    "command": "python -m unittest discover -s tests -v",
+    "result": "82 passed",
+    "note": "TEMP and TMP pointed to a workspace-local temp directory to avoid cross-volume os.replace failures in the Windows sandbox."
+  },
+  "backtest": {
+    "fixture": "legacy_stop_gap_funding_v1.json",
+    "final_equity": 9997.95708955224,
+    "trade": {
+      "side": "long",
+      "quantity": 9.950248756218908,
+      "entry_time": "2025-01-01T00:15:00+00:00",
+      "exit_time": "2025-01-01T04:15:00+00:00",
+      "entry_price": 100.05,
+      "exit_price": 99.95,
+      "stop_price": 90,
+      "take_profit": 120,
+      "strategy": "fixture_gap_funding",
+      "exit_reason": "end_of_test",
+      "gross_pnl": -0.9950248756218343,
+      "entry_fee": 0.49776119402985086,
+      "exit_fee": 0.49726368159204,
+      "funding_paid": 0.05286069651741295,
+      "net_pnl": -2.042910447761138,
+      "trade_id": 1,
+      "signal_id": 1,
+      "order_id": 1
+    },
+    "event_types": [
+      "EQUITY_MARKED",
+      "SIGNAL",
+      "ENTRY_REQUEST",
+      "ENTRY_ACCEPTED",
+      "ORDER_FILLED",
+      "POSITION_OPENED",
+      "FUNDING_CHARGED",
+      "EQUITY_MARKED",
+      "DATA_DISCONTINUITY",
+      "FUNDING_CHARGED",
+      "EQUITY_MARKED",
+      "FUNDING_CHARGED",
+      "EQUITY_MARKED",
+      "EXIT_EXECUTED",
+      "POSITION_CLOSED"
+    ],
+    "cases_fixture": "legacy_execution_cases_v1.json",
+    "cases": {
+      "short_target": {
+        "final_equity": 10095.160606435644,
+        "trade_count": 1,
+        "trade_net_pnl": [
+          95.16060643564369
+        ],
+        "event_types": [
+          "EQUITY_MARKED",
+          "SIGNAL",
+          "ENTRY_REQUEST",
+          "ENTRY_ACCEPTED",
+          "ORDER_FILLED",
+          "POSITION_OPENED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "FUNDING_CHARGED",
+          "EXIT_EXECUTED",
+          "POSITION_CLOSED",
+          "EQUITY_MARKED"
+        ]
+      },
+      "long_collision": {
+        "final_equity": 9897.1225,
+        "trade_count": 1,
+        "trade_net_pnl": [
+          -102.87749999999997
+        ],
+        "event_types": [
+          "EQUITY_MARKED",
+          "SIGNAL",
+          "ENTRY_REQUEST",
+          "ENTRY_ACCEPTED",
+          "ORDER_FILLED",
+          "POSITION_OPENED",
+          "FUNDING_CHARGED",
+          "EXIT_EXECUTED",
+          "POSITION_CLOSED",
+          "EQUITY_MARKED"
+        ]
+      },
+      "partial_fills": {
+        "final_equity": 9997.990625,
+        "trade_count": 1,
+        "trade_net_pnl": [
+          -2.009374999999943
+        ],
+        "event_types": [
+          "EQUITY_MARKED",
+          "SIGNAL",
+          "ENTRY_REQUEST",
+          "ENTRY_ACCEPTED",
+          "PARTIAL_FILL",
+          "POSITION_OPENED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "PARTIAL_FILL",
+          "POSITION_INCREASED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "PARTIAL_FILL",
+          "POSITION_INCREASED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "PARTIAL_FILL",
+          "POSITION_INCREASED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "PARTIAL_FILL",
+          "POSITION_INCREASED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "EXIT_EXECUTED",
+          "POSITION_CLOSED",
+          "ORDER_CANCELLED"
+        ]
+      },
+      "funding_across_gap": {
+        "final_equity": 9997.95708955224,
+        "trade_count": 1,
+        "trade_net_pnl": [
+          -2.042910447761138
+        ],
+        "event_types": [
+          "EQUITY_MARKED",
+          "SIGNAL",
+          "ENTRY_REQUEST",
+          "ENTRY_ACCEPTED",
+          "ORDER_FILLED",
+          "POSITION_OPENED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "DATA_DISCONTINUITY",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "EXIT_EXECUTED",
+          "POSITION_CLOSED"
+        ]
+      },
+      "stale_liquidity": {
+        "final_equity": 9998.003731343284,
+        "trade_count": 1,
+        "trade_net_pnl": [
+          -1.9962686567163619
+        ],
+        "event_types": [
+          "EQUITY_MARKED",
+          "SIGNAL",
+          "DATA_DISCONTINUITY",
+          "ENTRY_REQUEST",
+          "ORDER_WAITING_FOR_LIQUIDITY",
+          "EQUITY_MARKED",
+          "ENTRY_ACCEPTED",
+          "ORDER_FILLED",
+          "POSITION_OPENED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED",
+          "EXIT_EXECUTED",
+          "POSITION_CLOSED"
+        ]
+      },
+      "end_of_data_open": {
+        "final_equity": 10000.0,
+        "trade_count": 0,
+        "trade_net_pnl": [],
+        "event_types": [
+          "EQUITY_MARKED",
+          "SIGNAL",
+          "ENTRY_REQUEST",
+          "ENTRY_ACCEPTED",
+          "ORDER_FILLED",
+          "POSITION_OPENED",
+          "FUNDING_CHARGED",
+          "EQUITY_MARKED"
+        ]
+      }
+    }
+  },
+  "paper": {
+    "input": "two flat prospective BTCUSDT 15m candles after two-bar warmup",
+    "result": {
+      "status": "paper_replay_updated",
+      "timestamp": "2025-01-01T00:45:00+00:00",
+      "replayed": true,
+      "trades_closed": 0,
+      "marked_equity": 10000.0,
+      "safety_events": []
+    },
+    "summary": {
+      "accounting_note": "Open positions are marked in paper_equity.csv and are not force-closed at replay end.",
+      "dataset_sha256": "8e8084f779bcb67399713976c11c687c73a4028b289562f7dd8ebf5e41e7eefd",
+      "diagnostics": {
+        "candles_processed": 2,
+        "entries_accepted": 0,
+        "entries_rejected": 0,
+        "entries_skipped_kill_switch": 0,
+        "entry_attempts": 0,
+        "final_equity": 10000.0,
+        "kill_switch_activations": 0,
+        "kill_switch_would_trigger": 0,
+        "max_drawdown_pct": 0.0,
+        "net_pnl": 0.0,
+        "partial_fills": 0,
+        "performance_timings": {},
+        "rejected_orders": 0,
+        "rejection_examples": {},
+        "rejection_reasons": {},
+        "return_pct": 0.0,
+        "signals_generated": 0,
+        "strategy_performance": {},
+        "timestamp_convention": {
+          "decision_at_close": "candle_open_timestamp + candle_minutes",
+          "execution_at_next_open": "next candle's candle_open_timestamp",
+          "input_timestamp": "candle_open_timestamp",
+          "intrabar_exit": "timestamp identifies the exit candle; exact intrabar time is unknown in OHLC data"
+        },
+        "trades_closed": 0,
+        "trades_opened": 0
+      },
+      "event_count": 4,
+      "funding_event_count": 0,
+      "kill_switch_events": [],
+      "last_marked_equity": 10000.0,
+      "net_pnl_closed_trades": 0,
+      "paper_only": true,
+      "prospective_candles": 2,
+      "real_order_submission": false,
+      "realized_final_equity": 10000.0,
+      "trades_closed": 0
+    },
+    "event_types": [
+      "EQUITY_MARKED",
+      "EQUITY_MARKED",
+      "PAPER_CANDLE_ACCEPTED",
+      "PAPER_CANDLE_ACCEPTED"
+    ],
+    "event_ids": [
+      "7ae9feaf4c7b80ba1a09ccbae038897bfd1aec20b32092554483277d55d75f2e",
+      "4fe1067f452fd519fb838c64c97407ff577a0107f8dc2ce71cf3d68ac7e9024b",
+      "d639d70ea4d23817bb5046f776133ee65fe2d907f068d25935264e8f02ff8ae1",
+      "b27eefa1ebeb6ec07a2175a843b1175562a2224b59643d4bd1214cde466d4620"
+    ],
+    "output_files": {
+      "paper_manifest.json": {
+        "sha256": "826f835c14da15afc3762467e8721b1cc61d2d5e54c060c211bd2d5dad5f22ec",
+        "bytes": 1303
+      },
+      "prospective_candles.csv": {
+        "sha256": "95be79066477f5d635c15376fb20a391ce931457de4801abab193aae47967c76",
+        "bytes": 216
+      },
+      "paper_events.jsonl": {
+        "sha256": "2962627acca0ee4441a0bf2680630368e243e1c380b098db1ab4464ffb5d237e",
+        "bytes": 1572
+      },
+      "paper_trades.csv": {
+        "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+        "bytes": 2
+      },
+      "paper_equity.csv": {
+        "sha256": "a4a43ad04a6d6f7010c579fe8943d6d85edc26ff05315d46e94fe06d0e6620b3",
+        "bytes": 201
+      },
+      "paper_summary.json": {
+        "sha256": "13af3114e96cf8e12ecc0706f42c33ff56b5bd4f59410d6eec13456690acad2c",
+        "bytes": 1445
+      }
+    }
+  },
+  "historical_backtest": {
+    "git_commit": "749a0db",
+    "dataset": "tests/tests/combined.csv",
+    "dataset_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+    "scored_candles": 3000,
+    "configuration": {
+      "initial_equity": 10000.0,
+      "fee_rate": 0.0005,
+      "slippage_bps": 5.0,
+      "funding_rate_per_8h": 0.0001,
+      "candle_minutes": 15,
+      "max_participation_rate": 0.05,
+      "force_close_at_end": true,
+      "legacy_snapshot_mode": true,
+      "risk_per_trade_pct": 0.005,
+      "leverage": 2.0,
+      "estimated_round_trip_cost_pct": 0.002
+    },
+    "pre_refactor": {
+      "initial_equity": 10000.0,
+      "final_equity": 9072.616761587953,
+      "net_pnl": -927.3832384120469,
+      "return_pct": -0.09273832384120469,
+      "max_drawdown_pct": 0.10089063114007324,
+      "trade_count": 92,
+      "partial_fills": 0,
+      "kill_events": [
+        [
+          "2020-01-28T01:00:00+00:00",
+          "max_drawdown_limit",
+          "peak-to-valley drawdown threshold exceeded"
+        ]
+      ],
+      "rejected_orders": [],
+      "trade_ledger_sha256": "3049ef724b0410c5ba2417c4b4588fbd0e87175c171273d7f31e0999c66ff18e",
+      "equity_curve_sha256": "46df296d391d1f64a8cca3b654b74ae51e228e978f0a4651ddc0253a4179353f",
+      "combined_trades_equity_sha256": "0cd5e3270d6888e52d71269b9254183dfdbfa920068cecb07ad437451b552074"
+    },
+    "post_refactor": {
+      "initial_equity": 10000.0,
+      "final_equity": 9072.616761587953,
+      "net_pnl": -927.3832384120469,
+      "return_pct": -0.09273832384120469,
+      "max_drawdown_pct": 0.10089063114007324,
+      "trade_count": 92,
+      "partial_fills": 0,
+      "kill_events": [
+        [
+          "2020-01-28T01:00:00+00:00",
+          "max_drawdown_limit",
+          "peak-to-valley drawdown threshold exceeded"
+        ]
+      ],
+      "rejected_orders": [],
+      "trade_ledger_sha256": "3049ef724b0410c5ba2417c4b4588fbd0e87175c171273d7f31e0999c66ff18e",
+      "equity_curve_sha256": "46df296d391d1f64a8cca3b654b74ae51e228e978f0a4651ddc0253a4179353f",
+      "combined_trades_equity_sha256": "0cd5e3270d6888e52d71269b9254183dfdbfa920068cecb07ad437451b552074"
+    },
+    "exact_match": true
+  }
+}

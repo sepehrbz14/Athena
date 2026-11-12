@@ -1,7 +1,9 @@
 import unittest
 import csv
+import hashlib
 import io
 import json
+import math
 import zipfile
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
@@ -551,6 +553,56 @@ class IntrabarBacktesterTests(unittest.TestCase):
         self.assertEqual(legacy.rejected_orders, optimized.rejected_orders)
         self.assertEqual(legacy.partial_fills, optimized.partial_fills)
         self.assertEqual(len(legacy.trades), 92)
+
+        # This fixed snapshot was recorded from commit 749a0db before canonical
+        # execution extraction. It protects historical account outputs across
+        # later refactors, beyond comparing two modes of the same current code.
+        baseline_path = Path(__file__).parent / "fixtures" / "portfolio_parity" / "pre_refactor_baseline_v1.json"
+        historical_baseline = json.loads(baseline_path.read_text(encoding="utf-8"))["historical_backtest"]["pre_refactor"]
+        trade_rows = []
+        for trade in legacy.trades:
+            row = {
+                "side": trade.side.value,
+                "quantity": trade.quantity,
+                "entry_time": trade.entry_time.isoformat(),
+                "exit_time": trade.exit_time.isoformat(),
+                "entry_price": trade.entry_price,
+                "exit_price": trade.exit_price,
+                "stop_price": trade.stop_price,
+                "take_profit": trade.take_profit,
+                "strategy": trade.strategy,
+                "exit_reason": trade.exit_reason,
+                "gross_pnl": trade.gross_pnl,
+                "entry_fee": trade.entry_fee,
+                "exit_fee": trade.exit_fee,
+                "funding_paid": trade.funding_paid,
+                "net_pnl": trade.net_pnl,
+                "trade_id": trade.trade_id,
+                "signal_id": trade.signal_id,
+                "order_id": trade.order_id,
+            }
+            trade_rows.append(row)
+        equity_rows = [
+            {"timestamp": point.timestamp.isoformat(), "equity": point.equity, "drawdown_pct": point.drawdown_pct}
+            for point in legacy.equity_curve
+        ]
+        self.assertEqual(legacy.final_equity, historical_baseline["final_equity"])
+        self.assertEqual(legacy.net_pnl, historical_baseline["net_pnl"])
+        self.assertEqual(legacy.return_pct, historical_baseline["return_pct"])
+        self.assertEqual(legacy.max_drawdown_pct, historical_baseline["max_drawdown_pct"])
+        self.assertEqual(len(trade_rows), historical_baseline["trade_count"])
+        self.assertEqual(
+            hashlib.sha256(json.dumps(trade_rows, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+            historical_baseline["trade_ledger_sha256"],
+        )
+        expected_equity_rows = json.loads(
+            (Path(__file__).parent / "fixtures" / "portfolio_parity" / "pre_refactor_3000_equity_curve_v1.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(len(equity_rows), len(expected_equity_rows))
+        for actual, expected in zip(equity_rows, expected_equity_rows):
+            self.assertEqual(actual["timestamp"], expected["timestamp"])
+            self.assertTrue(math.isclose(actual["equity"], expected["equity"], rel_tol=1e-12, abs_tol=1e-7))
+            self.assertTrue(math.isclose(actual["drawdown_pct"], expected["drawdown_pct"], rel_tol=1e-12, abs_tol=1e-12))
 
     def test_monte_carlo_runs_have_independent_diagnostics(self) -> None:
         signal = Signal(Side.LONG, 95, 105, 1, "test", "test entry")

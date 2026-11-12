@@ -13,7 +13,7 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-from .backtest import valid_prior_volume
+from .execution import BarExecutionModel, valid_prior_volume
 from .models import Candle, Side
 
 
@@ -33,6 +33,10 @@ def _costed_trade(signal: dict[str, Any], candles: list[Candle], index_by_time: 
     # After a gap, prior observed volume is stale. Wait until one post-gap
     # candle completes, then enter at the next observed open.
     side=Side(signal['direction']); sign=side.sign
+    fee=cfg['fee_bps']/10000
+    execution=BarExecutionModel(fee_rate=fee,slippage_bps=cfg['slippage_bps'],
+        funding_rate_per_8h=cfg['funding_bps_8h']/10000,candle_minutes=cfg['candle_minutes'],
+        max_participation_rate=cfg['max_participation_rate'])
     stop=float(signal['stop_price']); target=float(signal['take_profit']) if signal.get('take_profit') not in ('',None) else None
     prior_volume=None
     # Pending remains live across gaps, but each candidate open must have a
@@ -40,7 +44,7 @@ def _costed_trade(signal: dict[str, Any], candles: list[Candle], index_by_time: 
     while entry_i<len(candles):
         candidate=candles[entry_i]
         prior_volume,_stale=valid_prior_volume(candles,entry_i,cfg['candle_minutes'])
-        candidate_exec=candidate.open*(1+sign*cfg['slippage_bps']/10000)
+        candidate_exec=execution.slipped_price(candidate.open,side)
         if (side is Side.LONG and stop>=candidate_exec) or (side is Side.SHORT and stop<=candidate_exec):
             return None,'entry_gap_invalidates_stop'
         if prior_volume is not None and prior_volume>0:
@@ -48,9 +52,10 @@ def _costed_trade(signal: dict[str, Any], candles: list[Candle], index_by_time: 
         entry_i+=1
     if entry_i>=len(candles): return None,'insufficient_fresh_volume_after_gap'
     entry_bar=candles[entry_i]
-    raw_entry=entry_bar.open; slip=cfg['slippage_bps']/10000; fee=cfg['fee_bps']/10000
-    entry_exec=raw_entry*(1+sign*slip)
-    stop_exec=stop*(1-sign*slip)
+    raw_entry=entry_bar.open
+    entry_exec=execution.slipped_price(raw_entry,side)
+    exit_side=Side.SHORT if side is Side.LONG else Side.LONG
+    stop_exec=execution.slipped_price(stop,exit_side)
     # Stop-risk budget includes price distance, expected adverse slippage and
     # both fees. Funding is separately accrued by actual elapsed holding time;
     # it is a variable carry cost and cannot be bounded ex ante without a time stop.
@@ -61,31 +66,29 @@ def _costed_trade(signal: dict[str, Any], candles: list[Candle], index_by_time: 
           cfg['reference_equity']*cfg['max_margin_fraction']*cfg['leverage']/entry_exec)
     if q<cfg['min_quantity']: return None,'below_minimum_contract_quantity'
     prior_volume=prior_volume or 0
-    q=min(q,prior_volume*cfg['max_participation_rate'])
+    q=min(q,execution.participation_quantity(prior_volume))
     if q<cfg['min_quantity']: return None,'insufficient_fresh_volume'
-    entry_fee=entry_exec*q*fee
+    entry_fill=execution.fill(raw_entry,side,q)
+    entry_fee=entry_fill.fee
     funding=0.0; last_funding=entry_bar.timestamp
     exit_raw=None; exit_ts=None; reason=None
     for bar in candles[entry_i:]:
         close_ts=bar.timestamp+timedelta(minutes=cfg['candle_minutes'])
         hours=max(0,(close_ts-last_funding).total_seconds()/3600)
-        funding += sign*q*bar.close*cfg['funding_bps_8h']/10000*hours/8
+        funding += execution.funding_amount(side,q,bar.close,execution.funding_rate_per_8h,hours)
         last_funding=close_ts
-        if side is Side.LONG:
-            if bar.low<=stop: exit_raw=min(stop,bar.open); reason='stop_loss'
-            elif target is not None and bar.high>=target: exit_raw=target; reason='take_profit'
-        else:
-            if bar.high>=stop: exit_raw=max(stop,bar.open); reason='stop_loss'
-            elif target is not None and bar.low<=target: exit_raw=target; reason='take_profit'
-        if reason:
+        exit_request=execution.intrabar_exit_request(side,stop,target,bar)
+        if exit_request:
+            exit_raw,reason=exit_request
             exit_ts=bar.timestamp; break
     if exit_raw is None:
         bar=candles[-1]; exit_raw=bar.close; exit_ts=bar.timestamp; reason='end_of_data'
-    exit_exec=exit_raw*(1-sign*slip)
+    exit_fill=execution.fill(exit_raw,exit_side,q)
+    exit_exec=exit_fill.price
     raw_gross=sign*q*(exit_raw-raw_entry)
-    slippage=q*(abs(entry_exec-raw_entry)+abs(exit_exec-exit_raw))
+    slippage=entry_fill.slippage+exit_fill.slippage
     execution_gross=raw_gross-slippage
-    exit_fee=exit_exec*q*fee; fees=entry_fee+exit_fee
+    exit_fee=exit_fill.fee; fees=entry_fee+exit_fee
     net=execution_gross-fees-funding
     held_hours=max(0,(exit_ts-entry_bar.timestamp).total_seconds()/3600)
     modeled_stop_loss=(abs(entry_exec-stop_exec)+fee*(entry_exec+stop_exec))*q

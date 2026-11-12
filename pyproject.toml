@@ -8,6 +8,9 @@ version = "0.1.0"
 description = "Paper-first, risk-managed crypto strategy research and backtesting toolkit"
 requires-python = ">=3.10"
 
+[project.optional-dependencies]
+test = ["jsonschema>=4.18,<5"]
+
 [tool.setuptools.packages.find]
 include = ["crypto_bot*"]
 

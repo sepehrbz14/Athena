@@ -7,27 +7,12 @@ from typing import Callable, Sequence
 
 from .controls import KillSwitch, KillSwitchConfig, KillSwitchMode
 from .diagnostics import BacktestDiagnostics, LogLevel, PerformanceTimings
+from .execution import BarExecutionModel, valid_prior_volume
 from .indicators import atr, percentage_return, resample, sma, standard_deviation
 from .models import BacktestResult, Candle, EntryRejectionReason, EquityPoint, Position, RejectedOrder, Side, Signal, Trade
 from .regimes import RegimeClassifier
 from .risk import PositionSizer, RiskConfig
 from .strategies import EnsembleDecision, MarketFeatures, MarketSnapshot, StrategyEnsemble
-
-
-def valid_prior_volume(candles: Sequence[Candle], index: int, candle_minutes: int = 15) -> tuple[float | None, bool]:
-    """Return the immediately prior completed bar's volume only if contiguous.
-
-    The bool marks a stale prior bar after a discontinuity. Both the portfolio
-    backtester and independent research evaluator use this liquidity policy.
-    """
-    if index <= 0:
-        return None, False
-    prior, current = candles[index - 1], candles[index]
-    if current.timestamp-prior.timestamp != timedelta(minutes=candle_minutes):
-        return None, True
-    return prior.volume, False
-
-
 @dataclass(frozen=True, slots=True)
 class BacktestConfig:
     initial_equity: float = 10_000.0
@@ -91,6 +76,13 @@ class IntrabarBacktester:
         self.sizer = sizer or PositionSizer(RiskConfig())
         self.regime_classifier = regime_classifier or RegimeClassifier()
         self.kill_switch = kill_switch or KillSwitch(KillSwitchConfig())
+        self.execution = BarExecutionModel(
+            fee_rate=self.config.fee_rate,
+            slippage_bps=self.config.slippage_bps,
+            funding_rate_per_8h=self.config.funding_rate_per_8h,
+            candle_minutes=self.config.candle_minutes,
+            max_participation_rate=self.config.max_participation_rate,
+        )
 
     def run(
         self,
@@ -209,7 +201,12 @@ class IntrabarBacktester:
                                           timestamp_semantics="exit_candle_open_timestamp",
                                           trade_id=trade.trade_id, signal_id=trade.signal_id,
                                           order_id=trade.order_id, price=trade.exit_price, reference_price=raw_price,
-                                          fee=trade.exit_fee, slippage=abs(trade.exit_price - raw_price) * trade.quantity,
+                                          fee=trade.exit_fee,
+                                          slippage=self.execution.fill(
+                                              raw_price,
+                                              Side.SHORT if trade.side is Side.LONG else Side.LONG,
+                                              trade.quantity,
+                                          ).slippage,
                                           reason=reason)
                         diagnostics.trade("POSITION_CLOSED", timestamp=candle.timestamp,
                                           exit_candle_open_timestamp=candle.timestamp,
@@ -389,7 +386,7 @@ class IntrabarBacktester:
             self._cancel_pending_order(pending, candle, diagnostics, reason)
             return position, False
         with timings.measure("execution_fills"):
-            entry_price = self._apply_slippage(candle.open, signal.side)
+            entry_price = self.execution.slipped_price(candle.open, signal.side)
         if pending.requested_quantity is None:
             if (signal.side is Side.LONG and signal.stop_price >= entry_price) or (
                 signal.side is Side.SHORT and signal.stop_price <= entry_price
@@ -410,7 +407,7 @@ class IntrabarBacktester:
             return None, False
 
         # At this open, only the preceding completed candle's volume is known.
-        available_quantity = (previous_volume or 0.0) * self.config.max_participation_rate
+        available_quantity = self.execution.participation_quantity(previous_volume)
         quantity = min(pending.remaining_quantity or 0.0, available_quantity)
         if quantity <= 0:
             diagnostics.order("ORDER_WAITING_FOR_LIQUIDITY", timestamp=candle.timestamp, **time_fields,
@@ -418,6 +415,10 @@ class IntrabarBacktester:
                               remaining_quantity=pending.remaining_quantity, prior_candle_volume=previous_volume,
                               liquidity_status="stale_volume_after_gap" if stale_volume_after_gap else "no_valid_completed_prior_volume")
             return position, True
+
+        with timings.measure("execution_fills"):
+            fill = self.execution.fill(candle.open, signal.side, quantity)
+        entry_price = fill.price
 
         if not pending.accepted_logged:
             diagnostics.entry_accepted(timestamp=candle.timestamp, **time_fields, candle_index=index,
@@ -433,21 +434,19 @@ class IntrabarBacktester:
             diagnostics.order("PARTIAL_FILL", timestamp=candle.timestamp, **time_fields,
                               signal_id=signal_id, order_id=order_id, trade_id=trade_id,
                               requested_size=pending.requested_quantity, filled_size=quantity,
-                              price=entry_price, reference_price=candle.open,
-                              fee=quantity * entry_price * self.config.fee_rate,
-                              slippage=abs(entry_price - candle.open) * quantity,
+                                       price=fill.price, reference_price=fill.raw_price,
+                                       fee=fill.fee, slippage=fill.slippage,
                               remaining_quantity=(pending.remaining_quantity or 0.0) - quantity,
                               prior_candle_volume=previous_volume)
         else:
             diagnostics.order("ORDER_FILLED", timestamp=candle.timestamp, **time_fields,
                               signal_id=signal_id, order_id=order_id, trade_id=trade_id,
-                              price=entry_price, reference_price=candle.open,
-                              fee=quantity * entry_price * self.config.fee_rate,
-                              slippage=abs(entry_price - candle.open) * quantity,
+                               price=fill.price, reference_price=fill.raw_price,
+                               fee=fill.fee, slippage=fill.slippage,
                               fill_quantity=quantity,
                               requested_size=pending.requested_quantity)
 
-        fee = quantity * entry_price * self.config.fee_rate
+        fee = fill.fee
         if position is None:
             position = Position(
                 side=signal.side, quantity=quantity, entry_price=entry_price,
@@ -516,59 +515,13 @@ class IntrabarBacktester:
         )
 
     def _apply_funding(self, position: Position, candle: Candle) -> float:
-        previous = position.last_funding_timestamp or position.opened_at
-        funding_timestamp = candle.timestamp + timedelta(minutes=self.config.candle_minutes)
-        elapsed_hours = max(0.0, (funding_timestamp - previous).total_seconds() / 3600)
-        periods = elapsed_hours / 8
-        # Positive funding is a cost for longs and a credit for shorts.
-        charge = position.side.sign * position.quantity * candle.close * self.config.funding_rate_per_8h * periods
-        position.funding_paid += charge
-        position.last_funding_timestamp = funding_timestamp
-        return charge
+        return self.execution.accrue_funding(position, candle)
 
     def _intrabar_exit(self, position: Position, candle: Candle) -> tuple[float, str] | None:
-        if position.side is Side.LONG:
-            stopped = candle.low <= position.stop_price
-            targeted = position.take_profit is not None and candle.high >= position.take_profit
-            if stopped:  # pessimistic ordering when both stop and target occur in one bar
-                return min(position.stop_price, candle.open), "stop_loss"
-            if targeted:
-                return position.take_profit or candle.high, "take_profit"
-        else:
-            stopped = candle.high >= position.stop_price
-            targeted = position.take_profit is not None and candle.low <= position.take_profit
-            if stopped:
-                return max(position.stop_price, candle.open), "stop_loss"
-            if targeted:
-                return position.take_profit or candle.low, "take_profit"
-        return None
+        return self.execution.position_exit_request(position, candle)
 
     def _close(self, position: Position, timestamp: datetime, raw_price: float, reason: str) -> Trade:
-        exit_side = Side.SHORT if position.side is Side.LONG else Side.LONG
-        exit_price = self._apply_slippage(raw_price, exit_side)
-        exit_fee = position.quantity * exit_price * self.config.fee_rate
-        gross_pnl = position.side.sign * position.quantity * (exit_price - position.entry_price)
-        net_pnl = gross_pnl - position.entry_fee - exit_fee - position.funding_paid
-        return Trade(
-            side=position.side,
-            quantity=position.quantity,
-            entry_time=position.opened_at,
-            exit_time=timestamp,
-            entry_price=position.entry_price,
-            exit_price=exit_price,
-            stop_price=position.stop_price,
-            take_profit=position.take_profit,
-            strategy=position.strategy,
-            exit_reason=reason,
-            gross_pnl=gross_pnl,
-            entry_fee=position.entry_fee,
-            exit_fee=exit_fee,
-            funding_paid=position.funding_paid,
-            net_pnl=net_pnl,
-            trade_id=position.trade_id,
-            signal_id=position.signal_id,
-            order_id=position.order_id,
-        )
+        return self.execution.close_position(position, timestamp, raw_price, reason)
 
     def _reject(
         self,
@@ -603,8 +556,7 @@ class IntrabarBacktester:
         )
 
     def _apply_slippage(self, price: float, order_side: Side) -> float:
-        adjustment = self.config.slippage_bps / 10_000
-        return price * (1 + adjustment if order_side is Side.LONG else 1 - adjustment)
+        return self.execution.slipped_price(price, order_side)
 
 
 class _IncrementalMarketData:
