@@ -1,0 +1,476 @@
+{
+  "source": "existing frozen scenario trade ledgers; no backtest rerun",
+  "audit": [
+    {
+      "scenario": "fee0_slip0",
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "signal_rows": 51292,
+      "trade_rows": 51292,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "fee_bps": 0,
+      "slippage_bps": 0,
+      "funding_bps_8h": 1.0,
+      "metadata_configuration_matches": true
+    },
+    {
+      "scenario": "fee2_slip2",
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "signal_rows": 51292,
+      "trade_rows": 51292,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "fee_bps": 2,
+      "slippage_bps": 2,
+      "funding_bps_8h": 1.0,
+      "metadata_configuration_matches": true
+    },
+    {
+      "scenario": "fee5_slip5",
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "signal_rows": 51292,
+      "trade_rows": 51292,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "fee_bps": 5,
+      "slippage_bps": 5,
+      "funding_bps_8h": 1.0,
+      "metadata_configuration_matches": true
+    },
+    {
+      "scenario": "fee10_slip10",
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "signal_rows": 51292,
+      "trade_rows": 51292,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "fee_bps": 10,
+      "slippage_bps": 10,
+      "funding_bps_8h": 1.0,
+      "metadata_configuration_matches": true
+    }
+  ],
+  "common_code_snapshot_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+  "common_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+  "common_signal_count": 51292,
+  "bootstrap_code_commit_sha": "0b5fd842092070dfa83b31c24a3c59326268c2aa",
+  "bootstrap_code_worktree_dirty": true,
+  "bootstrap_code_sha256": "9b0fe5f20d1174e4103f5d576524881d3ed6740348fca096aeff9022ac99558d",
+  "moving_block_configuration": {
+    "method": "non-circular moving-block bootstrap over consecutive calendar weeks",
+    "block_length_weeks": 4,
+    "iterations": 2000,
+    "seed": 20261105
+  },
+  "legacy_method": "independently resampled ISO-week clusters",
+  "results": [
+    {
+      "scenario": "fee0_slip0",
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "legacy_expectancy_ci": [
+        -1.6600233949541672,
+        -0.07691019801528144
+      ],
+      "legacy_profit_factor_ci": [
+        0.9359528665502892,
+        0.9970087338017373
+      ],
+      "moving_block_expectancy_ci": [
+        -1.6135207628725536,
+        -0.1148276421737407
+      ],
+      "moving_block_profit_factor_ci": [
+        0.9374891558121434,
+        0.9954576825022048
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee0_slip0",
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "legacy_expectancy_ci": [
+        -0.9507054338234461,
+        0.7456811504589557
+      ],
+      "legacy_profit_factor_ci": [
+        0.9646161997812056,
+        1.0283036219164883
+      ],
+      "moving_block_expectancy_ci": [
+        -0.814768262960075,
+        0.7342976665091706
+      ],
+      "moving_block_profit_factor_ci": [
+        0.9697520005917242,
+        1.0280803510805518
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee0_slip0",
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "legacy_expectancy_ci": [
+        -4.430627485927677,
+        1.6229179448400275
+      ],
+      "legacy_profit_factor_ci": [
+        0.8536528898909083,
+        1.0581533536733412
+      ],
+      "moving_block_expectancy_ci": [
+        -4.604376493923538,
+        1.8496415588922692
+      ],
+      "moving_block_profit_factor_ci": [
+        0.848733683479673,
+        1.0668231224308187
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee0_slip0",
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "legacy_expectancy_ci": [
+        -2.131531889411966,
+        5.078359793734054
+      ],
+      "legacy_profit_factor_ci": [
+        0.9309144965108694,
+        1.1815302814718103
+      ],
+      "moving_block_expectancy_ci": [
+        -2.1410318557733237,
+        4.897090455657291
+      ],
+      "moving_block_profit_factor_ci": [
+        0.9306214029724401,
+        1.1746237695810258
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee2_slip2",
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "legacy_expectancy_ci": [
+        -7.684013184719435,
+        -6.210804070022873
+      ],
+      "legacy_profit_factor_ci": [
+        0.7248959534670075,
+        0.7725152909240866
+      ],
+      "moving_block_expectancy_ci": [
+        -7.6474792966024,
+        -6.243244590783334
+      ],
+      "moving_block_profit_factor_ci": [
+        0.7234050908545357,
+        0.7723536621584421
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee2_slip2",
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "legacy_expectancy_ci": [
+        -6.563034972316455,
+        -4.909625500249222
+      ],
+      "legacy_profit_factor_ci": [
+        0.7692516039267568,
+        0.824339627617027
+      ],
+      "moving_block_expectancy_ci": [
+        -6.5187290784006375,
+        -4.8639043764588985
+      ],
+      "moving_block_profit_factor_ci": [
+        0.7695627320636286,
+        0.8266450903948839
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee2_slip2",
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "legacy_expectancy_ci": [
+        -9.036274584081216,
+        -3.2899577616601157
+      ],
+      "legacy_profit_factor_ci": [
+        0.7104601174966754,
+        0.8857472473965696
+      ],
+      "moving_block_expectancy_ci": [
+        -9.194757047681977,
+        -3.0298366950829183
+      ],
+      "moving_block_profit_factor_ci": [
+        0.7065306559124973,
+        0.8943504409189825
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee2_slip2",
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "legacy_expectancy_ci": [
+        -5.443760665503804,
+        1.4802633877946867
+      ],
+      "legacy_profit_factor_ci": [
+        0.8236178231900418,
+        1.0529139173493867
+      ],
+      "moving_block_expectancy_ci": [
+        -5.40893916503946,
+        1.2459278430190304
+      ],
+      "moving_block_profit_factor_ci": [
+        0.8249972105724531,
+        1.0444322682753817
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee5_slip5",
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "legacy_expectancy_ci": [
+        -15.186925900203947,
+        -13.81437088827303
+      ],
+      "legacy_profit_factor_ci": [
+        0.4881481434890129,
+        0.5282719174772179
+      ],
+      "moving_block_expectancy_ci": [
+        -15.305339301278499,
+        -13.68988370036434
+      ],
+      "moving_block_profit_factor_ci": [
+        0.482435672588221,
+        0.5347007864450776
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee5_slip5",
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "legacy_expectancy_ci": [
+        -13.482852400670795,
+        -11.810444695181845
+      ],
+      "legacy_profit_factor_ci": [
+        0.5483854605374787,
+        0.5968703089436717
+      ],
+      "moving_block_expectancy_ci": [
+        -13.575043119279009,
+        -11.626233342326408
+      ],
+      "moving_block_profit_factor_ci": [
+        0.5431672002816562,
+        0.604782700498276
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee5_slip5",
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "legacy_expectancy_ci": [
+        -14.471806618424425,
+        -9.165554546386922
+      ],
+      "legacy_profit_factor_ci": [
+        0.5456214256805568,
+        0.6891731709847783
+      ],
+      "moving_block_expectancy_ci": [
+        -14.636143303419828,
+        -8.895501407626337
+      ],
+      "moving_block_profit_factor_ci": [
+        0.540924287126108,
+        0.696912231194179
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee5_slip5",
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "legacy_expectancy_ci": [
+        -9.577767532054041,
+        -3.097317528966738
+      ],
+      "legacy_profit_factor_ci": [
+        0.6894542430859385,
+        0.8892591144102527
+      ],
+      "moving_block_expectancy_ci": [
+        -9.499042743591506,
+        -3.323312707723708
+      ],
+      "moving_block_profit_factor_ci": [
+        0.6918337125580584,
+        0.8815718411626134
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee10_slip10",
+      "strategy": "mean_reversion",
+      "trade_count": 27969,
+      "legacy_expectancy_ci": [
+        -23.16471025726361,
+        -21.765360165380457
+      ],
+      "legacy_profit_factor_ci": [
+        0.25978472525470037,
+        0.2940222989640459
+      ],
+      "moving_block_expectancy_ci": [
+        -23.449553419285994,
+        -21.44625525509213
+      ],
+      "moving_block_profit_factor_ci": [
+        0.2514465161783457,
+        0.3038693314099986
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee10_slip10",
+      "strategy": "breakout",
+      "trade_count": 16288,
+      "legacy_expectancy_ci": [
+        -20.97440848163142,
+        -19.294570661040847
+      ],
+      "legacy_profit_factor_ci": [
+        0.3170400882058699,
+        0.35993282539001786
+      ],
+      "moving_block_expectancy_ci": [
+        -21.223492582613037,
+        -18.945490446967444
+      ],
+      "moving_block_profit_factor_ci": [
+        0.30777249438931853,
+        0.3716049470769094
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee10_slip10",
+      "strategy": "trend_following",
+      "trade_count": 2226,
+      "legacy_expectancy_ci": [
+        -20.60622404545543,
+        -15.795906641152254
+      ],
+      "legacy_profit_factor_ci": [
+        0.353660832070474,
+        0.46711341983210414
+      ],
+      "moving_block_expectancy_ci": [
+        -20.801761146001564,
+        -15.468230166390194
+      ],
+      "moving_block_profit_factor_ci": [
+        0.34839233680483145,
+        0.4750275228182075
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    },
+    {
+      "scenario": "fee10_slip10",
+      "strategy": "momentum",
+      "trade_count": 4809,
+      "legacy_expectancy_ci": [
+        -14.916934913983312,
+        -9.048630819252933
+      ],
+      "legacy_profit_factor_ci": [
+        0.5162811351401905,
+        0.6758719844391212
+      ],
+      "moving_block_expectancy_ci": [
+        -14.772062041435554,
+        -9.192884379989009
+      ],
+      "moving_block_profit_factor_ci": [
+        0.5208047896847529,
+        0.6716291357979376
+      ],
+      "moving_block_length_weeks": 4,
+      "iterations": 2000,
+      "seed": 20261105
+    }
+  ]
+}

@@ -120,7 +120,19 @@ def _wilson(wins:int,n:int,z:float=1.95996398454)->list[float]|None:
     return [max(0,center-half),min(1,center+half)]
 
 
-def _bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)->dict[str,Any]:
+def _moving_block_indices(week_count:int,block_length_weeks:int,rng:random.Random)->list[int]:
+    """Draw non-circular consecutive weekly blocks, truncated to source span."""
+    if week_count<=0:return []
+    length=min(max(1,block_length_weeks),week_count)
+    out=[]
+    while len(out)<week_count:
+        start=rng.randint(0,week_count-length)
+        out.extend(range(start,start+length))
+    return out[:week_count]
+
+
+def _weekly_cluster_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)->dict[str,Any]:
+    """Legacy independent ISO-week cluster resampling, retained for comparison."""
     weeks=defaultdict(list)
     for r in rows: weeks[datetime.fromisoformat(r['entry_timestamp']).strftime('%G-W%V')].append(float(r['net_pnl']))
     keys=sorted(weeks); rng=random.Random(seed); expectancy=[]; pf=[]
@@ -136,8 +148,45 @@ def _bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)->dict[str,Any]:
             'expectancy_ci_95':ci(expectancy),'profit_factor_ci_95':ci(pf)}
 
 
+def _moving_block_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int,block_length_weeks:int=4)->dict[str,Any]:
+    """Moving-block bootstrap of consecutive calendar-week trade clusters."""
+    from datetime import date
+    by_week=defaultdict(list)
+    for row in rows:
+        by_week[datetime.fromisoformat(row['entry_timestamp']).date().strftime('%G-W%V')].append(float(row['net_pnl']))
+    if not by_week:
+        return {'method':'moving_block_bootstrap','seed':seed,'iterations':iterations,'block_length_weeks':block_length_weeks,
+                'expectancy_ci_95':None,'profit_factor_ci_95':None,'unique_trade_weeks':0}
+    years_weeks=sorted(by_week)
+    first_year,first_week=map(int,years_weeks[0].split('-W')); last_year,last_week=map(int,years_weeks[-1].split('-W'))
+    first=date.fromisocalendar(first_year,first_week,1); last=date.fromisocalendar(last_year,last_week,1)
+    calendar=[]; cursor=first
+    while cursor<=last:
+        iso=cursor.isocalendar(); calendar.append(f'{iso.year}-W{iso.week:02d}'); cursor+=timedelta(days=7)
+    weekly=[]
+    for key in calendar:
+        vals=by_week.get(key,[]); winners=sum(x for x in vals if x>0); losers=sum(x for x in vals if x<0)
+        weekly.append((sum(vals),winners,losers,len(vals)))
+    rng=random.Random(seed); expectancy=[]; profit_factors=[]
+    for _ in range(iterations):
+        sample=_moving_block_indices(len(weekly),block_length_weeks,rng)
+        pnl=wins=losses=count=0.0
+        for ix in sample:
+            t,w,l,n=weekly[ix]; pnl+=t; wins+=w; losses+=l; count+=n
+        expectancy.append(pnl/count if count else 0.0)
+        profit_factors.append(wins/abs(losses) if losses else (float('inf') if wins else 0.0))
+    def ci(vals):
+        vals.sort(); return [vals[int(.025*(len(vals)-1))],vals[int(.975*(len(vals)-1))]]
+    return {'method':'moving_block_bootstrap','seed':seed,'iterations':iterations,
+        'block_length_weeks':min(max(1,block_length_weeks),len(weekly)),
+        'source_calendar_weeks':len(weekly),'unique_trade_weeks':len(by_week),
+        'methodology':'sample consecutive, non-circular calendar-week blocks with replacement; retain trade clusters within each week; concatenate and truncate to source span',
+        'expectancy_ci_95':ci(expectancy),'profit_factor_ci_95':ci(profit_factors)}
+
+
 def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=20261105,iterations:int=2000,
-             fee_bps:float=5.0,slippage_bps:float=5.0,funding_bps_8h:float=1.0)->dict[str,Any]:
+             fee_bps:float=5.0,slippage_bps:float=5.0,funding_bps_8h:float=1.0,
+             block_length_weeks:int=4)->dict[str,Any]:
     with signal_csv.open(encoding='utf-8',newline='') as f: signals=list(csv.DictReader(f))
     index={c.timestamp.isoformat():i for i,c in enumerate(candles)}
     cfg={'reference_equity':10000.0,'risk_per_trade_pct':0.005,'risk_budget':50.0,'leverage':2.0,
@@ -179,7 +228,8 @@ def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=2026110
     for strat,rows in strategies.items():
         stats=summary['trade_performance_by_strategy'][strat]
         stats['win_rate_wilson_95']=_wilson(stats['wins'],stats['trade_count'])
-        stats['weekly_block_bootstrap']=_bootstrap(rows,seed,iterations)
+        stats['weekly_cluster_bootstrap_legacy']=_weekly_cluster_bootstrap(rows,seed,iterations)
+        stats['moving_block_bootstrap']=_moving_block_bootstrap(rows,seed,iterations,block_length_weeks)
         # Cumulative realized-trade diagnostic, not capital/equity available.
         eq=cfg['reference_equity']; peak=eq; maxdd=0; curve=[]
         for row in sorted(rows,key=lambda r:(r['exit_timestamp'],int(r['signal_id']))):
@@ -223,7 +273,7 @@ def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=2026110
       'dataset_timestamp_start':candles[0].timestamp.isoformat(),'dataset_timestamp_end':candles[-1].timestamp.isoformat(),
       'candle_count':len(candles),'signal_rows':len(signals),'configuration':cfg,'code_commit_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
       'code_worktree_dirty':dirty,'code_file_sha256':{p.name:sha256(p) for p in code_files},
-      'random_seed':seed,'bootstrap_iterations':iterations,'evaluation_timestamp_utc':datetime.now(timezone.utc).isoformat(),
+      'random_seed':seed,'bootstrap_iterations':iterations,'bootstrap_block_length_weeks':block_length_weeks,'evaluation_timestamp_utc':datetime.now(timezone.utc).isoformat(),
       'excluded_signals':dict(exclusions),'trades':len(trades)}
     (output/'run_metadata.json').write_text(json.dumps(meta,indent=2),encoding='utf-8')
     (output/'predictive_performance.json').write_text(json.dumps(predictive,indent=2),encoding='utf-8')
@@ -236,11 +286,11 @@ def evaluate(signal_csv:Path,candles:list[Candle],output:Path,*,seed:int=2026110
             for key,value in rows.items(): w.writerow([key,*value.values()])
     report={'metadata':meta,**summary,'predictive_performance':predictive,'trading_performance':summary['trade_performance_by_strategy'],
       'curve_warning':'independent_trade_diagnostic_curve is a sum of overlapping independent-trade P&L. Trades do not share capital or aggregate liquidity; it is not executable portfolio equity.',
-      'confidence_warning':'Intervals describe resampled weekly clusters, not proof that trades or weeks are independent.'}
+      'confidence_warning':'Intervals describe resampled chronological blocks, not proof that trades or weeks are independent.'}
     (output/'evaluation.json').write_text(json.dumps(report,indent=2,allow_nan=False),encoding='utf-8')
-    lines=['# Fixed-reference-risk independent-trade research evaluation','','This report is a counterfactual per-signal research evaluation, not an executable portfolio. Signals overlap and do not share capital or aggregate liquidity. See `run_metadata.json` for the frozen inputs, hash, commit, seed and parameters.','','Sizing targets a $50 initial-stop loss including adverse entry/exit slippage and entry/exit fees, subject to leverage collateral, notional, contract and per-trade volume caps. Variable funding is accrued from actual simulated elapsed holding time and included in net P&L, but excluded from ex-ante stop-risk sizing because exit time is unknown. Stop gaps can exceed the modeled stop loss and are flagged per trade.','','## Predictive performance','','Directional accuracy and forward returns are signal prediction measures, not trading profitability. Forward return, MFE and MAE sample sizes and means by strategy, regime and horizon are in `predictive_performance.csv` and `.json`.','','## Trading performance','','| Strategy | Trades | Win rate (Wilson 95%) | Gross P&L | Fees | Slippage | Funding paid | Net P&L | Expectancy (weekly block CI) | Profit factor (weekly block CI) | Diagnostic max DD |','|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
+    lines=['# Fixed-reference-risk independent-trade research evaluation','','This report is a counterfactual per-signal research evaluation, not an executable portfolio. Signals overlap and do not share capital or aggregate liquidity. See `run_metadata.json` for the frozen inputs, hash, commit, seed and parameters.','','Sizing targets a $50 initial-stop loss including adverse entry/exit slippage and entry/exit fees, subject to leverage collateral, notional, contract and per-trade volume caps. Variable funding is accrued from actual simulated elapsed holding time and included in net P&L, but excluded from ex-ante stop-risk sizing because exit time is unknown. Stop gaps can exceed the modeled stop loss and are flagged per trade.','','## Predictive performance','','Directional accuracy and forward returns are signal prediction measures, not trading profitability. Forward return, MFE and MAE sample sizes and means by strategy, regime and horizon are in `predictive_performance.csv` and `.json`.','','## Trading performance','','| Strategy | Trades | Win rate (Wilson 95%) | Gross P&L | Fees | Slippage | Funding paid | Net P&L | Expectancy (moving-block CI) | Profit factor (moving-block CI) | Diagnostic max DD |','|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
     for k,v in summary['trade_performance_by_strategy'].items():
-      ci=v['weekly_block_bootstrap']; lines.append(f"| {k} | {v['trade_count']} | {v['win_rate']:.1%} ({v['win_rate_wilson_95'][0]:.1%}–{v['win_rate_wilson_95'][1]:.1%}) | ${v['gross_pnl']:,.2f} | ${v['fees']:,.2f} | ${v['slippage']:,.2f} | ${v['funding_paid']:,.2f} | ${v['net_pnl']:,.2f} | ${v['expectancy']:.2f} ({ci['expectancy_ci_95'][0]:.2f}–{ci['expectancy_ci_95'][1]:.2f}) | {v['profit_factor']:.2f} ({ci['profit_factor_ci_95'][0]:.2f}–{ci['profit_factor_ci_95'][1]:.2f}) | {v['diagnostic_max_drawdown_pct']:.2%} |")
-    lines+=['','## Monthly and regime breakdowns','','See `monthly_performance.csv` and `market_regime_performance.csv`. Monthly ledger reconciliation by strategy is in `evaluation.json` and has been checked to within $1e-7. Exit reason counts (stop, target, end of data) are also in `evaluation.json`.','', '## Clustering and exclusions',f"- Unique signal weeks: {summary['unique_signal_weeks']}",f"- Trades overlapping another independent trade: {summary['overlap_trade_count']} ({summary['overlap_trade_pct']:.1%}); maximum concurrent: {summary['maximum_concurrent_independent_trades']}.",f"- Excluded signals by reason: `{json.dumps(dict(exclusions),sort_keys=True)}`",f"- Weekly bootstrap: seed {seed}, {iterations} iterations, ISO weeks resampled with replacement; trades within a week remain clustered. Intervals do not prove independence.",'',report['curve_warning'],'']
+      ci=v['moving_block_bootstrap']; lines.append(f"| {k} | {v['trade_count']} | {v['win_rate']:.1%} ({v['win_rate_wilson_95'][0]:.1%}–{v['win_rate_wilson_95'][1]:.1%}) | ${v['gross_pnl']:,.2f} | ${v['fees']:,.2f} | ${v['slippage']:,.2f} | ${v['funding_paid']:,.2f} | ${v['net_pnl']:,.2f} | ${v['expectancy']:.2f} ({ci['expectancy_ci_95'][0]:.2f}–{ci['expectancy_ci_95'][1]:.2f}) | {v['profit_factor']:.2f} ({ci['profit_factor_ci_95'][0]:.2f}–{ci['profit_factor_ci_95'][1]:.2f}) | {v['diagnostic_max_drawdown_pct']:.2%} |")
+    lines+=['','## Monthly and regime breakdowns','','See `monthly_performance.csv` and `market_regime_performance.csv`. Monthly ledger reconciliation by strategy is in `evaluation.json` and has been checked to within $1e-7. Exit reason counts (stop, target, end of data) are also in `evaluation.json`.','', '## Clustering and exclusions',f"- Unique signal weeks: {summary['unique_signal_weeks']}",f"- Trades overlapping another independent trade: {summary['overlap_trade_count']} ({summary['overlap_trade_pct']:.1%}); maximum concurrent: {summary['maximum_concurrent_independent_trades']}.",f"- Excluded signals by reason: `{json.dumps(dict(exclusions),sort_keys=True)}`",f"- Primary interval: moving-block bootstrap, seed {seed}, {iterations} iterations, {block_length_weeks}-week consecutive non-circular calendar blocks. Legacy independent-week cluster intervals are retained in `evaluation.json`. Intervals do not prove independence.",'',report['curve_warning'],'']
     (output/'research_report.md').write_text('\n'.join(lines),encoding='utf-8')
     return report

@@ -6,7 +6,8 @@ from pathlib import Path
 from crypto_bot.models import Candle, Signal, Side
 from crypto_bot.regimes import MarketRegime
 from crypto_bot.research import capture_signals
-from crypto_bot.research_evaluation import _costed_trade, _bootstrap, evaluate
+from crypto_bot.research_evaluation import (_costed_trade, _weekly_cluster_bootstrap,
+    _moving_block_bootstrap, _moving_block_indices, evaluate)
 from crypto_bot.strategies import StrategyEnsemble
 
 
@@ -91,12 +92,31 @@ class FixedReferenceResearchTests(unittest.TestCase):
                 trade=next(csv.DictReader(f))
             self.assertAlmostEqual(float(trade['gross_pnl'])-float(trade['slippage'])-float(trade['fees'])-float(trade['funding_paid']),float(trade['net_pnl']))
 
-    def test_weekly_bootstrap_reproducible_and_cluster_configured(self):
+    def test_weekly_cluster_bootstrap_reproducible_and_accurately_named(self):
         rows=[{'entry_timestamp':datetime(2025,1,1,tzinfo=timezone.utc).isoformat(),'net_pnl':1.0},
               {'entry_timestamp':datetime(2025,1,2,tzinfo=timezone.utc).isoformat(),'net_pnl':-0.5},
               {'entry_timestamp':datetime(2025,1,10,tzinfo=timezone.utc).isoformat(),'net_pnl':2.0}]
-        a=_bootstrap(rows,17,100); b=_bootstrap(rows,17,100)
+        a=_weekly_cluster_bootstrap(rows,17,100); b=_weekly_cluster_bootstrap(rows,17,100)
         self.assertEqual(a,b); self.assertEqual(a['seed'],17); self.assertIn('ISO week',a['block_unit'])
+
+    def test_moving_block_bootstrap_is_reproducible_and_configurable(self):
+        rows=[]
+        for week,values in [(1,[1,-1]),(2,[2]),(3,[-2]),(4,[4]),(5,[-4]),(6,[6])]:
+            for value in values:
+                rows.append({'entry_timestamp':datetime.fromisocalendar(2025,week,1).replace(tzinfo=timezone.utc).isoformat(),'net_pnl':value})
+        a=_moving_block_bootstrap(rows,41,150,block_length_weeks=2)
+        b=_moving_block_bootstrap(rows,41,150,block_length_weeks=2)
+        c=_moving_block_bootstrap(rows,41,150,block_length_weeks=3)
+        self.assertEqual(a,b); self.assertEqual(a['seed'],41); self.assertEqual(a['iterations'],150)
+        self.assertEqual(a['block_length_weeks'],2); self.assertNotEqual(a['expectancy_ci_95'],c['expectancy_ci_95'])
+
+    def test_moving_block_construction_preserves_week_chronology(self):
+        import random
+        indexes=_moving_block_indices(11,3,random.Random(7))
+        self.assertEqual(len(indexes),11)
+        for offset in range(0,9,3):
+            self.assertEqual(indexes[offset+1],indexes[offset]+1)
+            self.assertEqual(indexes[offset+2],indexes[offset]+2)
 
     def test_incomplete_higher_timeframe_features_have_no_future_leakage(self):
         class Always:
