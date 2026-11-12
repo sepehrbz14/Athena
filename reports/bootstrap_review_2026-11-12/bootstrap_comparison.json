@@ -77,9 +77,9 @@
   "common_code_snapshot_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
   "common_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
   "common_signal_count": 51292,
-  "bootstrap_code_commit_sha": "34d0a046855e147a65b831c4ff9e4715fe315655",
-  "bootstrap_code_worktree_dirty": true,
-  "bootstrap_code_sha256": "15e4c7f0cefe36af75e41ad0507a4c9947630748e0950663695710d1d78ab7d5",
+  "bootstrap_code_commit_sha": "f327a824534d1d9ee7764989ec6f8b48d6cf2811",
+  "bootstrap_code_worktree_dirty": false,
+  "bootstrap_code_sha256": "4ee4e4fc5d4eba512796c4a1c283e432496401a279aa3b7aef4a8e24062dac51",
   "moving_block_configuration": {
     "method": "non-circular moving-block bootstrap over consecutive calendar weeks",
     "block_length_weeks": 4,

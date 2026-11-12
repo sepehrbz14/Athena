@@ -2,8 +2,11 @@
 
 The moving-block intervals below are primary. They were recomputed from the frozen completed-trade ledgers only; no signal generation, sizing, execution simulation, or backtest was rerun. The legacy values are the original independent-week cluster bootstrap.
 
-- Clean code snapshot: `1bb70314e62f73b227f1e0a0652ef8acc0727250`
-- Signal SHA-256: `0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7`
+- Scenario evaluation code snapshot: `1bb70314e62f73b227f1e0a0652ef8acc0727250`
+- Bootstrap implementation commit: `f327a824534d1d9ee7764989ec6f8b48d6cf2811`
+- Bootstrap implementation SHA-256: `4ee4e4fc5d4eba512796c4a1c283e432496401a279aa3b7aef4a8e24062dac51`
+- Bootstrap checkout worktree clean: `True`
+- Frozen signal dataset SHA-256: `0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7`
 - Signal count per scenario: 51,292
 - Moving-block bootstrap: 2,000 iterations; 4 consecutive calendar weeks per non-circular sampled block; seed 20261105.
 
