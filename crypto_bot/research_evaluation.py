@@ -120,8 +120,36 @@ def _wilson(wins:int,n:int,z:float=1.95996398454)->list[float]|None:
     return [max(0,center-half),min(1,center+half)]
 
 
+def _validate_bootstrap_parameters(iterations:int,block_length_weeks:int|None=None)->None:
+    if isinstance(iterations,bool) or not isinstance(iterations,int) or iterations<=0:
+        raise ValueError('iterations must be a positive integer')
+    if block_length_weeks is not None and (isinstance(block_length_weeks,bool) or
+            not isinstance(block_length_weeks,int) or block_length_weeks<=0):
+        raise ValueError('block_length_weeks must be a positive integer')
+
+
+def _utc_entry_datetime(value:str)->datetime:
+    parsed=datetime.fromisoformat(value)
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError('entry_timestamp must include a timezone offset')
+    return parsed.astimezone(timezone.utc)
+
+
+def _validated_week_values(rows:list[dict[str,Any]])->dict[str,list[float]]:
+    weeks=defaultdict(list)
+    for row in rows:
+        pnl=float(row['net_pnl'])
+        if not math.isfinite(pnl):
+            raise ValueError('net_pnl values must be finite')
+        weeks[_utc_entry_datetime(row['entry_timestamp']).strftime('%G-W%V')].append(pnl)
+    return weeks
+
+
 def _moving_block_indices(week_count:int,block_length_weeks:int,rng:random.Random)->list[int]:
     """Draw non-circular consecutive weekly blocks, truncated to source span."""
+    if isinstance(week_count,bool) or not isinstance(week_count,int) or week_count<0:
+        raise ValueError('week_count must be a non-negative integer')
+    _validate_bootstrap_parameters(1,block_length_weeks)
     if week_count<=0:return []
     length=min(max(1,block_length_weeks),week_count)
     out=[]
@@ -134,9 +162,7 @@ def _moving_block_indices(week_count:int,block_length_weeks:int,rng:random.Rando
 def _calendar_week_trade_values(rows:list[dict[str,Any]])->tuple[list[str],list[list[float]],int]:
     """Return contiguous ISO weeks (including empty weeks) and trade clusters."""
     from datetime import date
-    by_week=defaultdict(list)
-    for row in rows:
-        by_week[datetime.fromisoformat(row['entry_timestamp']).date().strftime('%G-W%V')].append(float(row['net_pnl']))
+    by_week=_validated_week_values(rows)
     if not by_week:return [],[],0
     ordered=sorted(by_week)
     year,week=map(int,ordered[0].split('-W')); end_year,end_week=map(int,ordered[-1].split('-W'))
@@ -156,8 +182,8 @@ def _ci_bounds(values:list[float])->list[float|str]:
 
 def _weekly_cluster_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)->dict[str,Any]:
     """Legacy independent ISO-week cluster resampling, retained for comparison."""
-    weeks=defaultdict(list)
-    for r in rows: weeks[datetime.fromisoformat(r['entry_timestamp']).strftime('%G-W%V')].append(float(r['net_pnl']))
+    _validate_bootstrap_parameters(iterations)
+    weeks=_validated_week_values(rows)
     keys=sorted(weeks); rng=random.Random(seed); expectancy=[]; pf=[]
     if not keys:return {'seed':seed,'iterations':iterations,'block_unit':'ISO week','expectancy_ci_95':None,'profit_factor_ci_95':None}
     for _ in range(iterations):
@@ -173,6 +199,7 @@ def _weekly_cluster_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int)-
 
 def _moving_block_bootstrap(rows:list[dict[str,Any]],seed:int,iterations:int,block_length_weeks:int=4)->dict[str,Any]:
     """Moving-block bootstrap of consecutive calendar-week trade clusters."""
+    _validate_bootstrap_parameters(iterations,block_length_weeks)
     calendar,clusters,unique_trade_weeks=_calendar_week_trade_values(rows)
     if not calendar:
         return {'method':'moving_block_bootstrap','seed':seed,'iterations':iterations,'block_length_weeks':block_length_weeks,

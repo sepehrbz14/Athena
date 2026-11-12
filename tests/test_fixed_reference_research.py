@@ -134,6 +134,32 @@ class FixedReferenceResearchTests(unittest.TestCase):
         self.assertEqual(weeks,['2024-W52','2025-W01','2025-W02'])
         self.assertEqual(count,3); self.assertEqual(clusters,[[1.0],[2.0],[3.0]])
 
+    def test_calendar_week_assignment_normalizes_offset_timestamp_to_utc(self):
+        rows=[{'entry_timestamp':'2025-01-05T23:30:00-02:00','net_pnl':1.0}]
+        weeks,clusters,count=_calendar_week_trade_values(rows)
+        self.assertEqual(weeks,['2025-W02'])
+        self.assertEqual(clusters,[[1.0]])
+        self.assertEqual(count,1)
+
+    def test_bootstrap_rejects_invalid_iterations_and_block_lengths(self):
+        for iterations in (0,-1,1.5,True):
+            with self.subTest(iterations=iterations):
+                with self.assertRaises(ValueError): _weekly_cluster_bootstrap([],1,iterations)
+                with self.assertRaises(ValueError): _moving_block_bootstrap([],1,iterations,4)
+        for length in (0,-1,1.5,True):
+            with self.subTest(block_length=length):
+                with self.assertRaises(ValueError): _moving_block_bootstrap([],1,10,length)
+                with self.assertRaises(ValueError): _moving_block_indices(5,length,__import__('random').Random(1))
+
+    def test_bootstrap_rejects_non_finite_pnl_and_naive_timestamps(self):
+        for pnl in (float('nan'),float('inf'),float('-inf')):
+            rows=[{'entry_timestamp':self.t.isoformat(),'net_pnl':pnl}]
+            with self.subTest(pnl=pnl):
+                with self.assertRaises(ValueError): _weekly_cluster_bootstrap(rows,1,10)
+                with self.assertRaises(ValueError): _moving_block_bootstrap(rows,1,10,2)
+        naive=[{'entry_timestamp':'2025-01-01T00:00:00','net_pnl':1.0}]
+        with self.assertRaises(ValueError): _moving_block_bootstrap(naive,1,10,2)
+
     def test_zero_trade_weeks_are_retained_inside_calendar_span(self):
         rows=[{'entry_timestamp':datetime(2025,1,6,tzinfo=timezone.utc).isoformat(),'net_pnl':1},
               {'entry_timestamp':datetime(2025,1,20,tzinfo=timezone.utc).isoformat(),'net_pnl':-1}]
