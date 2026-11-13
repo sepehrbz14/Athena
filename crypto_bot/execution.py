@@ -23,6 +23,7 @@ class ExecutionFill:
     quantity: float
     fee: float
     slippage: float
+    order_side: Side
 
 
 def valid_prior_volume(
@@ -69,6 +70,7 @@ class BarExecutionModel:
             quantity=quantity,
             fee=quantity * price * self.fee_rate,
             slippage=abs(price - raw_price) * quantity,
+            order_side=order_side,
         )
 
     def participation_quantity(self, prior_volume: float | None) -> float:
