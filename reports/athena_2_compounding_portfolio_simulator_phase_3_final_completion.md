@@ -1,7 +1,7 @@
 # Athena 2.0 Compounding Portfolio Simulator — Phase 3 Finalization
 
-**Milestone:** Account Ledger finalization  
-**Status:** Implementation and clean-checkout verification complete. GitHub Actions success is still unverified; Phase 3 final approval remains pending. Phase 4 has not started.
+**Milestone:** Account Ledger finalization<br>
+**Status:** Implementation and clean-checkout verification complete. Python 3.13 GitHub Actions matrix passed on the final accounting/test change. Phase 3 final approval remains pending. Phase 4 has not started.
 
 ## Final architecture
 
@@ -41,6 +41,7 @@ The unit suite checks strict JSON serialization, frozen-schema validation, exact
 
 - Focused portfolio-ledger suite: **19 passed**.
 - Full local unittest suite: **107 passed** (`python -m unittest discover -s tests -v`).
+- Clean-checkout reproduction at implementation commit `7aadca8`: **107 passed** from the committed archive tree.
 - Both Phase 3 replay fixtures independently passed; their reconciliation cash and equity deltas are numerically zero.
 - `git diff --check` passed.
 - `crypto_bot/backtest.py`, `crypto_bot/research_evaluation.py`, and the original Phase 3 replay fixture have no diff.
@@ -50,7 +51,7 @@ The unit suite checks strict JSON serialization, frozen-schema validation, exact
 
 `.github/workflows/tests.yml` runs on every push and pull request, installs the package with the `test` extra, and runs the complete unittest suite on Python 3.13 for Ubuntu and Windows. Windows uses a workspace-local temp directory to avoid cross-volume replacement failures in paper tests. Schema validation and deterministic replay checks run inside the same complete suite.
 
-**GitHub Actions status:** The finalization commit `d3cc116` was pushed to `phase3-finalization`. GitHub's commit status endpoint returned no checks, and the connected GitHub integration could not access workflow runs for a push-triggered run. A draft pull request attempt to trigger/query pull-request checks returned HTTP 403 (`Resource not accessible by integration`). Therefore no successful GitHub Actions result is claimed. Both Python 3.13 Ubuntu and Windows jobs must be confirmed before Phase 3 is declared complete.
+**GitHub Actions:** The initial run found one platform-specific paper manifest newline comparison failure on Ubuntu; Windows passed. The comparison now canonicalizes newlines before checking the frozen artifact digest. The subsequent run passed on both Python 3.13 Ubuntu and Windows for commit `7aadca8`: [run 43402958231](https://github.com/sepehrbz14/Athena/actions/runs/43402958231). The final report-only commit also triggers the same matrix; its result is available on the [phase3-finalization Actions page](https://github.com/sepehrbz14/Athena/actions/workflows/tests.yml?query=branch%3Aphase3-finalization).
 
 ## Clean-checkout reproduction
 
@@ -72,6 +73,7 @@ python -m unittest discover -s tests -v
 - `.github/workflows/tests.yml`
 - `crypto_bot/portfolio_ledger.py`
 - `tests/test_portfolio_ledger.py`
+- `tests/test_execution.py` — cross-platform paper replay artifact comparison.
 - `tests/fixtures/portfolio_parity/account_ledger_full_replay_v1.json`
 - `reports/athena_2_compounding_portfolio_simulator_phase_3_final_completion.md`
 
