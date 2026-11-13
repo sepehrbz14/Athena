@@ -225,6 +225,9 @@ class ExecutionPolicyTests(unittest.TestCase):
             self.assertEqual([row["event_id"] for row in event_rows], baseline["paper"]["event_ids"])
             for name, expected in baseline["paper"]["output_files"].items():
                 data = (state / name).read_bytes()
+                # The baseline was captured on Windows. Normalize text-file
+                # newline conventions to CRLF before comparing its byte digest.
+                data = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
                 self.assertEqual(len(data), expected["bytes"], name)
                 self.assertEqual(hashlib.sha256(data).hexdigest(), expected["sha256"], name)
 
