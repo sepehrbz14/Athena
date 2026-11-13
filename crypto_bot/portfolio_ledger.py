@@ -29,14 +29,23 @@ def _atomic_financial(method):
     """Rollback all ledger state if a multi-step financial operation fails."""
     @wraps(method)
     def wrapped(self, *args, **kwargs):
-        snapshot = (self.cash, deepcopy(self.journal), deepcopy(self.positions),
-                    deepcopy(self.reservations), self._entry_sequence, deepcopy(self._events),
-                    deepcopy(self.completed_positions))
+        # Copy the graph as one object so shared references (notably an entry
+        # event's cached position result and positions[position_id]) stay shared.
+        snapshot = deepcopy({
+            "cash": self.cash, "journal": self.journal, "positions": self.positions,
+            "reservations": self.reservations, "sequence": self._entry_sequence,
+            "events": self._events, "completed": self.completed_positions,
+        })
         try:
             return method(self, *args, **kwargs)
         except Exception:
-            (self.cash, self.journal, self.positions, self.reservations,
-             self._entry_sequence, self._events, self.completed_positions) = snapshot
+            self.cash = snapshot["cash"]
+            self.journal = snapshot["journal"]
+            self.positions = snapshot["positions"]
+            self.reservations = snapshot["reservations"]
+            self._entry_sequence = snapshot["sequence"]
+            self._events = snapshot["events"]
+            self.completed_positions = snapshot["completed"]
             raise
     return wrapped
 
@@ -251,7 +260,7 @@ class PortfolioLedger:
                 position_id, pos.instrument_id, pos.side,
                 pos.total_entry_quantity,
                 pos.realized_gross_pnl, pos.entry_fees_paid, pos.exit_fees_paid, pos.funding_paid,
-                pos.realized_gross_pnl - pos.entry_fees_paid - pos.exit_fees_paid - pos.funding_paid,
+                pos.realized_gross_pnl - pos.entry_fees_paid - pos.exit_fees_paid + pos.funding_paid,
             ))
             del self.positions[position_id]
         result = (gross, closed)
@@ -326,7 +335,7 @@ class PortfolioLedger:
             entry_fees = -sum((entry.amount_usdt for entry in entries if entry.entry_type == "ENTRY_FEE"), ZERO)
             exit_fees = -sum((entry.amount_usdt for entry in entries if entry.entry_type == "EXIT_FEE"), ZERO)
             funding = sum((entry.amount_usdt for entry in entries if entry.entry_type == "FUNDING"), ZERO)
-            net = realized - entry_fees - exit_fees - funding
+            net = realized - entry_fees - exit_fees + funding
             if (realized, entry_fees, exit_fees, funding, net) != (
                 completed.realized_gross_pnl, completed.entry_fees_paid, completed.exit_fees_paid,
                 completed.funding_paid, completed.final_net_pnl

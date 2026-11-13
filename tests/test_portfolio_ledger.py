@@ -216,11 +216,44 @@ class PortfolioLedgerTests(unittest.TestCase):
             e.amount_usdt for e in self.ledger.journal if e.position_id == "closed" and e.entry_type == "EXIT_FEE"))
         self.assertEqual(record.funding_paid, sum(
             e.amount_usdt for e in self.ledger.journal if e.position_id == "closed" and e.entry_type == "FUNDING"))
-        self.assertEqual(record.final_net_pnl, record.realized_gross_pnl - record.entry_fees_paid - record.exit_fees_paid - record.funding_paid)
+        self.assertEqual(record.final_net_pnl, record.realized_gross_pnl - record.entry_fees_paid - record.exit_fees_paid + record.funding_paid)
         before_cash_events = len(self.ledger.journal)
         reconciled = self.ledger.reconcile({})
         self.assertEqual(reconciled["completed_position_net_pnl"], record.final_net_pnl)
         self.assertEqual(len(self.ledger.journal), before_cash_events)
+
+    def test_signed_funding_payments_and_receipts_with_multiple_events_and_partial_exits(self):
+        self.ledger.apply_entry_fill(position_id="funded", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=self.fill(100, Side.LONG, 2), leverage=2, when=NOW, event_id="funded-entry")
+        self.ledger.apply_funding("funded", "-0.75", NOW, "funding-payment-1")
+        self.ledger.apply_exit_fill("funded", self.fill(110, Side.SHORT, 1), NOW, "funded-partial")
+        self.ledger.apply_funding("funded", "0.25", NOW, "funding-receipt")
+        self.ledger.apply_funding("funded", "-0.10", NOW, "funding-payment-2")
+        self.ledger.apply_exit_fill("funded", self.fill(120, Side.SHORT, 1), NOW, "funded-final")
+        record = self.ledger.completed_positions[0]
+        self.assertEqual(record.funding_paid, Decimal("-0.60"))
+        self.assertEqual(record.final_net_pnl, record.realized_gross_pnl - record.entry_fees_paid - record.exit_fees_paid + Decimal("-0.60"))
+        funding_rows = [e for e in self.ledger.journal if e.position_id == "funded" and e.entry_type == "FUNDING"]
+        self.assertEqual([e.amount_usdt for e in funding_rows], [Decimal("-0.75"), Decimal("0.25"), Decimal("-0.10")])
+        self.assertEqual(self.ledger.reconcile({})["completed_position_net_pnl"], record.final_net_pnl)
+
+    def test_rollback_preserves_event_position_object_reference(self):
+        ledger = PortfolioLedger("reference-rollback", 1000)
+        ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="original-entry")
+        self.assertIs(ledger._events["original-entry"][1], ledger.positions["p"])
+        before = self._snapshot(ledger)
+        with patch.object(PortfolioLedger, "_post", side_effect=RuntimeError("injected increase failure")):
+            with self.assertRaisesRegex(RuntimeError, "increase failure"):
+                ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+                    fill=self.fill(105, Side.LONG, 1), leverage=2, when=NOW, event_id="increase-failure")
+        self.assertEqual(self._snapshot(ledger), before)
+        self.assertIs(ledger._events["original-entry"][1], ledger.positions["p"])
+        replayed = ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="original-entry")
+        self.assertIs(replayed, ledger.positions["p"])
+        self.assertEqual(replayed.quantity, ledger.positions["p"].quantity)
+        self.assertEqual(replayed.quantity, Decimal("1"))
 
     def test_versioned_replay_fixture_is_deterministic(self):
         fixture = json.loads(Path("tests/fixtures/portfolio_parity/account_ledger_replay_v1.json").read_text())
