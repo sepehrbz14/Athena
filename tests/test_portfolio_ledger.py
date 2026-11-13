@@ -19,6 +19,27 @@ from crypto_bot.portfolio_ledger import PortfolioLedger, ZERO
 NOW = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
 
+def _position_record(pos):
+    return {
+        "instrument_id": pos.instrument_id, "side": pos.side.value,
+        "quantity": str(pos.quantity), "average_entry_price": str(pos.average_entry_price),
+        "leverage": str(pos.leverage), "entry_fees_paid": str(pos.entry_fees_paid),
+        "exit_fees_paid": str(pos.exit_fees_paid), "funding_paid": str(pos.funding_paid),
+        "realized_gross_pnl": str(pos.realized_gross_pnl),
+        "total_entry_quantity": str(pos.total_entry_quantity),
+    }
+
+
+def _balance_record(ledger, marks):
+    return {key: str(value) for key, value in {
+        "cash": ledger.cash, "equity": ledger.equity(marks),
+        "unrealized_gross_pnl": sum(ledger.mark(marks).values(), ZERO),
+        "used_margin": ledger.used_initial_margin(marks),
+        "reservations": ledger.reserved_collateral,
+        "free_collateral": ledger.free_collateral_at(marks),
+    }.items()}
+
+
 class PortfolioLedgerTests(unittest.TestCase):
     def setUp(self):
         self.model = BarExecutionModel(fee_rate=0.001, slippage_bps=10)
@@ -35,18 +56,6 @@ class PortfolioLedgerTests(unittest.TestCase):
             validator.validate(entry.as_schema_record())
         with self.assertRaises(Exception):
             self.ledger.journal[0].amount_usdt = Decimal("0")
-
-    def test_every_journal_record_is_strict_json_and_frozen_schema_valid(self):
-        entry = self.ledger.deposit("1.25", NOW, "json-deposit")
-        encoded = entry.as_schema_record()
-        serialized = json.dumps(encoded, allow_nan=False)
-        self.assertEqual(json.loads(serialized), encoded)
-        schema = json.loads(Path("schemas/athena2_cash_journal_entry_v1.schema.json").read_text())
-        Draft202012Validator(schema, format_checker=Draft202012Validator.FORMAT_CHECKER).validate(encoded)
-        with self.assertRaises(ValueError):
-            replace(entry, amount_usdt=Decimal("1e10000")).as_schema_record()
-        with self.assertRaises(ValueError):
-            replace(entry, cash_after_usdt=Decimal("NaN")).as_schema_record()
 
     def test_every_journal_record_is_strict_json_and_frozen_schema_valid(self):
         entry = self.ledger.deposit("1.25", NOW, "json-deposit")
@@ -217,6 +226,40 @@ class PortfolioLedgerTests(unittest.TestCase):
         self.assertEqual(calls, 2)
         self.assertEqual(self._snapshot(exit_ledger), before)
 
+    def test_rollback_after_completed_record_append_and_event_registration(self):
+        closed = PortfolioLedger("closed-atomic", 1000)
+        closed.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="entry")
+        original_position = closed.positions["p"]
+        before = self._snapshot(closed)
+
+        class AppendThenFailList(list):
+            def append(self, item):
+                super().append(item)
+                raise RuntimeError("injected completed-record append failure")
+
+        closed.completed_positions = AppendThenFailList()
+        before = self._snapshot(closed)
+        with self.assertRaisesRegex(RuntimeError, "completed-record append"):
+            closed.apply_exit_fill("p", self.fill(110, Side.SHORT, 1), NOW, "close-fail")
+        self.assertEqual(self._snapshot(closed), before)
+        self.assertIs(closed.positions["p"], original_position)
+        self.assertEqual(closed.reconcile({"p": closed.positions["p"].average_entry_price})["cash_delta"], ZERO)
+
+        deposit_ledger = PortfolioLedger("event-atomic", 1000)
+        class FailOnEventDict(dict):
+            def __setitem__(self, key, value):
+                super().__setitem__(key, value)
+                if key == "deposit-registration":
+                    raise RuntimeError("injected event registration failure")
+        deposit_ledger._events = FailOnEventDict(deposit_ledger._events)
+        before = self._snapshot(deposit_ledger)
+        with self.assertRaisesRegex(RuntimeError, "event registration"):
+            deposit_ledger.deposit(10, NOW, "deposit-registration")
+        self.assertEqual(self._snapshot(deposit_ledger), before)
+        self.assertNotIn("deposit-registration", deposit_ledger._events)
+        self.assertEqual(deposit_ledger.reconcile({})["cash_delta"], ZERO)
+
     def test_deposit_withdraw_reserve_release_failures_are_atomic(self):
         ledger = PortfolioLedger("other-atomic", 1000)
         original_post = PortfolioLedger._post
@@ -310,19 +353,35 @@ class PortfolioLedgerTests(unittest.TestCase):
         ledger = PortfolioLedger("reference-rollback", 1000)
         ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
             fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="original-entry")
-        self.assertIs(ledger._events["original-entry"][1], ledger.positions["p"])
+        original_position = ledger.positions["p"]
+        self.assertIs(ledger._events["original-entry"][1], original_position)
         before = self._snapshot(ledger)
         with patch.object(PortfolioLedger, "_post", side_effect=RuntimeError("injected increase failure")):
             with self.assertRaisesRegex(RuntimeError, "increase failure"):
                 ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
                     fill=self.fill(105, Side.LONG, 1), leverage=2, when=NOW, event_id="increase-failure")
         self.assertEqual(self._snapshot(ledger), before)
+        self.assertIs(ledger.positions["p"], original_position)
         self.assertIs(ledger._events["original-entry"][1], ledger.positions["p"])
         replayed = ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
             fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="original-entry")
         self.assertIs(replayed, ledger.positions["p"])
         self.assertEqual(replayed.quantity, ledger.positions["p"].quantity)
         self.assertEqual(replayed.quantity, Decimal("1"))
+
+    def test_reconciliation_detects_orphan_financial_journal_rows_and_corrupt_sequence(self):
+        self.ledger.journal.append(replace(self.ledger.journal[0],
+            entry_id="acct-1:cash:00000002", event_id="unregistered", amount_usdt=Decimal("1"),
+            cash_after_usdt=Decimal("1001"), position_id="missing-position"))
+        self.ledger.cash += Decimal("1")
+        self.ledger._entry_sequence += 1
+        with self.assertRaisesRegex(AssertionError, "unregistered financial movements"):
+            self.ledger.reconcile({})
+
+        clean = PortfolioLedger("sequence-check", 100)
+        clean._entry_sequence += 1
+        with self.assertRaisesRegex(AssertionError, "sequence counter"):
+            clean.reconcile({})
 
     def test_completed_position_id_cannot_be_reopened_and_old_replays_remain_idempotent(self):
         entry = self.fill(100, Side.LONG, 1)
@@ -397,16 +456,37 @@ class PortfolioLedgerTests(unittest.TestCase):
             ledger.deposit(fixture["deposit_usdt"], NOW, "deposit-1")
             for reservation in fixture["reservations"]:
                 ledger.reserve(reservation["order_id"], reservation["amount_usdt"], marks={})
+            checkpoints = {}
             for position in fixture["positions"]:
                 side = Side(position["side"])
                 for index, (price, qty) in enumerate(position["entries"]):
                     ledger.apply_entry_fill(position_id=position["position_id"], instrument_id=position["instrument_id"],
                         side=side, fill=model.fill(price, side, qty), leverage=position["leverage"], when=NOW,
                         event_id=f"{position['position_id']}-entry-{index}")
+            for position in fixture["positions"]:
+                side = Side(position["side"])
                 for index, funding in enumerate(position["funding"]):
                     ledger.apply_funding(position["position_id"], funding, NOW, f"{position['position_id']}-funding-{index}")
+            marks = {pid: pos.average_entry_price for pid, pos in ledger.positions.items()}
+            checkpoints["all_positions_open"] = {
+                "positions": {pid: _position_record(pos) for pid, pos in ledger.positions.items()},
+                "balances": _balance_record(ledger, marks),
+            }
+            for position in fixture["positions"]:
+                side = Side(position["side"])
                 close_side = Side.SHORT if side is Side.LONG else Side.LONG
-                for index, (price, qty) in enumerate(position["exits"]):
+                price, qty = position["exits"][0]
+                ledger.apply_exit_fill(position["position_id"], model.fill(price, close_side, qty), NOW,
+                    f"{position['position_id']}-exit-0")
+            marks = {pid: pos.average_entry_price for pid, pos in ledger.positions.items()}
+            checkpoints["after_partial_exits"] = {
+                "positions": {pid: _position_record(pos) for pid, pos in ledger.positions.items()},
+                "balances": _balance_record(ledger, marks),
+            }
+            for position in fixture["positions"]:
+                side = Side(position["side"])
+                close_side = Side.SHORT if side is Side.LONG else Side.LONG
+                for index, (price, qty) in enumerate(position["exits"][1:], 1):
                     ledger.apply_exit_fill(position["position_id"], model.fill(price, close_side, qty), NOW,
                         f"{position['position_id']}-exit-{index}")
                 with self.assertRaisesRegex(ValueError, "completed position ID"):
@@ -427,17 +507,22 @@ class PortfolioLedgerTests(unittest.TestCase):
                 validator.validate(record)
             return {
                 "journal": journal,
+                "initial_cash": str(ledger.initial_cash),
                 "cash": str(ledger.cash),
-                "positions": {pid: {"quantity": str(pos.quantity), "average_entry_price": str(pos.average_entry_price)}
-                              for pid, pos in ledger.positions.items()},
-                "completed": [{"position_id": p.position_id, "realized": str(p.realized_gross_pnl),
+                "positions": {pid: _position_record(pos) for pid, pos in ledger.positions.items()},
+                "completed": [{"position_id": p.position_id, "instrument_id": p.instrument_id,
+                    "side": p.side.value, "quantity_closed": str(p.quantity_closed),
+                    "realized": str(p.realized_gross_pnl),
                     "entry_fees": str(p.entry_fees_paid), "exit_fees": str(p.exit_fees_paid),
                     "funding": str(p.funding_paid), "net": str(p.final_net_pnl)} for p in ledger.completed_positions],
                 "reservations": {key: str(value) for key, value in ledger.reservations.items()},
                 "reconciliation": {key: str(value) for key, value in reconciliation.items()},
+                "checkpoints": checkpoints,
             }
         first, second = replay(), replay()
         self.assertEqual(first, second)
+        expected_golden = json.loads(Path("tests/fixtures/portfolio_parity/account_ledger_audit_golden_v1.json").read_text())
+        self.assertEqual(first, expected_golden["snapshot"])
         expected = fixture["expected"]
         self.assertEqual([p["position_id"] for p in first["completed"]], expected["completed_positions"])
         self.assertEqual(len(first["positions"]), expected["active_positions"])

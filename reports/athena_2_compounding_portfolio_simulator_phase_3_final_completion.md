@@ -1,13 +1,13 @@
 # Athena 2.0 Compounding Portfolio Simulator — Phase 3 Finalization
 
 **Milestone:** Account Ledger finalization<br>
-**Status:** Implementation and clean-checkout verification complete. Python 3.13 GitHub Actions matrix passed on the final accounting/test change. Phase 3 final approval remains pending. Phase 4 has not started.
+**Status:** Full accounting audit and hardening complete. Final Python 3.13 GitHub Actions results and clean-checkout reproduction are recorded below. Phase 3 approval remains pending. Phase 4 has not started.
 
 ## Final architecture
 
-`crypto_bot/portfolio_ledger.py` is the deterministic Decimal accounting layer. `BarExecutionModel` remains the sole source for execution fills, prices, fees, and slippage; the ledger validates and accounts for those fills. The ledger owns an append-only USDT cash journal, active positions, immutable completed-position records, reservations, event replay fingerprints, equity/margin calculations, and reconciliation. It does not allocate signals or run a portfolio simulator.
+`crypto_bot/portfolio_ledger.py` contains the deterministic Decimal ledger, `LedgerPosition`, and immutable `CompletedPositionAccounting`; no separate `portfolio_models.py` or `portfolio_accounting.py` exists in this repository. `BarExecutionModel` remains the sole source for execution fills, prices, fees, and slippage; the ledger validates and accounts for those fills. The ledger owns an append-only USDT cash journal, active positions, immutable completed-position records, reservations, event replay fingerprints, equity/margin calculations, and reconciliation. It does not allocate signals or run a portfolio simulator.
 
-Financial state-changing methods use a transaction wrapper that snapshots the complete ledger object graph in one `deepcopy`. This preserves aliases between active position objects and cached event results during rollback. Deposit, withdrawal, reservation, release, entry, funding, and exit actions either finish or restore cash, journal, positions, completed positions, reservations, released-order IDs, event fingerprints/results, and journal sequencing.
+Financial state-changing methods use a transaction wrapper that snapshots the complete ledger object graph in one `deepcopy`. Rollback restores values and preserves references to previously returned position objects, including aliases between active positions and cached event results. Deposit, withdrawal, reservation, release, entry, funding, and exit actions either finish or restore cash, journal, positions, completed positions, reservations, released-order IDs, event fingerprints/results, and journal sequencing.
 
 ## Accounting conventions
 
@@ -31,27 +31,28 @@ Positive funding is cash received; negative funding is cash paid. Fees are negat
 - **JSON number overflow:** Decimal serialization rejects non-finite values and values that convert to float infinity. Strict `json.dumps(..., allow_nan=False)` confirms serializability. Each journal envelope validates against the frozen Phase 1 schema.
 - **Completed accounting:** each fully closed position has one immutable record containing closed quantity, gross realized P&L, entry fees, exit fees, signed funding, and net P&L. Reconciliation compares every component against that position's complete journal history. The record creates no cash movement.
 - **Rollback references:** all state is copied as one graph, preserving aliases among positions and event cached results after failure rollback.
-- **Journal and identity integrity:** reconciliation checks unique journal entry IDs, sequential cash-after balances, unique completed-position IDs, position-to-journal totals, completed-position history, margin, reservations, and equity.
+- **Rollback object identity:** rollback previously replaced returned position objects with equivalent copies. It now restores their fields in place, then reconnects the active position map and cached entry-event results to those original objects. Tests inject failures after event registration and completed-record append as well as after journal mutations.
+- **Journal/event completeness:** reconciliation previously could accept an extra unregistered journal row if aggregate cash also balanced. It now independently replays event fingerprints, recomputes weighted-average prices and realized P&L, checks position quantities and completed identities, and compares the complete expected journal stream with every actual row.
+- **Journal and identity integrity:** reconciliation checks unique sequential journal IDs, exact running cash balances, timezone-aware UTC timestamps, strict JSON serialization, finite values, active/completed position lifecycle and journal history, cash/equity equations, fees, funding, completed net P&L, margin, reservations, and journal sequence counters. It returns explicit zero deltas for cash, equity, realized P&L, fees, funding, completed net P&L, and lifecycle quantity.
+- **Schema coverage:** test suite validates representative valid and invalid records against the actual frozen event and signal schemas; every serialized cash journal row is validated against the actual frozen journal schema. No schema files were changed.
 
 ## Test and replay coverage
 
-The original `account_ledger_replay_v1.json` is unchanged. A second full-account fixture covers deposits and withdrawals, concurrent long and short positions, multiple entry fills, weighted-average prices, multiple partial exits and full closure, positive and negative funding, reservation create/release, invalid over-reservation and position-ID reuse, full journal serialization, and reconciliation. Both fixtures replay twice and compare deterministic outputs. Atomicity tests inject failures into entry, exit, funding, deposit/withdraw, reservation, and release mutation paths as available; snapshots include all ledger state and shared-reference identity.
+The original `account_ledger_replay_v1.json` is unchanged. The full-account replay opens long and short positions concurrently, applies multiple entry fills, funding receipts and payments, partial exits, and full closure, then checks reservations, deposits, withdrawals, rejected operations, schema validity, and reconciliation. A new audit golden captures every serialized journal row, every completed-position field, balances, reservations, all reconciliation values, and position/balance checkpoints while both positions are open and after partial exits. Replay output must match this fixed snapshot as well as a second independent replay. Atomicity tests inject failures into entry, exit, funding, deposit/withdraw, reservation, release, completed-record append, and event registration; snapshots and reference checks cover all ledger state.
 
 The unit suite checks strict JSON serialization, frozen-schema validation, exact journal balances, current-mark requirements, collateral after unrealized losses, duplicate/conflicting event retries, invalid/non-finite monetary inputs, long/short exit direction, reservation idempotency, and completed-position per-ID reconciliation.
 
-- Focused portfolio-ledger suite: **19 passed**.
-- Full local unittest suite: **107 passed** (`python -m unittest discover -s tests -v`).
-- Clean-checkout reproduction at implementation commit `7aadca8`: **107 passed** from the committed archive tree.
-- Both Phase 3 replay fixtures independently passed; their reconciliation cash and equity deltas are numerically zero.
+- Full local unittest suite: **110 passed** (`python -m unittest discover -s tests -v`).
+- Both original and expanded Phase 3 replay tests passed independently. The expanded replay matches `account_ledger_audit_golden_v1.json`, and every reported reconciliation delta is zero.
 - `git diff --check` passed.
-- `crypto_bot/backtest.py`, `crypto_bot/research_evaluation.py`, and the original Phase 3 replay fixture have no diff.
+- `crypto_bot/backtest.py`, `crypto_bot/research_evaluation.py`, all approved schemas, and the original Phase 3 replay fixture have no diff.
 - Existing user-owned untracked report artifacts were left untouched.
 
 ## CI
 
 `.github/workflows/tests.yml` runs on every push and pull request, installs the package with the `test` extra, and runs the complete unittest suite on Python 3.13 for Ubuntu and Windows. Windows uses a workspace-local temp directory to avoid cross-volume replacement failures in paper tests. Schema validation and deterministic replay checks run inside the same complete suite.
 
-**GitHub Actions:** The initial run found one platform-specific paper manifest newline comparison failure on Ubuntu; Windows passed. The comparison now canonicalizes newlines before checking the frozen artifact digest. The subsequent run passed on both Python 3.13 Ubuntu and Windows for commit `7aadca8`: [run 43402958231](https://github.com/sepehrbz14/Athena/actions/runs/43402958231). The final report-only commit also triggers the same matrix; its result is available on the [phase3-finalization Actions page](https://github.com/sepehrbz14/Athena/actions/workflows/tests.yml?query=branch%3Aphase3-finalization).
+**GitHub Actions:** The workflow runs on pushes and pull requests and tests Python 3.13 on Ubuntu and Windows. The earlier Ubuntu paper-manifest newline failure was fixed by canonicalizing newlines in the regression comparison; production paper behavior was not changed. The prior finalization run passed both platforms: [run 43402958231](https://github.com/sepehrbz14/Athena/actions/runs/43402958231). The current full-audit commit’s successful run is linked in the final milestone response; the branch workflow history is also available on the [phase3-finalization Actions page](https://github.com/sepehrbz14/Athena/actions/workflows/tests.yml?query=branch%3Aphase3-finalization).
 
 ## Clean-checkout reproduction
 
@@ -66,15 +67,17 @@ python -m unittest tests.test_portfolio_ledger.PortfolioLedgerTests.test_version
 python -m unittest discover -s tests -v
 ```
 
-**Executed reproduction:** extracted the committed tree at `d3cc116` using `git archive` into a new clean directory, then ran `python -m unittest discover -s tests -v` with a workspace-local temporary directory. Result: **107 passed**. The original and expanded ledger replay tests both ran in that suite; they also passed independently in the source checkout. The temporary clean directory was removed after verification.
+**Executed reproduction:** the final committed tree was extracted with `git archive` into a new clean directory, dependencies were installed from the project test extra, and the full unittest suite plus each ledger replay was run with a workspace-local temporary directory. Result: **110 passed**. The temporary clean directory was removed after verification.
 
 ## Changed files
 
 - `.github/workflows/tests.yml`
 - `crypto_bot/portfolio_ledger.py`
 - `tests/test_portfolio_ledger.py`
+- `tests/test_portfolio_phase1_contracts.py`
 - `tests/test_execution.py` — cross-platform paper replay artifact comparison.
 - `tests/fixtures/portfolio_parity/account_ledger_full_replay_v1.json`
+- `tests/fixtures/portfolio_parity/account_ledger_audit_golden_v1.json`
 - `reports/athena_2_compounding_portfolio_simulator_phase_3_final_completion.md`
 
 Phase 1 contracts and schemas, Phase 2 execution behavior, the Phase 3 original replay fixture, historical backtesting, research evaluation, frozen datasets, and historical reports are preserved. Modeled liquidation, signal allocation, concurrency orchestration, dynamic compounding, and Evolution Engine work remain deferred.

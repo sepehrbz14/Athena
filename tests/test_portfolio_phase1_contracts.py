@@ -7,6 +7,7 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from jsonschema import Draft202012Validator
 
 from crypto_bot.backtest import BacktestConfig, IntrabarBacktester
 from crypto_bot.diagnostics import LogLevel
@@ -46,6 +47,32 @@ class PortfolioPhase1ContractTests(unittest.TestCase):
         self.assertNotIn("MARGIN_RESERVED", cash["properties"]["entry_type"]["enum"])
         self.assertEqual(signal["properties"]["instrument_id"]["const"], "BTCUSDT")
         self.assertNotIn("forward_outcomes", signal["properties"])
+
+    def test_frozen_event_and_signal_schemas_validate_records(self):
+        event_schema = json.loads((SCHEMAS / "athena2_portfolio_event_v1.schema.json").read_text(encoding="utf-8"))
+        signal_schema = json.loads((SCHEMAS / "athena2_frozen_signal_v1.schema.json").read_text(encoding="utf-8"))
+        checker = Draft202012Validator.FORMAT_CHECKER
+        event = {
+            "schema_version": "athena.portfolio.event.v1", "event_id": "signal-1",
+            "event_type": "SIGNAL_CAPTURED", "event_time": "2025-01-01T00:00:00Z",
+            "phase": "input", "account_id": "account-1", "instrument_id": "BTCUSDT",
+            "source_signal_id": 1, "payload": {"direction": "long"},
+        }
+        signal = {
+            "schema_version": "athena.frozen_signal.v1", "source_signal_sha256": "a" * 64,
+            "source_candle_sha256": "b" * 64, "instrument_id": "BTCUSDT", "signal_id": 1,
+            "candle_open_time": "2025-01-01T00:00:00Z", "available_at": "2025-01-01T00:15:00Z",
+            "strategy": "frozen-ensemble", "direction": "long", "confidence": 0.75,
+            "reference_price": 100, "stop_price": 95, "take_profit": 110,
+        }
+        event_validator = Draft202012Validator(event_schema, format_checker=checker)
+        signal_validator = Draft202012Validator(signal_schema, format_checker=checker)
+        event_validator.validate(event)
+        signal_validator.validate(signal)
+        with self.assertRaises(Exception):
+            event_validator.validate({**event, "unexpected": True})
+        with self.assertRaises(Exception):
+            signal_validator.validate({**signal, "forward_outcomes": {"pnl": 10}})
 
     def test_current_backtester_reproduces_frozen_stop_gap_funding_golden(self):
         fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
