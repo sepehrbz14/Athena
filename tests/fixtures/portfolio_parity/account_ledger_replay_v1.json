@@ -1,0 +1,19 @@
+{
+  "fixture_version": "athena.account_ledger_replay.v1",
+  "account_id": "replay-account",
+  "initial_cash_usdt": "1000",
+  "scenario": [
+    {"op": "entry_fill", "position_id": "btc-1", "instrument_id": "BTCUSDT", "side": "long", "raw_price": 100, "quantity": 2, "leverage": 2, "event_id": "entry-1"},
+    {"op": "funding", "position_id": "btc-1", "amount_usdt": "-0.5", "event_id": "funding-1"},
+    {"op": "exit_fill", "position_id": "btc-1", "raw_price": 110, "quantity": 2, "order_side": "short", "event_id": "exit-1"}
+  ],
+  "execution": {"fee_rate": 0.001, "slippage_bps": 10},
+  "expected": {
+    "cash_usdt": "1018.66002",
+    "equity_usdt": "1018.66002",
+    "journal_types": ["INITIAL_DEPOSIT", "ENTRY_FEE", "FUNDING", "REALIZED_PNL", "EXIT_FEE"],
+    "journal_amounts_usdt": ["1000", "-0.2002", "-0.5", "19.58", "-0.21978"],
+    "open_positions": 0,
+    "used_margin_usdt": "0"
+  }
+}
