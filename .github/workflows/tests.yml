@@ -1,0 +1,33 @@
+name: Athena test suite
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unittest:
+    name: Python 3.13 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      TEMP: ${{ github.workspace }}\.ci_tmp
+      TMP: ${{ github.workspace }}\.ci_tmp
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Prepare Windows temporary directory
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
+      - name: Validate frozen schemas and run deterministic replay/full unit suite
+        run: python -m unittest discover -s tests -v

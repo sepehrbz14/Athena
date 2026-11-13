@@ -16,6 +16,7 @@ from decimal import InvalidOperation
 import math
 from copy import deepcopy
 from functools import wraps
+import json
 from typing import Any
 
 from .execution import BarExecutionModel, ExecutionFill
@@ -35,6 +36,7 @@ def _atomic_financial(method):
             "cash": self.cash, "journal": self.journal, "positions": self.positions,
             "reservations": self.reservations, "sequence": self._entry_sequence,
             "events": self._events, "completed": self.completed_positions,
+            "released_orders": self.released_orders,
         })
         try:
             return method(self, *args, **kwargs)
@@ -46,6 +48,7 @@ def _atomic_financial(method):
             self._entry_sequence = snapshot["sequence"]
             self._events = snapshot["events"]
             self.completed_positions = snapshot["completed"]
+            self.released_orders = snapshot["released_orders"]
             raise
     return wrapped
 
@@ -83,7 +86,7 @@ class CashJournalEntry:
 
     def as_schema_record(self) -> dict[str, Any]:
         """Return the frozen v1 envelope; Decimal is encoded as JSON number."""
-        return {k: (float(v) if isinstance(v, Decimal) else v) for k, v in {
+        record = {k: (_decimal_json_number(v) if isinstance(v, Decimal) else v) for k, v in {
             "schema_version": self.schema_version, "entry_id": self.entry_id,
             "event_id": self.event_id, "event_time": self.event_time,
             "account_id": self.account_id, "asset": self.asset,
@@ -92,6 +95,18 @@ class CashJournalEntry:
             "source_signal_id": self.source_signal_id, "order_id": self.order_id,
             "position_id": self.position_id, "trade_id": self.trade_id, "memo": self.memo,
         }.items()}
+        # Fail closed if any value cannot be represented as strict JSON.
+        json.dumps(record, allow_nan=False, separators=(",", ":"))
+        return record
+
+
+def _decimal_json_number(value: Decimal) -> float:
+    if not value.is_finite():
+        raise ValueError("journal Decimal must be finite")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError("journal Decimal is outside finite JSON number range")
+    return result
 
 
 @dataclass(slots=True)
@@ -133,6 +148,7 @@ class PortfolioLedger:
     _entry_sequence: int = 0
     _events: dict[str, tuple[tuple[Any, ...], Any]] = field(default_factory=dict)
     completed_positions: list[CompletedPositionAccounting] = field(default_factory=list)
+    released_orders: set[str] = field(default_factory=set)
 
     def __post_init__(self) -> None:
         self.initial_cash = D(self.initial_cash)
@@ -156,23 +172,32 @@ class PortfolioLedger:
         self.journal.append(entry)
         return entry
 
+    @_atomic_financial
     def deposit(self, amount: Decimal | int | float | str, when: datetime, event_id: str) -> CashJournalEntry:
         amount = D(amount)
         if amount <= ZERO: raise ValueError("deposit must be positive")
         return self._event(event_id, ("DEPOSIT", amount, when), lambda: self._post("DEPOSIT", amount, when, event_id))
 
+    @_atomic_financial
     def withdraw(self, amount: Decimal | int | float | str, when: datetime, event_id: str, *, marks: dict[str, Any]) -> CashJournalEntry:
         amount = D(amount)
         if amount <= ZERO: raise ValueError("withdrawal must be positive")
         marks = self._require_marks(marks)
-        if amount > self.free_collateral_at(marks): raise ValueError("withdrawal exceeds free collateral")
-        return self._event(event_id, ("WITHDRAWAL", amount, when), lambda: self._post("WITHDRAWAL", -amount, when, event_id))
+        def withdraw_once():
+            if amount > self.free_collateral_at(marks): raise ValueError("withdrawal exceeds free collateral")
+            return self._post("WITHDRAWAL", -amount, when, event_id)
+        return self._event(event_id, ("WITHDRAWAL", amount, when), withdraw_once)
 
+    @_atomic_financial
     def reserve(self, order_id: str, amount: Decimal | int | float | str, *, marks: dict[str, Any]) -> Decimal:
         amount = D(amount)
         marks = self._require_marks(marks)
         if amount < ZERO: raise ValueError("reservation cannot be negative")
-        if order_id in self.reservations: raise ValueError("order already has a reservation")
+        if not order_id: raise ValueError("order ID is required")
+        if order_id in self.reservations:
+            if self.reservations[order_id] == amount: return amount
+            raise ValueError("conflicting reservation retry for order ID")
+        if order_id in self.released_orders: raise ValueError("released order reservation cannot be recreated")
         if amount > self.free_collateral_at(marks): raise ValueError("reservation exceeds free collateral")
         self.reservations[order_id] = amount
         return amount
@@ -187,8 +212,13 @@ class PortfolioLedger:
         self._events[event_id] = (fingerprint, result)
         return result
 
+    @_atomic_financial
     def release_reservation(self, order_id: str) -> Decimal:
-        return self.reservations.pop(order_id, ZERO)
+        if order_id not in self.reservations:
+            return ZERO
+        amount = self.reservations.pop(order_id)
+        self.released_orders.add(order_id)
+        return amount
 
     @_atomic_financial
     def apply_entry_fill(self, *, position_id: str, instrument_id: str, side: Side,
@@ -205,6 +235,8 @@ class PortfolioLedger:
             return self.positions.get(position_id, prior[1])
         pos = self.positions.get(position_id)
         if pos is None:
+            if any(item.position_id == position_id for item in self.completed_positions):
+                raise ValueError("completed position ID cannot be reused")
             pos = LedgerPosition(position_id, instrument_id, side, ZERO, ZERO, lev)
             self.positions[position_id] = pos
         if (pos.instrument_id, pos.side, pos.leverage) != (instrument_id, side, lev):
@@ -308,7 +340,11 @@ class PortfolioLedger:
         equity = self.equity(marks)
         equation_delta = equity - (self.cash + sum(self.mark(marks).values(), ZERO))
         prior_cash = ZERO
+        entry_ids = set()
         for entry in self.journal:
+            if entry.entry_id in entry_ids:
+                raise AssertionError("journal entry IDs must be unique")
+            entry_ids.add(entry.entry_id)
             prior_cash += entry.amount_usdt
             if entry.cash_after_usdt != prior_cash:
                 raise AssertionError("journal running cash balance mismatch")

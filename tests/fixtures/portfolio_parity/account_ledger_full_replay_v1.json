@@ -1,0 +1,20 @@
+{
+  "fixture_version": "athena.account_ledger_full_replay.v1",
+  "initial_cash_usdt": "10000",
+  "deposit_usdt": "100",
+  "withdrawal_usdt": "50",
+  "execution": {"fee_rate": 0.001, "slippage_bps": 10},
+  "reservations": [{"order_id": "long-order", "amount_usdt": "200"}, {"order_id": "short-order", "amount_usdt": "300"}],
+  "positions": [
+    {"position_id": "long-1", "instrument_id": "BTCUSDT", "side": "long", "leverage": "2", "entries": [[100, 1], [110, 1]], "funding": ["-1", "0.2"], "exits": [[120, 0.5], [130, 1.5]]},
+    {"position_id": "short-1", "instrument_id": "ETHUSDT", "side": "short", "leverage": "3", "entries": [[200, 2]], "funding": ["0.5"], "exits": [[190, 1], [180, 1]]}
+  ],
+  "invalid_operations": ["duplicate_position_id_after_close", "oversized_reservation"],
+  "expected": {
+    "completed_positions": ["long-1", "short-1"],
+    "active_positions": 0,
+    "active_reservations": 0,
+    "reservation_operations_change_cash": false,
+    "all_reconciliation_deltas_zero": true
+  }
+}
