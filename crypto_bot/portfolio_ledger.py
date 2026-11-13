@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from decimal import InvalidOperation
 import math
+from copy import deepcopy
+from functools import wraps
 from typing import Any
 
 from .execution import BarExecutionModel, ExecutionFill
@@ -21,6 +23,22 @@ from .models import Side
 
 
 ZERO = Decimal("0")
+
+
+def _atomic_financial(method):
+    """Rollback all ledger state if a multi-step financial operation fails."""
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        snapshot = (self.cash, deepcopy(self.journal), deepcopy(self.positions),
+                    deepcopy(self.reservations), self._entry_sequence, deepcopy(self._events),
+                    deepcopy(self.completed_positions))
+        try:
+            return method(self, *args, **kwargs)
+        except Exception:
+            (self.cash, self.journal, self.positions, self.reservations,
+             self._entry_sequence, self._events, self.completed_positions) = snapshot
+            raise
+    return wrapped
 
 
 def D(value: Decimal | int | float | str) -> Decimal:
@@ -78,6 +96,21 @@ class LedgerPosition:
     entry_fees_paid: Decimal = ZERO
     funding_paid: Decimal = ZERO
     realized_gross_pnl: Decimal = ZERO
+    exit_fees_paid: Decimal = ZERO
+    total_entry_quantity: Decimal = ZERO
+
+
+@dataclass(frozen=True, slots=True)
+class CompletedPositionAccounting:
+    position_id: str
+    instrument_id: str
+    side: Side
+    quantity_closed: Decimal
+    realized_gross_pnl: Decimal
+    entry_fees_paid: Decimal
+    exit_fees_paid: Decimal
+    funding_paid: Decimal
+    final_net_pnl: Decimal
 
 
 @dataclass(slots=True)
@@ -90,6 +123,7 @@ class PortfolioLedger:
     reservations: dict[str, Decimal] = field(default_factory=dict)
     _entry_sequence: int = 0
     _events: dict[str, tuple[tuple[Any, ...], Any]] = field(default_factory=dict)
+    completed_positions: list[CompletedPositionAccounting] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.initial_cash = D(self.initial_cash)
@@ -147,13 +181,15 @@ class PortfolioLedger:
     def release_reservation(self, order_id: str) -> Decimal:
         return self.reservations.pop(order_id, ZERO)
 
+    @_atomic_financial
     def apply_entry_fill(self, *, position_id: str, instrument_id: str, side: Side,
                          fill: ExecutionFill, leverage: Decimal | int | float | str,
                          when: datetime, event_id: str, order_id: str | None = None) -> LedgerPosition:
         qty, price, lev, fee = D(fill.quantity), D(fill.price), D(leverage), D(fill.fee)
-        if qty <= ZERO or price <= ZERO or lev <= ZERO or fee < ZERO: raise ValueError("fill values must be positive with nonnegative fees")
+        slippage = D(fill.slippage)
+        if qty <= ZERO or price <= ZERO or lev <= ZERO or fee < ZERO or slippage < ZERO: raise ValueError("fill values must be positive with nonnegative fees and slippage")
         if fill.order_side is not side: raise ValueError("entry fill direction does not match position")
-        fingerprint = ("ENTRY_FILL", position_id, instrument_id, side, qty, price, lev, fee, when, order_id)
+        fingerprint = ("ENTRY_FILL", position_id, instrument_id, side, qty, price, lev, fee, slippage, when, order_id)
         prior = self._events.get(event_id)
         if prior is not None:
             if prior[0] != fingerprint: raise ValueError(f"conflicting replay for event ID {event_id}")
@@ -167,44 +203,57 @@ class PortfolioLedger:
         new_qty = pos.quantity + qty
         pos.average_entry_price = (pos.quantity * pos.average_entry_price + qty * price) / new_qty
         pos.quantity = new_qty
+        pos.total_entry_quantity += qty
         pos.entry_fees_paid += fee
         self._post("ENTRY_FEE", -fee, when, event_id, instrument_id=instrument_id, position_id=position_id, order_id=order_id)
         self._events[event_id] = (fingerprint, pos)
         return pos
 
+    @_atomic_financial
     def apply_funding(self, position_id: str, amount: Decimal | int | float | str,
                       when: datetime, event_id: str) -> CashJournalEntry:
-        pos = self.positions[position_id]
         amount = D(amount)
         fingerprint = ("FUNDING", position_id, amount, when)
         prior = self._events.get(event_id)
         if prior is not None:
             if prior[0] != fingerprint: raise ValueError(f"conflicting replay for event ID {event_id}")
             return prior[1]
+        pos = self.positions[position_id]
         pos.funding_paid += amount
         result = self._post("FUNDING", amount, when, event_id, instrument_id=pos.instrument_id, position_id=position_id)
         self._events[event_id] = (fingerprint, result)
         return result
 
+    @_atomic_financial
     def apply_exit_fill(self, position_id: str, fill: ExecutionFill, when: datetime,
                         event_id: str, *, order_id: str | None = None, trade_id: str | None = None) -> tuple[Decimal, bool]:
-        pos = self.positions[position_id]
         qty, price, fee = D(fill.quantity), D(fill.price), D(fill.fee)
-        if qty <= ZERO or price <= ZERO or fee < ZERO or qty > pos.quantity: raise ValueError("exit fill values are invalid")
-        expected_side = Side.SHORT if pos.side is Side.LONG else Side.LONG
-        if fill.order_side is not expected_side: raise ValueError("exit fill direction must oppose position")
-        fingerprint = ("EXIT_FILL", position_id, qty, price, fee, fill.order_side, when, order_id, trade_id)
+        slippage = D(fill.slippage)
+        if qty <= ZERO or price <= ZERO or fee < ZERO or slippage < ZERO: raise ValueError("exit fill values are invalid")
+        fingerprint = ("EXIT_FILL", position_id, qty, price, fee, slippage, fill.order_side, when, order_id, trade_id)
         prior = self._events.get(event_id)
         if prior is not None:
             if prior[0] != fingerprint: raise ValueError(f"conflicting replay for event ID {event_id}")
             return prior[1]
+        pos = self.positions[position_id]
+        if qty > pos.quantity: raise ValueError("exit fill quantity exceeds open position")
+        expected_side = Side.SHORT if pos.side is Side.LONG else Side.LONG
+        if fill.order_side is not expected_side: raise ValueError("exit fill direction must oppose position")
         gross = D(pos.side.sign) * qty * (price - pos.average_entry_price)
         pos.quantity -= qty
         pos.realized_gross_pnl += gross
         self._post("REALIZED_PNL", gross, when, event_id, instrument_id=pos.instrument_id, position_id=position_id, order_id=order_id, trade_id=trade_id)
         self._post("EXIT_FEE", -fee, when, event_id, instrument_id=pos.instrument_id, position_id=position_id, order_id=order_id, trade_id=trade_id)
+        pos.exit_fees_paid += fee
         closed = pos.quantity == ZERO
-        if closed: del self.positions[position_id]
+        if closed:
+            self.completed_positions.append(CompletedPositionAccounting(
+                position_id, pos.instrument_id, pos.side,
+                pos.total_entry_quantity,
+                pos.realized_gross_pnl, pos.entry_fees_paid, pos.exit_fees_paid, pos.funding_paid,
+                pos.realized_gross_pnl - pos.entry_fees_paid - pos.exit_fees_paid - pos.funding_paid,
+            ))
+            del self.positions[position_id]
         result = (gross, closed)
         self._events[event_id] = (fingerprint, result)
         return result
@@ -257,14 +306,32 @@ class PortfolioLedger:
         for pid, pos in self.positions.items():
             if pos.quantity <= ZERO or pos.average_entry_price <= ZERO or pos.leverage <= ZERO:
                 raise AssertionError(f"invalid open position accounting: {pid}")
-            if pos.entry_fees_paid < ZERO or not pos.funding_paid.is_finite() or not pos.realized_gross_pnl.is_finite():
+            if (pos.entry_fees_paid < ZERO or pos.exit_fees_paid < ZERO or pos.total_entry_quantity < pos.quantity
+                    or not pos.funding_paid.is_finite() or not pos.realized_gross_pnl.is_finite()):
                 raise AssertionError(f"invalid position financial totals: {pid}")
             position_entries = [entry for entry in self.journal if entry.position_id == pid]
             entry_fees = -sum((entry.amount_usdt for entry in position_entries if entry.entry_type == "ENTRY_FEE"), ZERO)
             funding = sum((entry.amount_usdt for entry in position_entries if entry.entry_type == "FUNDING"), ZERO)
             realized = sum((entry.amount_usdt for entry in position_entries if entry.entry_type == "REALIZED_PNL"), ZERO)
-            if (entry_fees, funding, realized) != (pos.entry_fees_paid, pos.funding_paid, pos.realized_gross_pnl):
+            exit_fees = -sum((entry.amount_usdt for entry in position_entries if entry.entry_type == "EXIT_FEE"), ZERO)
+            if (entry_fees, exit_fees, funding, realized) != (pos.entry_fees_paid, pos.exit_fees_paid, pos.funding_paid, pos.realized_gross_pnl):
                 raise AssertionError(f"position-to-journal accounting mismatch: {pid}")
+        completed_ids = set()
+        for completed in self.completed_positions:
+            if completed.position_id in completed_ids or completed.position_id in self.positions:
+                raise AssertionError("completed position identity is duplicated or still active")
+            completed_ids.add(completed.position_id)
+            entries = [entry for entry in self.journal if entry.position_id == completed.position_id]
+            realized = sum((entry.amount_usdt for entry in entries if entry.entry_type == "REALIZED_PNL"), ZERO)
+            entry_fees = -sum((entry.amount_usdt for entry in entries if entry.entry_type == "ENTRY_FEE"), ZERO)
+            exit_fees = -sum((entry.amount_usdt for entry in entries if entry.entry_type == "EXIT_FEE"), ZERO)
+            funding = sum((entry.amount_usdt for entry in entries if entry.entry_type == "FUNDING"), ZERO)
+            net = realized - entry_fees - exit_fees - funding
+            if (realized, entry_fees, exit_fees, funding, net) != (
+                completed.realized_gross_pnl, completed.entry_fees_paid, completed.exit_fees_paid,
+                completed.funding_paid, completed.final_net_pnl
+            ):
+                raise AssertionError(f"completed position-to-journal reconciliation mismatch: {completed.position_id}")
         if any(value < ZERO or not value.is_finite() for value in self.reservations.values()):
             raise AssertionError("invalid reservation balance")
         journal_by_type = {kind: sum((e.amount_usdt for e in self.journal if e.entry_type == kind), ZERO)
@@ -280,7 +347,8 @@ class PortfolioLedger:
                 "realized_pnl": journal_by_type["REALIZED_PNL"], "entry_fees": journal_by_type["ENTRY_FEE"],
                 "exit_fees": journal_by_type["EXIT_FEE"], "funding": journal_by_type["FUNDING"],
                 "used_margin": used_margin, "reservations": self.reserved_collateral,
-                "free_collateral": free_collateral}
+                "free_collateral": free_collateral,
+                "completed_position_net_pnl": sum((p.final_net_pnl for p in self.completed_positions), ZERO)}
 
     def execution_fill(self, model: BarExecutionModel, raw_price: float, order_side: Side, quantity: float) -> ExecutionFill:
         """Route trade fills through the canonical Phase 2 execution policy."""

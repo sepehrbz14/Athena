@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import unittest
+from dataclasses import replace
+from unittest.mock import patch
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -140,6 +142,85 @@ class PortfolioLedgerTests(unittest.TestCase):
             self.ledger.apply_exit_fill("short", self.fill(90, Side.SHORT, 1), NOW, "wrong-short-exit")
         with self.assertRaises(ValueError):
             self.ledger.equity({"long": "0", "short": 100})
+
+    def _snapshot(self, ledger):
+        return (ledger.cash, tuple(ledger.journal), repr(ledger.positions), dict(ledger.reservations),
+                ledger._entry_sequence, repr(ledger._events), tuple(ledger.completed_positions))
+
+    def test_entry_funding_and_exit_failures_roll_back_all_ledger_state(self):
+        entry_ledger = PortfolioLedger("entry-atomic", 1000)
+        before = self._snapshot(entry_ledger)
+        with patch.object(PortfolioLedger, "_post", side_effect=RuntimeError("injected entry journal failure")):
+            with self.assertRaisesRegex(RuntimeError, "injected"):
+                entry_ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+                    fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="entry-fail")
+        self.assertEqual(self._snapshot(entry_ledger), before)
+
+        funding_ledger = PortfolioLedger("funding-atomic", 1000)
+        funding_ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="entry-ok")
+        funding_ledger.reserve("r", "10", marks={"p": 100})
+        before = self._snapshot(funding_ledger)
+        with patch.object(PortfolioLedger, "_post", side_effect=RuntimeError("injected funding journal failure")):
+            with self.assertRaisesRegex(RuntimeError, "injected"):
+                funding_ledger.apply_funding("p", "-1", NOW, "funding-fail")
+        self.assertEqual(self._snapshot(funding_ledger), before)
+
+        exit_ledger = PortfolioLedger("exit-atomic", 1000)
+        exit_ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=self.fill(100, Side.LONG, 1), leverage=2, when=NOW, event_id="entry-exit")
+        exit_ledger.reserve("r", "10", marks={"p": 100})
+        before = self._snapshot(exit_ledger)
+        original_post = PortfolioLedger._post
+        calls = 0
+        def fail_second(self, *args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise RuntimeError("injected second exit journal failure")
+            return original_post(self, *args, **kwargs)
+        with patch.object(PortfolioLedger, "_post", autospec=True, side_effect=fail_second):
+            with self.assertRaisesRegex(RuntimeError, "second exit"):
+                exit_ledger.apply_exit_fill("p", self.fill(110, Side.SHORT, 1), NOW, "exit-fail")
+        self.assertEqual(calls, 2)
+        self.assertEqual(self._snapshot(exit_ledger), before)
+
+    def test_slippage_is_validated_and_part_of_entry_and_exit_fingerprints(self):
+        entry_fill = self.fill(100, Side.LONG, 1)
+        self.ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+            fill=entry_fill, leverage=2, when=NOW, event_id="entry-slip")
+        with self.assertRaisesRegex(ValueError, "conflicting replay"):
+            self.ledger.apply_entry_fill(position_id="p", instrument_id="BTCUSDT", side=Side.LONG,
+                fill=replace(entry_fill, slippage=entry_fill.slippage + 1), leverage=2, when=NOW, event_id="entry-slip")
+        exit_fill = self.fill(110, Side.SHORT, 1)
+        self.ledger.apply_exit_fill("p", exit_fill, NOW, "exit-slip")
+        with self.assertRaisesRegex(ValueError, "conflicting replay"):
+            self.ledger.apply_exit_fill("p", replace(exit_fill, slippage=exit_fill.slippage + 1), NOW, "exit-slip")
+        bad_slippage = replace(self.fill(100, Side.LONG, 1), slippage=float("nan"))
+        with self.assertRaises(ValueError):
+            PortfolioLedger("bad-slip", 100).apply_entry_fill(position_id="p", instrument_id="BTCUSDT",
+                side=Side.LONG, fill=bad_slippage, leverage=2, when=NOW, event_id="bad-slip")
+
+    def test_closed_position_has_independent_immutable_accounting_reconciliation(self):
+        self.ledger.apply_entry_fill(position_id="closed", instrument_id="BTCUSDT", side=Side.SHORT,
+            fill=self.fill(100, Side.SHORT, 2), leverage=2, when=NOW, event_id="close-entry")
+        self.ledger.apply_funding("closed", "-0.25", NOW, "close-funding")
+        self.ledger.apply_exit_fill("closed", self.fill(90, Side.LONG, 1), NOW, "close-part")
+        self.ledger.apply_exit_fill("closed", self.fill(80, Side.LONG, 1), NOW, "close-final")
+        record = self.ledger.completed_positions[0]
+        self.assertEqual(record.realized_gross_pnl, sum(
+            e.amount_usdt for e in self.ledger.journal if e.position_id == "closed" and e.entry_type == "REALIZED_PNL"))
+        self.assertEqual(record.entry_fees_paid, -sum(
+            e.amount_usdt for e in self.ledger.journal if e.position_id == "closed" and e.entry_type == "ENTRY_FEE"))
+        self.assertEqual(record.exit_fees_paid, -sum(
+            e.amount_usdt for e in self.ledger.journal if e.position_id == "closed" and e.entry_type == "EXIT_FEE"))
+        self.assertEqual(record.funding_paid, sum(
+            e.amount_usdt for e in self.ledger.journal if e.position_id == "closed" and e.entry_type == "FUNDING"))
+        self.assertEqual(record.final_net_pnl, record.realized_gross_pnl - record.entry_fees_paid - record.exit_fees_paid - record.funding_paid)
+        before_cash_events = len(self.ledger.journal)
+        reconciled = self.ledger.reconcile({})
+        self.assertEqual(reconciled["completed_position_net_pnl"], record.final_net_pnl)
+        self.assertEqual(len(self.ledger.journal), before_cash_events)
 
     def test_versioned_replay_fixture_is_deterministic(self):
         fixture = json.loads(Path("tests/fixtures/portfolio_parity/account_ledger_replay_v1.json").read_text())
