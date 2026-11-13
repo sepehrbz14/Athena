@@ -52,7 +52,7 @@ The unit suite checks strict JSON serialization, frozen-schema validation, exact
 
 `.github/workflows/tests.yml` runs on every push and pull request, installs the package with the `test` extra, and runs the complete unittest suite on Python 3.13 for Ubuntu and Windows. Windows uses a workspace-local temp directory to avoid cross-volume replacement failures in paper tests. Schema validation and deterministic replay checks run inside the same complete suite.
 
-**GitHub Actions:** The workflow runs on pushes and pull requests and tests Python 3.13 on Ubuntu and Windows. The earlier Ubuntu paper-manifest newline failure was fixed by canonicalizing newlines in the regression comparison; production paper behavior was not changed. The prior finalization run passed both platforms: [run 43402958231](https://github.com/sepehrbz14/Athena/actions/runs/43402958231). The current full-audit commit’s successful run is linked in the final milestone response; the branch workflow history is also available on the [phase3-finalization Actions page](https://github.com/sepehrbz14/Athena/actions/workflows/tests.yml?query=branch%3Aphase3-finalization).
+**GitHub Actions:** The workflow runs on pushes and pull requests and tests Python 3.13 on Ubuntu and Windows. The earlier Ubuntu paper-manifest newline failure was fixed by canonicalizing newlines in the regression comparison; production paper behavior was not changed. The prior finalization run passed both platforms: [run 43402958231](https://github.com/sepehrbz14/Athena/actions/runs/43402958231). The complete audit and accounting/test commit `c9d8c39` passed on both platforms: [run 43406405287](https://github.com/sepehrbz14/Athena/actions/runs/43406405287). A report-only follow-up also triggers the matrix; its final-commit result is visible on the [phase3-finalization Actions page](https://github.com/sepehrbz14/Athena/actions/workflows/tests.yml?query=branch%3Aphase3-finalization).
 
 ## Clean-checkout reproduction
 
@@ -67,7 +67,7 @@ python -m unittest tests.test_portfolio_ledger.PortfolioLedgerTests.test_version
 python -m unittest discover -s tests -v
 ```
 
-**Executed reproduction:** the final committed tree was extracted with `git archive` into a new clean directory, dependencies were installed from the project test extra, and the full unittest suite plus each ledger replay was run with a workspace-local temporary directory. Result: **110 passed**. The temporary clean directory was removed after verification.
+**Executed reproduction:** the final audit commit tree was extracted with `git archive` into a new clean directory. Local pip could not reach its package index to install build tools, so the clean-tree replay and full suite used the already-installed test dependencies; GitHub Actions independently installed the project test extra on both operating systems. The two ledger replay tests and full suite passed in the archive tree (**110 tests**). The temporary clean directory was removed after verification.
 
 ## Changed files
 
