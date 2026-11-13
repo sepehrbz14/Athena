@@ -1,7 +1,7 @@
 # Athena 2.0 Compounding Portfolio Simulator — Phase 3 Finalization
 
 **Milestone:** Account Ledger finalization  
-**Status:** Local implementation complete; final GitHub Actions run pending publication of this commit. Phase 4 has not started.
+**Status:** Implementation and clean-checkout verification complete. GitHub Actions success is still unverified; Phase 3 final approval remains pending. Phase 4 has not started.
 
 ## Final architecture
 
@@ -50,7 +50,7 @@ The unit suite checks strict JSON serialization, frozen-schema validation, exact
 
 `.github/workflows/tests.yml` runs on every push and pull request, installs the package with the `test` extra, and runs the complete unittest suite on Python 3.13 for Ubuntu and Windows. Windows uses a workspace-local temp directory to avoid cross-volume replacement failures in paper tests. Schema validation and deterministic replay checks run inside the same complete suite.
 
-**GitHub Actions status:** pending. A successful GitHub Actions result must be linked here after the finalized commit is pushed and both matrix jobs complete. Local test results are not represented as GitHub CI results.
+**GitHub Actions status:** The finalization commit `d3cc116` was pushed to `phase3-finalization`. GitHub's commit status endpoint returned no checks, and the connected GitHub integration could not access workflow runs for a push-triggered run. A draft pull request attempt to trigger/query pull-request checks returned HTTP 403 (`Resource not accessible by integration`). Therefore no successful GitHub Actions result is claimed. Both Python 3.13 Ubuntu and Windows jobs must be confirmed before Phase 3 is declared complete.
 
 ## Clean-checkout reproduction
 
@@ -65,7 +65,7 @@ python -m unittest tests.test_portfolio_ledger.PortfolioLedgerTests.test_version
 python -m unittest discover -s tests -v
 ```
 
-The clean-checkout reproduction result should be recorded here with the final commit SHA after it runs.
+**Executed reproduction:** extracted the committed tree at `d3cc116` using `git archive` into a new clean directory, then ran `python -m unittest discover -s tests -v` with a workspace-local temporary directory. Result: **107 passed**. The original and expanded ledger replay tests both ran in that suite; they also passed independently in the source checkout. The temporary clean directory was removed after verification.
 
 ## Changed files
 
