@@ -1,0 +1,51 @@
+{
+  "schema_version": "athena.portfolio_config.v1",
+  "config_id": "athena2_btcusdt_compounding_baseline_v1",
+  "initial_equity_usdt": 10000.0,
+  "instrument_allowlist": ["BTCUSDT"],
+  "per_trade_risk_pct": 0.005,
+  "aggregate_open_pending_stop_risk_pct": 0.015,
+  "leverage": 2.0,
+  "maximum_gross_exposure_equity_multiple": 2.0,
+  "maximum_net_exposure_equity_multiple": 2.0,
+  "maximum_active_positions": 1,
+  "pyramiding_enabled": false,
+  "minimum_equity_usdt": 1.0,
+  "cash_buffer_pct": 0.05,
+  "minimum_quantity_btc": 0.000001,
+  "priority_strategy_order": [
+    "breakout",
+    "mean_reversion",
+    "momentum",
+    "trend_following"
+  ],
+  "daily_loss_limit_pct": 0.03,
+  "maximum_drawdown_pct": 0.1,
+  "pending_order_expiry_eligible_candles": 1,
+  "execution": {
+    "fee_rate": 0.0005,
+    "slippage_bps": 5.0,
+    "funding_rate_per_8h": 0.0001,
+    "candle_minutes": 15,
+    "max_participation_rate": 0.05,
+    "force_close_at_end": true
+  },
+  "order_policy": {
+    "reservation_formula": "remaining_initial_margin_plus_entry_fee_reserve",
+    "cash_buffer_policy": "account_level_equity_floor",
+    "expiry_policy": "first_contiguous_positive_liquidity_attempt",
+    "invalid_actual_stop_policy": "reject_and_release",
+    "slippage_size_policy": "reduce_to_actual_risk_and_collateral_then_reject_below_minimum"
+  },
+  "funding_policy": {
+    "legacy_charge_to_cash_movement_sign": -1,
+    "positive_cash_movement": "received",
+    "negative_cash_movement": "paid",
+    "timing_policy": "elapsed_time_prorated_at_bar_close_before_stop_target"
+  },
+  "insolvency_policy": {
+    "entry_lock_at_minimum_equity": true,
+    "insolvency_threshold_usdt": 0.0,
+    "forced_exit_price_policy": "worst_observed_bar_extreme"
+  }
+}

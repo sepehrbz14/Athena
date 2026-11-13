@@ -1,0 +1,33 @@
+{
+  "fixture_version": "athena.phase4_reservation_examples.v1",
+  "cases": [
+    {
+      "side": "long",
+      "equity_usdt": "10000",
+      "quantity": "1",
+      "reference_price": "10000",
+      "stop_price": "9500",
+      "expected_entry_estimate": "10005",
+      "expected_stop_exit_estimate": "9495.25",
+      "expected_margin_reserve": "5002.5",
+      "expected_entry_fee_reserve": "5.0025",
+      "expected_order_reserve": "5007.5025",
+      "expected_account_cash_buffer": "500",
+      "expected_pending_stop_risk": "519.500125"
+    },
+    {
+      "side": "short",
+      "equity_usdt": "10000",
+      "quantity": "1",
+      "reference_price": "10000",
+      "stop_price": "10500",
+      "expected_entry_estimate": "9995",
+      "expected_stop_exit_estimate": "10505.25",
+      "expected_margin_reserve": "4997.5",
+      "expected_entry_fee_reserve": "4.9975",
+      "expected_order_reserve": "5002.4975",
+      "expected_account_cash_buffer": "500",
+      "expected_pending_stop_risk": "520.500125"
+    }
+  ]
+}

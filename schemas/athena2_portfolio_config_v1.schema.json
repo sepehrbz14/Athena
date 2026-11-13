@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/portfolio-config-v1.schema.json",
+  "title": "Athena 2.0 BTCUSDT compounding portfolio baseline config v1",
+  "description": "Fixed, non-optimized Phase 4 starting configuration. Changes require a new config version.",
+  "type": "object",
+  "required": [
+    "schema_version", "config_id", "initial_equity_usdt", "instrument_allowlist",
+    "per_trade_risk_pct", "aggregate_open_pending_stop_risk_pct", "leverage",
+    "maximum_gross_exposure_equity_multiple", "maximum_net_exposure_equity_multiple",
+    "maximum_active_positions", "pyramiding_enabled", "minimum_equity_usdt",
+    "cash_buffer_pct", "minimum_quantity_btc", "priority_strategy_order",
+    "daily_loss_limit_pct", "maximum_drawdown_pct", "pending_order_expiry_eligible_candles",
+    "execution", "order_policy", "funding_policy", "insolvency_policy"
+  ],
+  "properties": {
+    "schema_version": {"const": "athena.portfolio_config.v1"},
+    "config_id": {"const": "athena2_btcusdt_compounding_baseline_v1"},
+    "initial_equity_usdt": {"const": 10000.0},
+    "instrument_allowlist": {"type": "array", "items": {"const": "BTCUSDT"}, "minItems": 1, "maxItems": 1},
+    "per_trade_risk_pct": {"const": 0.005},
+    "aggregate_open_pending_stop_risk_pct": {"const": 0.015},
+    "leverage": {"const": 2.0},
+    "maximum_gross_exposure_equity_multiple": {"const": 2.0},
+    "maximum_net_exposure_equity_multiple": {"const": 2.0},
+    "maximum_active_positions": {"const": 1},
+    "pyramiding_enabled": {"const": false},
+    "minimum_equity_usdt": {"const": 1.0},
+    "cash_buffer_pct": {"const": 0.05},
+    "minimum_quantity_btc": {"const": 0.000001},
+    "priority_strategy_order": {
+      "const": ["breakout", "mean_reversion", "momentum", "trend_following"]
+    },
+    "daily_loss_limit_pct": {"const": 0.03},
+    "maximum_drawdown_pct": {"const": 0.1},
+    "pending_order_expiry_eligible_candles": {"const": 1},
+    "execution": {
+      "type": "object",
+      "required": ["fee_rate", "slippage_bps", "funding_rate_per_8h", "candle_minutes", "max_participation_rate", "force_close_at_end"],
+      "properties": {
+        "fee_rate": {"const": 0.0005},
+        "slippage_bps": {"const": 5.0},
+        "funding_rate_per_8h": {"const": 0.0001},
+        "candle_minutes": {"const": 15},
+        "max_participation_rate": {"const": 0.05},
+        "force_close_at_end": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "order_policy": {
+      "type": "object",
+      "required": ["reservation_formula", "cash_buffer_policy", "expiry_policy", "invalid_actual_stop_policy", "slippage_size_policy"],
+      "properties": {
+        "reservation_formula": {"const": "remaining_initial_margin_plus_entry_fee_reserve"},
+        "cash_buffer_policy": {"const": "account_level_equity_floor"},
+        "expiry_policy": {"const": "first_contiguous_positive_liquidity_attempt"},
+        "invalid_actual_stop_policy": {"const": "reject_and_release"},
+        "slippage_size_policy": {"const": "reduce_to_actual_risk_and_collateral_then_reject_below_minimum"}
+      },
+      "additionalProperties": false
+    },
+    "funding_policy": {
+      "type": "object",
+      "required": ["legacy_charge_to_cash_movement_sign", "positive_cash_movement", "negative_cash_movement", "timing_policy"],
+      "properties": {
+        "legacy_charge_to_cash_movement_sign": {"const": -1},
+        "positive_cash_movement": {"const": "received"},
+        "negative_cash_movement": {"const": "paid"},
+        "timing_policy": {"const": "elapsed_time_prorated_at_bar_close_before_stop_target"}
+      },
+      "additionalProperties": false
+    },
+    "insolvency_policy": {
+      "type": "object",
+      "required": ["entry_lock_at_minimum_equity", "insolvency_threshold_usdt", "forced_exit_price_policy"],
+      "properties": {
+        "entry_lock_at_minimum_equity": {"const": true},
+        "insolvency_threshold_usdt": {"const": 0.0},
+        "forced_exit_price_policy": {"const": "worst_observed_bar_extreme"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
