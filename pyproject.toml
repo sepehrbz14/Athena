@@ -7,9 +7,10 @@ name = "athena-crypto-bot"
 version = "0.1.0"
 description = "Paper-first, risk-managed crypto strategy research and backtesting toolkit"
 requires-python = ">=3.10"
+dependencies = ["jsonschema>=4.18,<5"]
 
 [project.optional-dependencies]
-test = ["jsonschema>=4.18,<5"]
+test = []
 
 [tool.setuptools.packages.find]
 include = ["crypto_bot*"]

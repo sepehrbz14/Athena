@@ -127,6 +127,21 @@ class BarExecutionModel:
                 return take_profit or candle.low, "take_profit"
         return None
 
+    @staticmethod
+    def opening_stop_gap_request(side: Side, stop_price: float, candle: Candle) -> tuple[float, str] | None:
+        """Resolve only a stop crossed at the observed bar open.
+
+        This lets portfolio orchestration close risk before allocating pending
+        entries while keeping gap-through pricing in the canonical execution
+        component. Intrabar stop/target collisions still use
+        :meth:`intrabar_exit_request`.
+        """
+        if side is Side.LONG and candle.open <= stop_price:
+            return min(stop_price, candle.open), "stop_loss"
+        if side is Side.SHORT and candle.open >= stop_price:
+            return max(stop_price, candle.open), "stop_loss"
+        return None
+
     def position_exit_request(self, position: Position, candle: Candle) -> tuple[float, str] | None:
         return self.intrabar_exit_request(position.side, position.stop_price, position.take_profit, candle)
 

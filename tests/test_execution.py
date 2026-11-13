@@ -85,7 +85,13 @@ class ExecutionPolicyTests(unittest.TestCase):
         self.assertEqual(execution.participation_quantity(40), 10)
 
     def test_actual_json_schemas_accept_valid_and_reject_invalid_records(self):
-        schemas = sorted((ROOT / "schemas").glob("athena2_*.schema.json"))
+        # Validate the three frozen Phase 1 contracts explicitly. Additive
+        # versioned configuration schemas are validated in their own tests.
+        schemas = [ROOT / "schemas" / name for name in (
+            "athena2_portfolio_event_v1.schema.json",
+            "athena2_cash_journal_entry_v1.schema.json",
+            "athena2_frozen_signal_v1.schema.json",
+        )]
         self.assertEqual(len(schemas), 3)
         validators = {}
         for path in schemas:

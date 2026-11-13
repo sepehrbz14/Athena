@@ -225,6 +225,40 @@ class PortfolioLedger:
         self.reservations[order_id] = amount
         return amount
 
+    @_atomic_financial
+    def resize_reservation(self, order_id: str, amount: Decimal | int | float | str, *, marks: dict[str, Any]) -> Decimal:
+        """Atomically replace a live collateral reservation after a partial fill.
+
+        Reservations are account encumbrances, never journal cash movements.
+        A released order ID remains terminal and cannot be reopened.
+        """
+        amount = D(amount)
+        marks = self._require_marks(marks)
+        if not isinstance(order_id, str) or not order_id:
+            raise ValueError("order ID is required")
+        if amount < ZERO:
+            raise ValueError("reservation cannot be negative")
+        if order_id in self.released_orders:
+            raise ValueError("released order reservation cannot be recreated")
+        prior = self.reservations.get(order_id)
+        if prior is None:
+            if amount == ZERO:
+                return ZERO
+            raise ValueError("cannot resize a nonexistent reservation")
+        if prior == amount:
+            return amount
+        # free_collateral includes the old reservation; add it back for the
+        # replacement affordability check.
+        available = self.free_collateral_at(marks) + prior
+        if amount > available:
+            raise ValueError("reservation exceeds free collateral")
+        if amount == ZERO:
+            del self.reservations[order_id]
+            self.released_orders.add(order_id)
+            return ZERO
+        self.reservations[order_id] = amount
+        return amount
+
     def _event(self, event_id: str, fingerprint: tuple[Any, ...], action):
         if not event_id: raise ValueError("event ID is required")
         prior = self._events.get(event_id)
