@@ -388,8 +388,18 @@ class PortfolioSimulator:
             # 7. Batch-allocation at close, available for the next bar open.
             batch = signals_by_available.get(available_at, [])
             if batch:
-                self._allocate_batch(batch, ledger, orders, meta, mark_by_position, order_records,
-                    event_records, disposition_by_row, kill, available_at, equity, equity_entry_locked)
+                if index == len(candles) - 1:
+                    # There is no execution opportunity after the final close.
+                    # Record an explicit terminal disposition instead of
+                    # creating an order that can only be cancelled immediately.
+                    for signal in batch:
+                        self._set_disposition(disposition_by_row, signal, "rejected",
+                            "NO_FOLLOWING_EXECUTION_BAR")
+                        self._event(event_records, available_at, "signal_rejected", signal.order_id,
+                            {"signal_id": signal.signal_id, "reason": "NO_FOLLOWING_EXECUTION_BAR"})
+                else:
+                    self._allocate_batch(batch, ledger, orders, meta, mark_by_position, order_records,
+                        event_records, disposition_by_row, kill, available_at, equity, equity_entry_locked)
 
             if checkpoint_path is not None:
                 self._write_checkpoint(checkpoint_path, candles, signals, index, equity_curve, ledger, orders,
@@ -405,21 +415,38 @@ class PortfolioSimulator:
                 break
 
         reached_end = last_index == len(candles) - 1
-        if self.config.force_close_at_end and candles and reached_end:
+        if candles and reached_end:
             final = candles[-1]
             final_time = final.timestamp + timedelta(minutes=self.execution.candle_minutes)
-            for pid in list(ledger.positions):
-                position = ledger.positions[pid]
-                side = Side.SHORT if position.side is Side.LONG else Side.LONG
-                fill = self.execution.fill(final.close, side, float(position.quantity))
-                ledger.apply_exit_fill(pid, fill, final_time, f"exit:{pid}:{final_time.isoformat()}:end_of_data",
-                    order_id=meta[pid].order_id)
-                self._event(event_records, final_time, "position_closed", pid,
-                    {"reason": "end_of_data", "fill_price": D(fill.price), "quantity": D(fill.quantity)})
-                meta.pop(pid, None)
+            if self.config.force_close_at_end:
+                for pid in list(ledger.positions):
+                    position = ledger.positions[pid]
+                    side = Side.SHORT if position.side is Side.LONG else Side.LONG
+                    fill = self.execution.fill(final.close, side, float(position.quantity))
+                    ledger.apply_exit_fill(pid, fill, final_time, f"exit:{pid}:{final_time.isoformat()}:end_of_data",
+                        order_id=meta[pid].order_id)
+                    self._event(event_records, final_time, "position_closed", pid,
+                        {"reason": "end_of_data", "fill_price": D(fill.price), "quantity": D(fill.quantity)})
+                    meta.pop(pid, None)
             self._cancel_all(ledger, orders, order_records, final_time, event_records, "END_OF_DATA")
+            for raw_row, disposition in tuple(disposition_by_row.items()):
+                if disposition.status == "pending":
+                    disposition_by_row[raw_row] = SignalDisposition(disposition.raw_row,
+                        disposition.signal_id, disposition.instrument_id, disposition.available_at,
+                        disposition.strategy, disposition.selected, "rejected", "END_OF_DATA",
+                        disposition.order_id)
         final_marks = {pid: mark_by_position[pid] for pid in ledger.positions}
         reconciliation = ledger.reconcile(final_marks)
+        final_equity = ledger.equity(final_marks)
+        prior_status = status
+        if final_equity <= ZERO:
+            status = "insolvent"
+        elif final_equity < self.config.minimum_equity_usdt and status == "complete":
+            status = "minimum_equity_locked"
+        if status != prior_status and final_equity < self.config.minimum_equity_usdt:
+            self._event(event_records, candles[-1].timestamp + timedelta(minutes=self.execution.candle_minutes),
+                "entries_locked", self.account_id,
+                {"reason": "INSOLVENCY" if final_equity <= ZERO else "MINIMUM_EQUITY", "equity": final_equity})
         if self.config.force_close_at_end and reached_end:
             final_time = candles[-1].timestamp + timedelta(minutes=self.execution.candle_minutes)
             final_equity = ledger.equity(final_marks)
@@ -432,6 +459,18 @@ class PortfolioSimulator:
                 "drawdown_pct": ZERO if peak <= 0 else max(ZERO, (peak-final_equity)/peak)})
             self._event(event_records, final_time, "end_of_data", self.account_id,
                 {"equity": final_equity, "cash": ledger.cash, "force_closed": True})
+        elif reached_end:
+            final_time = candles[-1].timestamp + timedelta(minutes=self.execution.candle_minutes)
+            final_equity = ledger.equity(final_marks)
+            peak = max(peak, final_equity)
+            equity_curve.append({"time": final_time, "cash": ledger.cash,
+                "unrealized_gross_pnl": final_equity - ledger.cash, "equity": final_equity,
+                "used_margin": ledger.used_initial_margin(final_marks), "reservations": ledger.reserved_collateral,
+                "gross_exposure": self._gross_exposure(ledger, meta, final_marks, orders),
+                "net_exposure": self._net_exposure(ledger, meta, final_marks, orders),
+                "drawdown_pct": ZERO if peak <= 0 else max(ZERO, (peak-final_equity)/peak)})
+            self._event(event_records, final_time, "end_of_data", self.account_id,
+                {"equity": final_equity, "cash": ledger.cash, "force_closed": False})
         max_dd = max((row["drawdown_pct"] for row in equity_curve), default=ZERO)
         result = PortfolioResult(self.config.sha256, manifest, list(disposition_by_row.values()), event_records,
             equity_curve, reconciliation, ledger, order_records, peak, max_dd, status)

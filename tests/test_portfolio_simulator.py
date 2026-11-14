@@ -134,6 +134,39 @@ class PortfolioSimulatorTests(unittest.TestCase):
         self.assertEqual(result.ledger.reservations, {})
         self.assertEqual(result.reconciliation["equity_delta"], Decimal("0"))
 
+    def test_final_close_signal_is_disposed_without_creating_unfillable_order(self):
+        candles = make_candles(count=3)
+        sig = signal(candles, index=2)
+        result = PortfolioSimulator(CONFIG).run(candles, [sig])
+        disposition = result.dispositions[0]
+        self.assertEqual(disposition.status, "rejected")
+        self.assertEqual(disposition.reason_code, "NO_FOLLOWING_EXECUTION_BAR")
+        self.assertFalse(any(row["event"] == "reserved" for row in result.orders))
+        self.assertFalse(result.ledger.reservations)
+
+    def test_end_of_data_cancels_stale_pending_order_and_disposes_signal(self):
+        candles = make_candles(count=5, gap_at=4)
+        sig = signal(candles, index=3)
+        result = PortfolioSimulator(CONFIG).run(candles, [sig])
+        self.assertTrue(any(row["event"] == "cancelled" and row["reason"] == "END_OF_DATA"
+            for row in result.orders))
+        self.assertEqual(result.dispositions[0].status, "rejected")
+        self.assertEqual(result.dispositions[0].reason_code, "END_OF_DATA")
+        self.assertFalse(result.ledger.reservations)
+        result.ledger.reconcile({})
+
+    def test_non_force_close_end_of_data_keeps_marked_position_and_releases_orders(self):
+        config = replace(CONFIG, force_close_at_end=False)
+        candles = make_candles(count=5)
+        sig = signal(candles)
+        result = PortfolioSimulator(config).run(candles, [sig])
+        self.assertEqual(len(result.ledger.positions), 1)
+        self.assertFalse(result.ledger.reservations)
+        summary = result.financial_summary()
+        self.assertNotEqual(Decimal(summary["final_unrealized_gross_pnl_usdt"]), Decimal("0"))
+        self.assertTrue(any(event["event_type"] == "END_OF_DATA"
+            and event["payload"]["force_closed"] is False for event in result.events))
+
     def test_partial_fill_expires_and_reservation_never_posts_cash(self):
         candles = make_candles(count=5, volumes=[20, 20, 20, 20, 20])
         sig = signal(candles)
