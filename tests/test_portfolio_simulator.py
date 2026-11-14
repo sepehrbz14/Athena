@@ -182,6 +182,59 @@ class PortfolioSimulatorTests(unittest.TestCase):
         self.assertEqual(closure["payload"]["raw_price"], Decimal("90"))
         result.ledger.reconcile({})
 
+    def test_funding_uses_full_elapsed_interval_across_data_gap(self):
+        # Position opens on candle 1, then a 30-minute interval separates the
+        # next candle. Carried quantity must accrue all elapsed time once.
+        candles = make_candles(count=5)
+        candles[3] = Candle(candles[2].timestamp + timedelta(minutes=30), 100, 101, 99, 100, 1000)
+        candles[4] = Candle(candles[3].timestamp + timedelta(minutes=15), 100, 101, 99, 100, 1000)
+        sig = signal(candles, stop=95, target=130)
+        result = PortfolioSimulator(CONFIG).run(candles, [sig])
+        quantity = result.ledger.completed_positions[0].quantity_closed
+        expected_charge = sum((quantity * Decimal("100") * Decimal(str(CONFIG.execution.funding_rate_per_8h))
+            * Decimal(str(hours)) / Decimal("8") for hours in (0.25, 0.25, 0.5, 0.25)), Decimal("0"))
+        posted = sum((entry.amount_usdt for entry in result.ledger.journal if entry.entry_type == "FUNDING"), Decimal("0"))
+        self.assertLessEqual(abs(posted + expected_charge), Decimal("1e-18"))
+        result.ledger.reconcile({})
+
+    def test_minimum_equity_is_entry_lock_not_existing_position_liquidation(self):
+        # A deliberately high test floor makes the distinction observable
+        # without changing the frozen baseline configuration.
+        config = replace(CONFIG, minimum_equity_usdt=Decimal("9999"))
+        candles = make_candles(count=5, highs=[101, 101, 101, 101, 101],
+            lows=[99, 99, 99, 99, 99])
+        candles[2] = Candle(candles[2].timestamp, 99.5, 100, 99, 99.5, 1000)
+        sig = signal(candles, stop=95, target=130)
+        result = PortfolioSimulator(config).run(candles, [sig])
+        closures = [event for event in result.events if event["event_type"] == "POSITION_CLOSED"]
+        self.assertEqual(len(closures), 1)
+        self.assertEqual(closures[0]["payload"]["reason"], "end_of_data")
+        self.assertEqual(result.status, "minimum_equity_locked")
+        result.ledger.reconcile({})
+
+    def test_adverse_gap_below_minimum_equity_locks_future_signals_and_reports_remaining_cash(self):
+        candles = make_candles(count=4, highs=[101, 101, 49, 49], lows=[100.01, 100.01, 47.441, 47.441],
+            volumes=[10000] * 4)
+        candles[2] = Candle(candles[2].timestamp, 47.441, 48, 47.441, 47.441, 10000)
+        first = signal(candles, signal_id=1, stop=99.99, target=None)
+        later = signal(candles, signal_id=2, index=2, stop=40, target=60)
+        result = PortfolioSimulator(CONFIG).run(candles, [first, later])
+        self.assertEqual(result.status, "minimum_equity_locked")
+        self.assertGreater(result.ledger.cash, Decimal("0"))
+        self.assertLess(result.ledger.cash, CONFIG.minimum_equity_usdt)
+        second_disposition = next(d for d in result.dispositions if d.signal_id == 2)
+        self.assertEqual(second_disposition.status, "rejected")
+        self.assertEqual(second_disposition.reason_code, "MINIMUM_EQUITY")
+        closure = next(event for event in result.events if event["event_type"] == "POSITION_CLOSED")
+        self.assertEqual(closure["payload"]["reason"], "stop_loss")
+        self.assertTrue(closure["payload"]["gap_at_open"])
+        self.assertFalse(any(event["event_type"] == "INSOLVENCY_DECLARED" for event in result.events))
+        summary = result.financial_summary()
+        self.assertEqual(Decimal(summary["insolvency_deficit_usdt"]), Decimal("0"))
+        self.assertEqual(Decimal(summary["final_equity_usdt"]), result.ledger.cash)
+        self.assertGreater(Decimal(summary["net_loss_from_initial_equity_usdt"]), Decimal("9999"))
+        result.ledger.reconcile({})
+
     def test_catastrophic_gap_triggers_insolvency_lock_and_worst_price_exit(self):
         candles = make_candles(count=4, highs=[101, 101, .002, .002], lows=[99, 100, .0005, .0005],
             volumes=[10000, 10000, 10000, 10000])
@@ -193,6 +246,9 @@ class PortfolioSimulatorTests(unittest.TestCase):
         self.assertTrue(any(event["event_type"] == "INSOLVENCY_DECLARED" for event in result.events))
         self.assertFalse(result.ledger.positions)
         self.assertLess(result.ledger.cash, 0)
+        summary = result.financial_summary()
+        self.assertEqual(Decimal(summary["insolvency_deficit_usdt"]), -result.ledger.cash)
+        self.assertTrue(summary["insolvent"])
         closure = next(event for event in result.events if event["event_type"] == "POSITION_CLOSED"
             and event["payload"].get("reason") == "insolvency")
         self.assertEqual(closure["payload"]["raw_price"], Decimal("0.0005"))

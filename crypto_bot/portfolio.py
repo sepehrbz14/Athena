@@ -41,6 +41,30 @@ class PortfolioResult:
     status: str
     checkpoint_sha256: str | None = None
 
+    def financial_summary(self) -> dict[str, Any]:
+        """Return account outcome with remaining equity separated from deficit.
+
+        A negative final equity is an insolvency deficit, not negative
+        remaining capital. Net loss from initial equity is reported separately.
+        """
+        initial_cash = sum((entry.amount_usdt for entry in self.ledger.journal
+            if entry.entry_type == "INITIAL_DEPOSIT"), ZERO)
+        final_cash = self.ledger.cash
+        final_equity = self.equity_curve[-1]["equity"] if self.equity_curve else final_cash
+        return {
+            "schema_version": "athena.portfolio_account_summary.v1",
+            "status": self.status,
+            "initial_equity_usdt": str(initial_cash),
+            "final_cash_usdt": str(final_cash),
+            "final_unrealized_gross_pnl_usdt": str(final_equity - final_cash),
+            "final_equity_usdt": str(final_equity),
+            "net_loss_from_initial_equity_usdt": str(initial_cash - final_equity),
+            "insolvency_deficit_usdt": str(max(ZERO, -final_equity)),
+            "insolvent": self.status == "insolvent" or final_equity <= ZERO,
+            "maximum_drawdown_pct": str(self.maximum_drawdown_pct),
+            "reconciliation": {key: str(value) for key, value in self.reconciliation.items()},
+        }
+
     def as_record(self) -> dict[str, Any]:
         def dec(value: Any) -> Any:
             if isinstance(value, Decimal):
@@ -143,6 +167,10 @@ class PortfolioSimulator:
 
         for index, candle in enumerate(candles):
             last_index = index
+            # Fill quantities are a per-candle delta. Keeping them across bars
+            # misclassifies carried inventory as newly filled and under-accrues
+            # elapsed funding across data gaps.
+            filled_this_bar.clear()
             bar_time = candle.timestamp.astimezone(timezone.utc)
             available_at = bar_time + timedelta(minutes=self.execution.candle_minutes)
             if index and candle.timestamp - candles[index - 1].timestamp > timedelta(minutes=self.execution.candle_minutes):
@@ -151,40 +179,21 @@ class PortfolioSimulator:
                      "missing_intervals": max(0, int((candle.timestamp-candles[index-1].timestamp).total_seconds() //
                          (self.execution.candle_minutes * 60)) - 1)})
 
-            # 1. Resolve only stop gaps at the observed open before allocating
-            # pending entries. Gap-through pricing remains in BarExecutionModel.
-            for pid in list(ledger.positions):
-                position = ledger.positions[pid]
-                state = meta[pid]
-                equity_at_open = ledger.equity({pid: D(candle.open)})
-                if equity_at_open <= ZERO:
-                    raw_extreme = candle.low if position.side is Side.LONG else candle.high
-                    exit_request = (raw_extreme, "insolvency")
-                    status = "insolvent"
-                    equity_entry_locked = True
-                    self._cancel_all(ledger, orders, order_records, bar_time, event_records, "INSOLVENCY")
-                else:
-                    exit_request = self.execution.opening_stop_gap_request(position.side, float(state.stop_price), candle)
-                if exit_request is not None:
-                    raw_price, reason = exit_request
-                    exit_side = Side.SHORT if position.side is Side.LONG else Side.LONG
-                    fill = self.execution.fill(raw_price, exit_side, float(position.quantity))
-                    ledger.apply_exit_fill(pid, fill, available_at,
-                        f"exit:{pid}:{available_at.isoformat()}:{reason}", order_id=state.order_id)
-                    state.exit_reason = reason
-                    meta.pop(pid, None)
-                    mark_by_position.pop(pid, None)
-                    self._event(event_records, bar_time, "position_closed", pid,
-                        {"reason": reason, "gap_at_open": True, "raw_price": D(raw_price),
-                         "fill_price": D(fill.price), "quantity": D(fill.quantity)})
-                    if state.order_id in orders:
-                        self._cancel_order(ledger, orders, order_records, state.order_id,
-                            "POSITION_CLOSED_BEFORE_REMAINDER_FILLED", bar_time, event_records)
-
-            # Re-mark any surviving positions at the observed open before
-            # calculating this bar's risk, margin and exposure availability.
+            # Mark existing positions at the observed open before validating
+            # pending risk/collateral. The minimum-equity floor locks entries
+            # and releases pending reservations; it does not liquidate existing
+            # positions. Insolvency exits are evaluated at the adverse bar
+            # extreme after this bar's frozen funding accrual below.
             for pid in ledger.positions:
                 mark_by_position[pid] = D(candle.open)
+            equity_at_open = self._equity(ledger, mark_by_position)
+            if equity_at_open < self.config.minimum_equity_usdt and not equity_entry_locked:
+                equity_entry_locked = True
+                if status == "complete":
+                    status = "minimum_equity_locked"
+                self._cancel_all(ledger, orders, order_records, bar_time, event_records, "MINIMUM_EQUITY")
+                self._event(event_records, bar_time, "entries_locked", self.account_id,
+                    {"reason": "MINIMUM_EQUITY", "equity": equity_at_open})
 
             # 3. Pending orders get an eligible next-open attempt only when the
             # immediate prior candle is contiguous and has positive volume.
@@ -192,14 +201,14 @@ class PortfolioSimulator:
             eligible_attempt = index > 0 and not stale and valid_volume is not None and valid_volume > 0
             for order_id in list(orders):
                 order = orders[order_id]
+                if equity_entry_locked:
+                    self._cancel_order(ledger, orders, order_records, order_id, "MINIMUM_EQUITY", bar_time, event_records)
+                    self._set_disposition(disposition_by_row, order.signal, "rejected", "MINIMUM_EQUITY")
+                    continue
                 allowed, _reason = kill.allow_new_trade()
                 if not allowed:
                     self._cancel_order(ledger, orders, order_records, order_id, "KILL_SWITCH_ACTIVE", bar_time, event_records)
                     self._set_disposition(disposition_by_row, order.signal, "rejected", "KILL_SWITCH_ACTIVE")
-                    continue
-                if equity_entry_locked:
-                    self._cancel_order(ledger, orders, order_records, order_id, "MINIMUM_EQUITY", bar_time, event_records)
-                    self._set_disposition(disposition_by_row, order.signal, "rejected", "MINIMUM_EQUITY")
                     continue
                 if not eligible_attempt:
                     self._event(event_records, bar_time, "order_waiting_for_liquidity", order_id,
@@ -310,8 +319,8 @@ class PortfolioSimulator:
                         {"legacy_charge": D(legacy_charge), "ledger_cash_movement": funding_cash})
                 state.last_funding_timestamp = available_at
 
-            # 5. Resolve intrabar stop/target collisions after all open fills and
-            # funding. The execution model keeps its adverse-stop-first policy.
+            # 5. Resolve gap and intrabar exits after the frozen funding accrual.
+            # BarExecutionModel preserves adverse-stop-first gap/collision rules.
             for pid in list(ledger.positions):
                 position = ledger.positions[pid]
                 state = meta[pid]
@@ -321,13 +330,15 @@ class PortfolioSimulator:
                     float(-position.funding_paid), signal_id=state.signal.signal_id,
                     last_funding_timestamp=state.last_funding_timestamp)
                 worst_mark = candle.low if position.side is Side.LONG else candle.high
+                gap_exit_request = self.execution.opening_stop_gap_request(position.side,
+                    float(state.stop_price), candle)
                 if ledger.equity({pid: D(worst_mark)}) <= ZERO:
                     exit_request = (worst_mark, "insolvency")
                     status = "insolvent"
                     equity_entry_locked = True
                     self._cancel_all(ledger, orders, order_records, available_at, event_records, "INSOLVENCY")
                 else:
-                    exit_request = self.execution.position_exit_request(view, candle)
+                    exit_request = gap_exit_request or self.execution.position_exit_request(view, candle)
                 if exit_request is not None:
                     raw_price, reason = exit_request
                     exit_side = Side.SHORT if position.side is Side.LONG else Side.LONG
@@ -337,7 +348,8 @@ class PortfolioSimulator:
                     meta.pop(pid, None)
                     mark_by_position.pop(pid, None)
                     self._event(event_records, available_at, "position_closed", pid,
-                        {"reason": reason, "raw_price": D(raw_price), "fill_price": D(fill.price), "quantity": D(fill.quantity)})
+                        {"reason": reason, "gap_at_open": gap_exit_request is not None and exit_request == gap_exit_request,
+                         "raw_price": D(raw_price), "fill_price": D(fill.price), "quantity": D(fill.quantity)})
                     if state.order_id in orders:
                         self._cancel_order(ledger, orders, order_records, state.order_id,
                             "POSITION_CLOSED_BEFORE_REMAINDER_FILLED", available_at, event_records)
@@ -362,14 +374,16 @@ class PortfolioSimulator:
             if equity <= ZERO:
                 status = "insolvent"
             if equity < self.config.minimum_equity_usdt:
+                newly_locked = not equity_entry_locked
                 equity_entry_locked = True
                 self._cancel_all(ledger, orders, order_records, available_at, event_records, "MINIMUM_EQUITY")
                 if equity <= ZERO:
                     status = "insolvent"
                 elif status == "complete":
                     status = "minimum_equity_locked"
-                self._event(event_records, available_at, "entries_locked", self.account_id,
-                        {"reason": "INSOLVENCY" if equity <= ZERO else "MINIMUM_EQUITY", "equity": equity})
+                if newly_locked:
+                    self._event(event_records, available_at, "entries_locked", self.account_id,
+                            {"reason": "INSOLVENCY" if equity <= ZERO else "MINIMUM_EQUITY", "equity": equity})
 
             # 7. Batch-allocation at close, available for the next bar open.
             batch = signals_by_available.get(available_at, [])
@@ -439,10 +453,10 @@ class PortfolioSimulator:
             key = (signal.instrument_id, signal.available_at)
             reason = None
             allowed, kill_reason = kill.allow_new_trade()
-            if not allowed:
-                reason = "KILL_SWITCH_ACTIVE"
-            elif equity_entry_locked:
+            if equity_entry_locked:
                 reason = "MINIMUM_EQUITY"
+            elif not allowed:
+                reason = "KILL_SWITCH_ACTIVE"
             elif key in seen_in_batch:
                 reason = "CONFLICTING_SIGNAL_BATCH"
             elif signal.instrument_id not in self.config.instrument_allowlist:
@@ -779,4 +793,6 @@ def run_from_files(*, config_path: str | Path, signal_path: str | Path, metadata
     record = result.as_record()
     (root / "portfolio_result_v1.json").write_text(json.dumps(record, sort_keys=True, indent=2, allow_nan=False), encoding="utf-8")
     (root / "portfolio_events_v1.jsonl").write_text("".join(json.dumps(row, sort_keys=True, allow_nan=False) + "\n" for row in record["events"]), encoding="utf-8")
+    (root / "portfolio_account_summary_v1.json").write_text(
+        json.dumps(result.financial_summary(), sort_keys=True, indent=2, allow_nan=False), encoding="utf-8")
     return result

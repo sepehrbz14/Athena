@@ -84,7 +84,13 @@ class BarExecutionModel:
         funding_rate_per_8h: float,
         elapsed_hours: float,
     ) -> float:
-        """Signed funding cash amount: positive is a credit, negative a debit."""
+        """Return legacy funding *charge*: positive debits a long's account.
+
+        PortfolioLedger uses signed cash movement (positive means received),
+        so the portfolio adapter negates this value exactly once. The legacy
+        backtester continues to store this quantity in its historical
+        ``funding_paid`` convention.
+        """
         return side.sign * quantity * mark_price * funding_rate_per_8h * max(0.0, elapsed_hours) / 8
 
     def accrue_funding(self, position: Position, candle: Candle) -> float:
