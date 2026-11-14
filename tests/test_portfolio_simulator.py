@@ -155,6 +155,25 @@ class PortfolioSimulatorTests(unittest.TestCase):
         self.assertFalse(result.ledger.reservations)
         result.ledger.reconcile({})
 
+    def test_safety_lock_cancels_pending_reservations_without_cash_movement(self):
+        from crypto_bot.portfolio_ledger import PortfolioLedger
+        when = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        for reason in ("MINIMUM_EQUITY", "INSOLVENCY"):
+            with self.subTest(reason=reason):
+                ledger = PortfolioLedger("safety-lock-test", Decimal("10000"))
+                ledger.reserve("order:pending", Decimal("1200"), marks={})
+                original_cash = ledger.cash
+                original_journal = list(ledger.journal)
+                orders = {"order:pending": object()}
+                records, events = [], []
+                PortfolioSimulator(CONFIG)._cancel_all(ledger, orders, records, when, events, reason)
+                self.assertFalse(orders)
+                self.assertFalse(ledger.reservations)
+                self.assertEqual(ledger.cash, original_cash)
+                self.assertEqual(ledger.journal, original_journal)
+                self.assertEqual(records[0]["reason"], reason)
+                self.assertEqual(events[0]["payload"]["reason"], reason)
+
     def test_non_force_close_end_of_data_keeps_marked_position_and_releases_orders(self):
         config = replace(CONFIG, force_close_at_end=False)
         candles = make_candles(count=5)
