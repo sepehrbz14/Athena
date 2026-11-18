@@ -37,7 +37,7 @@ Evaluation-start records preserve source commit and dirty state, dataset and sou
 ## Changed files
 
 - `crypto_bot/experiment_registry.py` — append-only registry, deterministic IDs/seeds, event transitions, multiplicity accounting, verifier, and CLI.
-- `tests/test_experiment_registry.py` — 18 registry-specific contract, failure-path, line-ending, and golden-vector tests.
+- `tests/test_experiment_registry.py` — 19 registry-specific contract, lifecycle, failure-path, line-ending, and golden-vector tests.
 - `reports/evolution_engine_milestone0_2026-11-18/frozen_protocol.md` — precise decimal-string representation for the already-frozen unsigned 64-bit seed.
 - `reports/evolution_engine_milestone1_2026-11-18/README.md` — usage and trust boundary.
 - `reports/evolution_engine_milestone1_2026-11-18/completion_report.md` — this acceptance record.
@@ -46,8 +46,8 @@ Existing Phase 3, Phase 4, Phase 5 datasets, reports, experiment outputs, ledger
 
 ## Acceptance evidence
 
-- Registry-specific tests: **18 passed**, including golden protocol, candidate, attempt, unsigned 64-bit seed, and LF/CRLF schema-bundle vectors.
-- Full local regression suite: **175 passed** on Windows Python 3.13 when `TEMP`/`TMP` point to a directory on the workspace volume. The desktop synthetic temporary mount caused four existing atomic-rename tests to fail with WinError 650; the repository workflow already sets a workspace-local temporary directory for both CI platforms.
+- Registry-specific tests: **19 passed**, including separate `INSUFFICIENT_EVIDENCE` lifecycle coverage, golden protocol/candidate/attempt IDs, unsigned 64-bit seed, and LF/CRLF schema-bundle vectors.
+- Full local regression suite: **176 passed** on Windows Python 3.13 when `TEMP`/`TMP` point to a directory on the workspace volume. The desktop synthetic temporary mount caused four existing atomic-rename tests to fail with WinError 650; the repository workflow already sets a workspace-local temporary directory for both CI platforms.
 - Clean-checkout reproduction: GitHub Actions checked out commit `d2df0b5d3c932d92b7a789051df2732629f38044` at depth 1 on fresh Ubuntu and Windows runners. The full suite passed on both, including exact golden values: protocol `sha256:9b7f82d541c910cfa6786189e488f9dd9b514ee3b6179b6beaa430aff24aafb5`; candidate `sha256:6dccf9c39cc9f6a28e70461f108ac47462c44928890cecbe12b331b7a5e4e102`; attempt `sha256:67289e7b7c86cbaa7ace9f7e9c10ea0a7f06180315306bf1a75e0f439e6569ee`; submitted spec SHA-256 `2b881495cb1efb0b45f7e3409d308578c510409c43bfa84d8c15e62380c29f79`; seed `18292073701005286295` (decimal string in registry event).
 - GitHub Actions Python 3.13 / Ubuntu: **passed**, [job 135054570763](https://github.com/sepehrbz14/Athena/actions/runs/44375810154/job/135054570763).
 - GitHub Actions Python 3.13 / Windows: **passed**, [job 135054570743](https://github.com/sepehrbz14/Athena/actions/runs/44375810154/job/135054570743).

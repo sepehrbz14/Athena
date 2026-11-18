@@ -362,6 +362,17 @@ class ExperimentRegistryTests(unittest.TestCase):
         self.assertEqual(outcome["event_type"], "NO_QUALIFYING_CANDIDATE")
         self.assertTrue(self.registry.verify().valid)
 
+    def test_insufficient_evidence_is_distinct_and_remains_in_multiplicity_family(self):
+        self.assertEqual(self.registry.validate_attempt(self.attempt_id), "VALIDATED")
+        self.registry.record_evaluation_started(self.attempt_id, ["outer-1"], ["net"])
+        self.registry.complete_evaluation(self.attempt_id, result_sha256=ZERO,
+            wall_seconds=1, peak_memory_mb=1, artifact_bytes=1)
+        self.registry.mark_insufficient(self.attempt_id, "MINIMUM_SAMPLE_FLOOR")
+        self.assertEqual(self.registry.attempt_states()[self.attempt_id], "INSUFFICIENT_EVIDENCE")
+        self.assertEqual({row["p_value"] for row in self.registry.multiplicity_entries()}, {1.0})
+        self.assertEqual(len(self.registry.multiplicity_entries()), 4)
+        self.assertTrue(self.registry.verify().valid)
+
     def test_technical_and_unevaluated_attempts_block_valid_no_qualifier(self):
         self.registry.skip_attempt(self.attempt_id, "not run")
         with self.assertRaises(registry.InvalidTransitionError):
