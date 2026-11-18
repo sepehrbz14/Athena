@@ -28,7 +28,7 @@ The only clarification to frozen wording is the seed's storage representation. T
 
 `crypto_bot/experiment_registry.py` implements a local SQLite event store with `synchronous=FULL`, exclusive create semantics, and update/delete-denying triggers for events and raw candidate specifications. Protocol registration, raw attempt bytes, attempt registration events, and the manifest seal are committed in one SQLite transaction. An injected interruption at any event boundary rolls back the whole registration batch.
 
-Protocol, candidate, search-family, attempt, and event identifiers use deterministic canonical content hashing. The protocol hash excludes only the derived attempt-manifest digest to avoid a protocol/attempt/manifest hash cycle; the full manifest digest is included in the sealed hash-chain event and final protocol record. Attempt ordinals are cumulative within the persistent search family and never reset across linked protocol revisions. Duplicate candidate content can be submitted again as a new counted attempt with a distinct ordinal and attempt ID.
+Protocol, candidate, search-family, attempt, and event identifiers use deterministic canonical content hashing. The schema-bundle digest normalizes CRLF to LF before hashing, so Git's Windows line-ending conversion does not change the frozen schema identity. The protocol hash excludes only the derived attempt-manifest digest to avoid a protocol/attempt/manifest hash cycle; the full manifest digest is included in the sealed hash-chain event and final protocol record. Attempt ordinals are cumulative within the persistent search family and never reset across linked protocol revisions. Duplicate candidate content can be submitted again as a new counted attempt with a distinct ordinal and attempt ID.
 
 Every attempt is recorded before parsing or validation. Invalid submitted bytes, rejected candidates, insufficient evidence, technical failures, skipped/unevaluated attempts, and completed attempts remain in the sealed family. Four multiplicity rows are reconstructed for every attempt; invalid, failed, insufficient, skipped, unevaluated, and missing p-values receive p=1. Resource-limit violations become technical failures. `NO_QUALIFYING_CANDIDATE` is accepted only after every attempt has a compatible terminal disposition and is recorded as a successful outcome.
 
@@ -37,7 +37,7 @@ Evaluation-start records preserve source commit and dirty state, dataset and sou
 ## Changed files
 
 - `crypto_bot/experiment_registry.py` — append-only registry, deterministic IDs/seeds, event transitions, multiplicity accounting, verifier, and CLI.
-- `tests/test_experiment_registry.py` — 16 registry-specific contract and failure-path tests.
+- `tests/test_experiment_registry.py` — 18 registry-specific contract, failure-path, line-ending, and golden-vector tests.
 - `reports/evolution_engine_milestone0_2026-11-18/frozen_protocol.md` — precise decimal-string representation for the already-frozen unsigned 64-bit seed.
 - `reports/evolution_engine_milestone1_2026-11-18/README.md` — usage and trust boundary.
 - `reports/evolution_engine_milestone1_2026-11-18/completion_report.md` — this acceptance record.
@@ -46,8 +46,9 @@ Existing Phase 3, Phase 4, Phase 5 datasets, reports, experiment outputs, ledger
 
 ## Acceptance evidence
 
-- Registry-specific tests: **17 passed**, including golden protocol, candidate, attempt, and unsigned 64-bit seed vectors.
-- Full local regression suite: **174 passed** on Windows Python 3.13 when `TEMP`/`TMP` point to a directory on the workspace volume. The desktop synthetic temporary mount caused four existing atomic-rename tests to fail with WinError 650; the repository workflow already sets a workspace-local temporary directory for both CI platforms.
+- Registry-specific tests: **18 passed**, including golden protocol, candidate, attempt, unsigned 64-bit seed, and LF/CRLF schema-bundle vectors.
+- Full local regression suite: **175 passed** on Windows Python 3.13 when `TEMP`/`TMP` point to a directory on the workspace volume. The desktop synthetic temporary mount caused four existing atomic-rename tests to fail with WinError 650; the repository workflow already sets a workspace-local temporary directory for both CI platforms.
+- Cross-platform correction: the first golden-vector CI run exposed that Windows checkout line endings changed the schema-bundle hash. The registry now normalizes CRLF to LF before hashing, with an explicit equivalence test. Final CI rerun is pending.
 - Clean-checkout reproduction: pending final commit and report.
 - GitHub Actions Ubuntu and Windows Python 3.13: pending final push and workflow completion.
 

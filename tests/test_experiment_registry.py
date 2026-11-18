@@ -193,6 +193,19 @@ class ExperimentRegistryTests(unittest.TestCase):
         self.assertEqual(registry.derive_seed(protocol["protocol_id"], attempt, "outer-1", "net"),
                          18292073701005286295)
 
+    def test_schema_bundle_hash_is_stable_for_lf_and_crlf_checkouts(self):
+        source = registry._M0_SCHEMA_DIR
+        with tempfile.TemporaryDirectory(dir=self.temp.name) as temp_dir:
+            lf = Path(temp_dir) / "lf"
+            crlf = Path(temp_dir) / "crlf"
+            lf.mkdir()
+            crlf.mkdir()
+            for name in registry._SCHEMA_NAMES:
+                raw = (source / name).read_bytes().replace(b"\r\n", b"\n")
+                (lf / name).write_bytes(raw)
+                (crlf / name).write_bytes(raw.replace(b"\n", b"\r\n"))
+            self.assertEqual(registry.schema_bundle_sha256(lf), registry.schema_bundle_sha256(crlf))
+
     def test_registration_is_sealed_before_validation_and_records_identity(self):
         events = self.registry.events()
         self.assertEqual([e["event_type"] for e in events], [

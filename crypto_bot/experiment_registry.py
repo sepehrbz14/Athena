@@ -197,11 +197,16 @@ def content_id(payload: Any) -> str:
 
 
 def schema_bundle_sha256(schema_dir: Path | None = None) -> str:
-    """Hash the exact named M0 schema bytes in stable order."""
+    """Hash named M0 schema bytes with Git-independent LF line endings.
+
+    Git may materialize text files with CRLF on Windows. Normalizing only the
+    line-ending convention keeps the schema bundle identity stable while all
+    JSON content, whitespace within lines, names, and ordering remain hashed.
+    """
     directory = schema_dir or _M0_SCHEMA_DIR
     hasher = hashlib.sha256()
     for name in _SCHEMA_NAMES:
-        raw = (directory / name).read_bytes()
+        raw = (directory / name).read_bytes().replace(b"\r\n", b"\n")
         name_bytes = name.encode("utf-8")
         hasher.update(len(name_bytes).to_bytes(4, "big"))
         hasher.update(name_bytes)
