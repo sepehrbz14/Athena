@@ -46,8 +46,8 @@ Existing Phase 3, Phase 4, Phase 5 datasets, reports, experiment outputs, ledger
 
 ## Acceptance evidence
 
-- Registry-specific tests: **16 passed**.
-- Full local regression suite: **173 passed** on Windows Python 3.13 when `TEMP`/`TMP` point to a directory on the workspace volume. The desktop synthetic temporary mount caused four existing atomic-rename tests to fail with WinError 650; the repository workflow already sets a workspace-local temporary directory for both CI platforms.
+- Registry-specific tests: **17 passed**, including golden protocol, candidate, attempt, and unsigned 64-bit seed vectors.
+- Full local regression suite: **174 passed** on Windows Python 3.13 when `TEMP`/`TMP` point to a directory on the workspace volume. The desktop synthetic temporary mount caused four existing atomic-rename tests to fail with WinError 650; the repository workflow already sets a workspace-local temporary directory for both CI platforms.
 - Clean-checkout reproduction: pending final commit and report.
 - GitHub Actions Ubuntu and Windows Python 3.13: pending final push and workflow completion.
 

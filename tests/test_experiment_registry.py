@@ -176,6 +176,23 @@ class ExperimentRegistryTests(unittest.TestCase):
                             registry.derive_seed(self.protocol_id, self.attempt_id, "outer-2", "return"))
         self.assertEqual(registry.canonical_json_bytes({"b": 2, "a": 1}), b'{"a":1,"b":2}')
 
+    def test_golden_protocol_candidate_attempt_and_seed_reconstruct(self):
+        protocol = protocol_document()
+        self.assertEqual(protocol["protocol_id"],
+            "sha256:9b7f82d541c910cfa6786189e488f9dd9b514ee3b6179b6beaa430aff24aafb5")
+        raw = candidate_bytes(protocol["protocol_id"])
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+            "2b881495cb1efb0b45f7e3409d308578c510409c43bfa84d8c15e62380c29f79")
+        candidate = json.loads(raw)
+        self.assertEqual(candidate["candidate_id"],
+            "sha256:6dccf9c39cc9f6a28e70461f108ac47462c44928890cecbe12b331b7a5e4e102")
+        attempt = registry.compute_attempt_id(protocol["protocol_id"], 1, "regime_specialization",
+                                              hashlib.sha256(raw).hexdigest())
+        self.assertEqual(attempt,
+            "sha256:67289e7b7c86cbaa7ace9f7e9c10ea0a7f06180315306bf1a75e0f439e6569ee")
+        self.assertEqual(registry.derive_seed(protocol["protocol_id"], attempt, "outer-1", "net"),
+                         18292073701005286295)
+
     def test_registration_is_sealed_before_validation_and_records_identity(self):
         events = self.registry.events()
         self.assertEqual([e["event_type"] for e in events], [
