@@ -1,8 +1,8 @@
 # Athena Phase 4 Financial Audit — Funding Timing Addendum
 
-**Published:** 2026-11-18  
-**Corrected simulator source commit:** `414cd2705e069936f2dbe6ed6d054f8b5a62e918`  
-**Prior full-replay source commit:** `c97b39f9919e85227aac1266c622fc3bc4468a3a`  
+**Published:** 2026-11-18
+**Corrected simulator source commit:** `414cd2705e069936f2dbe6ed6d054f8b5a62e918`
+**Prior full-replay source commit:** `c97b39f9919e85227aac1266c622fc3bc4468a3a`
 **Scope:** Opening-gap stop funding timing and historical impact. The prior [2026-11-14 financial audit](phase4_financial_audit_2026-11-14/PHASE4_FINANCIAL_AUDIT.md) and all its replay outputs remain unchanged.
 
 ## Finding and correction
