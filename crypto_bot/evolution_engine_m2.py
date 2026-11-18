@@ -481,7 +481,7 @@ class M2RegistryCoordinator:
             if self._registry.attempt_states().get(attempt_id) != "SUBMITTED":
                 continue
             if index in duplicate_indexes:
-                protocol_id, registration, _raw, _ = self._registry._protocol_and_attempt(attempt_id)
+                _protocol, registration, _raw, protocol_id = self._registry._protocol_and_attempt(attempt_id)
                 self._registry._append_attempt_event(
                     protocol_id, attempt_id, "CANDIDATE_INVALID",
                     {

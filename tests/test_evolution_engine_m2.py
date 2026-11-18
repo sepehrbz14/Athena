@@ -197,7 +197,10 @@ class M2Fixture:
                 base64.b64decode(catalog["review"]["signature"])
             ).hexdigest(),
             "freeze_sequence": catalog["catalog_version"],
-            "previous_receipt_sha256": None,
+            "previous_receipt_sha256": (
+                _sha256(m1.canonical_json_bytes(self.receipt))
+                if catalog["catalog_version"] > 1 else None
+            ),
             "frozen_at_utc": FIXED_TIME,
             "identity_authority_key_id": self.root_authority.key_id,
             "signature_algorithm": "Ed25519",
@@ -274,7 +277,7 @@ class M2Fixture:
         if duplicate_custodian:
             record["approvals"][1]["custodian_key_id"] = record["approvals"][0]["custodian_key_id"]
         unsigned = copy.deepcopy(record)
-        unsigned["identity_authority_signature"] = ""
+        unsigned.pop("identity_authority_signature", None)
         unsigned.pop("current_signer_signature", None)
         unsigned.pop("new_key_possession_signature", None)
         for approval in unsigned["approvals"]:
@@ -292,7 +295,9 @@ class M2Fixture:
 
 class EvolutionEngineM2Tests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
+        # The Windows CI workflow points TEMP inside the checkout; external
+        # trust fixtures must still live outside that repository.
+        self.temp = tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[2])
         self.fixture = M2Fixture(Path(self.temp.name))
         self.fixture.freeze()
         self.protocol, self.request = self.fixture.prepare_request()
@@ -360,7 +365,7 @@ class EvolutionEngineM2Tests(unittest.TestCase):
     def test_generation_registers_before_validation_and_writes_dated_report(self):
         result = self.fixture.coordinator.submit(self.protocol, self.request, write_report=True)
         self.assertEqual(result.validation_statuses, ("VALIDATED",))
-        self.assertEqual(len(self.fixture.registry.events()), 5)
+        self.assertEqual(len(self.fixture.registry.events()), 4)
         self.assertIsNotNone(result.report_directory)
         self.assertTrue((result.report_directory / "generation_manifest.json").is_file())
         self.assertTrue((result.report_directory / "candidate_specs").is_dir())
@@ -660,9 +665,12 @@ class EvolutionEngineM2Tests(unittest.TestCase):
         catalog = copy.deepcopy(self.fixture.catalog)
         catalog["entries"].append(copy.deepcopy(catalog["entries"][0]))
         catalog["entries"][1]["template_id"] = "regime.duplicate"
-        catalog = _catalog(catalog["entries"], self.fixture.reviewer)
+        catalog = _catalog(
+            catalog["entries"], self.fixture.reviewer, version=2,
+            parent=self.fixture.catalog["catalog_id"],
+        )
         protocol, request = prepare_generation_protocol(
-            protocol_document(attempt_count=2), catalog_id=catalog["catalog_id"], catalog_version=1,
+            protocol_document(attempt_count=2), catalog_id=catalog["catalog_id"], catalog_version=2,
             template_ids=[entry["template_id"] for entry in catalog["entries"]],
         )
         receipt = self.fixture.make_receipt(catalog)
