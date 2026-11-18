@@ -1,0 +1,363 @@
+{
+  "clean_checkout": {
+    "commit": "d256a182b578e1daba09e3dbc3c6bce6e82d0479",
+    "line_endings": "Frozen CSV inputs retain their exact pinned CRLF bytes; baseline config retains its exact pinned LF bytes.",
+    "sparse_paths": "All Phase 5 source, schemas, config, frozen inputs, completed ledgers, and fixed cost-scenario inputs required by this run were checked out.",
+    "worktree_clean": true
+  },
+  "frozen_inputs_sha256": {
+    "candles": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+    "independent_completed_ledger": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db",
+    "independent_evaluator_metadata": "5ee64a935633dc3464efad11c26b5f0b9972bfa4bd1f47c7138fb6c6ee9a3ff2",
+    "phase4_baseline_config": "bf5eeff4de2b58487f917cefecd9b8b7dc94ec7a72bf125729f34ab65c861627",
+    "phase4_completed_positions": "59a2cc1f7b4993da1b9c4943b5acaccd749059e78bb387c24fe47a2c473e8d82",
+    "phase4_events": "8d66b06d9a4cde5c2cb390728ec7ceb6b1a42ef09c9dfb4b79bfad0c1052f0bd",
+    "phase4_manifest": "b00d28cfb1a2622a8776a9d6d6a75dafab919dc240ab0c571ddaf2f426f88583",
+    "phase4_order_fill_events": "82785e0747141e7f047d292d276501a675ee5ad52b18df6d14dbd0e178b7f01e",
+    "phase4_order_ledger": "a0b87139f51b22798c0bb5784ee4fb3bdad452338ff8f76aeb78f9f8b0390dc6",
+    "preserved_cost_scenario_fee0_slip0": "e6371aafa2eb9de9f06b117776959e9c786f8409bcf3b78cef92f968761262e2",
+    "preserved_cost_scenario_fee10_slip10": "eb4781a406ea186a0710b9c055cab1b1b770a1d9dcb7aadd59c978d18e734ab5",
+    "preserved_cost_scenario_fee2_slip2": "192ac8606b8fa4e74869d944787add9b41074f0e4897225407478431ec17ae7d",
+    "preserved_cost_scenario_fee5_slip5": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db",
+    "preserved_cost_scenario_metadata_fee0_slip0": "12b91a13e12dd4c8d72de98c3c21ac024a5fd7427fa9a6673eb6635fb5edc07e",
+    "preserved_cost_scenario_metadata_fee10_slip10": "1dda763bfc5269e550437843d1b0e51071e13d9ed56bdd2ab1ddeaefdd0d8b96",
+    "preserved_cost_scenario_metadata_fee2_slip2": "9af82a0816ce767203c46172c5c5bebc93faf3817f0a828e56a0073f4589980d",
+    "preserved_cost_scenario_metadata_fee5_slip5": "cf1c9f61ba40da62a2d8e7f1b9361f62c3989d55eabf30dabc6ac7dda6fa7a31",
+    "signal_metadata": "49beadbdb4cca781c20f37c5d8e651d4eebb3e5da429be3b1d7e2e6ef7a1a6cc",
+    "signals": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7"
+  },
+  "phase4_replay": {
+    "approved_final_publication_commit": "6b6d3b9e64c80ce99d284b76f86bc79126a09dd5",
+    "approved_simulator_source_commit": "414cd2705e069936f2dbe6ed6d054f8b5a62e918",
+    "event_stream_matches": true,
+    "event_stream_sha256": "0dfd36a24813dc090fb579d102eef67762755dc779987daf6a666cf093f717e1",
+    "final_account_summary": {
+      "final_cash_usdt": "9051.510973339474987446164828",
+      "final_equity_usdt": "9051.510973339474987446164828",
+      "final_unrealized_gross_pnl_usdt": "0E-24",
+      "initial_equity_usdt": "10000.0",
+      "insolvency_deficit_usdt": "0",
+      "insolvent": false,
+      "maximum_drawdown_pct": "0.1032180999310561168746973713",
+      "net_loss_from_initial_equity_usdt": "948.489026660525012553835172",
+      "reconciliation": {
+        "cash": "9051.510973339474987446164828",
+        "cash_delta": "0E-24",
+        "completed_net_pnl_delta": "0E-26",
+        "completed_position_net_pnl": "-948.4890266605250125538351740",
+        "entry_fees": "-282.8661540657855445",
+        "entry_fees_delta": "0E-16",
+        "equity": "9051.510973339474987446164828",
+        "equity_delta": "0E-24",
+        "exit_fees": "-282.7980888137845014",
+        "exit_fees_delta": "0E-16",
+        "free_collateral": "9051.510973339474987446164828",
+        "funding": "-3.7759596774530479399",
+        "funding_delta": "0E-19",
+        "lifecycle_quantity_delta": "0E-17",
+        "realized_pnl": "-379.0488241035019187139351740",
+        "realized_pnl_delta": "0E-25",
+        "reservations": "0",
+        "unrealized_gross_pnl": "0",
+        "used_margin": "0"
+      },
+      "schema_version": "athena.portfolio_account_summary.v1",
+      "status": "complete"
+    },
+    "preserved_audit_replay_commit": "c97b39f9919e85227aac1266c622fc3bc4468a3a",
+    "preserved_event_stream_sha256": "0dfd36a24813dc090fb579d102eef67762755dc779987daf6a666cf093f717e1",
+    "preserved_result_sha256": "f0111014caa1baf99aa9d3e4145eeba582ed99820d0e8f3502e8b66d543b539e",
+    "result_matches_after_path_normalization": true,
+    "result_raw_sha256": "527b35c92e9d90817f2891218a1c67de51623fc895e1ba342b64cccea7cce074",
+    "result_sha256_after_checkout_path_normalization": "f0111014caa1baf99aa9d3e4145eeba582ed99820d0e8f3502e8b66d543b539e",
+    "verified_from_clean_checkout_commit": "d256a182b578e1daba09e3dbc3c6bce6e82d0479"
+  },
+  "phase5": {
+    "all_inputs_unchanged_during_run": true,
+    "assertions": {
+      "all_inputs_unchanged": true,
+      "all_trade_reconciliation_deltas_within_1e-7": true,
+      "counterfactual_count_matches_evaluator_metadata": true,
+      "portfolio_net_matches_phase4_manifest_within_1e-7": true,
+      "portfolio_positions_joined_to_signal_and_lifecycle_events": true
+    },
+    "authoritative_output_comparison": {
+      "bootstrap_intervals.csv": {
+        "authoritative_sha256": "ce55ca3ad30278514ab858987f4603e2f3c641bbeaadabbf62b7a4d47278f477",
+        "clean_checkout_sha256": "ce55ca3ad30278514ab858987f4603e2f3c641bbeaadabbf62b7a4d47278f477",
+        "matches": true
+      },
+      "completed_trade_attribution.csv": {
+        "authoritative_sha256": "aaedbc271aea4956991bdbf48ffc283533d2a691d20e2282e2c4a415a9a675ea",
+        "clean_checkout_sha256": "aaedbc271aea4956991bdbf48ffc283533d2a691d20e2282e2c4a415a9a675ea",
+        "matches": true
+      },
+      "cost_sensitivity.csv": {
+        "authoritative_sha256": "3bbf33e23e01c8892c8580d78b99041b9ce52e5ba04ab48921e6679e81b80dbf",
+        "clean_checkout_sha256": "3bbf33e23e01c8892c8580d78b99041b9ce52e5ba04ab48921e6679e81b80dbf",
+        "matches": true
+      },
+      "entry_timing_sensitivity.csv": {
+        "authoritative_sha256": "e9b6df31f52f126a0201e62297c5b12bd7a79f2877a1673983b571e14a179166",
+        "clean_checkout_sha256": "1629b956e04dca2295a817f01e490ee5d22b51010b19e410989526b0fa95c073",
+        "matches": false
+      },
+      "monthly_performance.csv": {
+        "authoritative_sha256": "2277f82e327945c0f87a2e8450c3b40e0b4c5e3b732fd45fef6ce119cedbd307",
+        "clean_checkout_sha256": "2277f82e327945c0f87a2e8450c3b40e0b4c5e3b732fd45fef6ce119cedbd307",
+        "matches": true
+      },
+      "predictive_performance.csv": {
+        "authoritative_sha256": "c37b9e60ca82cf2177d13a65737567fc79167fe920f49454c0364cc0d5aa9da4",
+        "clean_checkout_sha256": "c37b9e60ca82cf2177d13a65737567fc79167fe920f49454c0364cc0d5aa9da4",
+        "matches": true
+      },
+      "regime_performance.csv": {
+        "authoritative_sha256": "53f35a96c31fb6fe83648b66edc55a5d7b600b239c97ff6b2cd7f8658d98b3a5",
+        "clean_checkout_sha256": "53f35a96c31fb6fe83648b66edc55a5d7b600b239c97ff6b2cd7f8658d98b3a5",
+        "matches": true
+      },
+      "split_audit.csv": {
+        "authoritative_sha256": "5513217c1eb45456a9cc039e38358f7499a7fac7428101f7065f20df0f28d12b",
+        "clean_checkout_sha256": "5513217c1eb45456a9cc039e38358f7499a7fac7428101f7065f20df0f28d12b",
+        "matches": true
+      },
+      "strategy_scorecard.csv": {
+        "authoritative_sha256": "3f4eea663e66b278ab839abce74dd5dd8e5cdc3b34214393c3e34d458b1b1ff9",
+        "clean_checkout_sha256": "3f4eea663e66b278ab839abce74dd5dd8e5cdc3b34214393c3e34d458b1b1ff9",
+        "matches": true
+      },
+      "trade_clustering.csv": {
+        "authoritative_sha256": "0f828ee0b43b63266c6c290a0c2a53b39f9761c2a4ba9901bb40cedb80a6cd09",
+        "clean_checkout_sha256": "0f828ee0b43b63266c6c290a0c2a53b39f9761c2a4ba9901bb40cedb80a6cd09",
+        "matches": true
+      },
+      "trade_slice_performance.csv": {
+        "authoritative_sha256": "74fe34809d0325850151c09467f2edb29203ce65bb6a70b069855b17d02df84d",
+        "clean_checkout_sha256": "74fe34809d0325850151c09467f2edb29203ce65bb6a70b069855b17d02df84d",
+        "matches": true
+      },
+      "weekly_performance.csv": {
+        "authoritative_sha256": "3bd15ce897860e31802e4f54ab904ad7c01a0cd56524bdf2cd102332bd83ac3b",
+        "clean_checkout_sha256": "3bd15ce897860e31802e4f54ab904ad7c01a0cd56524bdf2cd102332bd83ac3b",
+        "matches": true
+      }
+    },
+    "chronological_interpretation": "Windows through 2026-08-19 are previously observed historical diagnostics, not genuine prospective walk-forward validation or untouched holdout. Future holdout remains pending.",
+    "counts": {
+      "executable_portfolio_positions": 91,
+      "independent_counterfactual_trades": 51292,
+      "signal_rows": 51292
+    },
+    "csv_output_count": 12,
+    "csv_output_sha256": {
+      "bootstrap_intervals.csv": "ce55ca3ad30278514ab858987f4603e2f3c641bbeaadabbf62b7a4d47278f477",
+      "completed_trade_attribution.csv": "aaedbc271aea4956991bdbf48ffc283533d2a691d20e2282e2c4a415a9a675ea",
+      "cost_sensitivity.csv": "3bbf33e23e01c8892c8580d78b99041b9ce52e5ba04ab48921e6679e81b80dbf",
+      "entry_timing_sensitivity.csv": "1629b956e04dca2295a817f01e490ee5d22b51010b19e410989526b0fa95c073",
+      "monthly_performance.csv": "2277f82e327945c0f87a2e8450c3b40e0b4c5e3b732fd45fef6ce119cedbd307",
+      "predictive_performance.csv": "c37b9e60ca82cf2177d13a65737567fc79167fe920f49454c0364cc0d5aa9da4",
+      "regime_performance.csv": "53f35a96c31fb6fe83648b66edc55a5d7b600b239c97ff6b2cd7f8658d98b3a5",
+      "split_audit.csv": "5513217c1eb45456a9cc039e38358f7499a7fac7428101f7065f20df0f28d12b",
+      "strategy_scorecard.csv": "3f4eea663e66b278ab839abce74dd5dd8e5cdc3b34214393c3e34d458b1b1ff9",
+      "trade_clustering.csv": "0f828ee0b43b63266c6c290a0c2a53b39f9761c2a4ba9901bb40cedb80a6cd09",
+      "trade_slice_performance.csv": "74fe34809d0325850151c09467f2edb29203ce65bb6a70b069855b17d02df84d",
+      "weekly_performance.csv": "3bd15ce897860e31802e4f54ab904ad7c01a0cd56524bdf2cd102332bd83ac3b"
+    },
+    "entry_timing_scenario_count": 12,
+    "entry_timing_scenarios_changed": [
+      {
+        "corrected_net_pnl": -25008.523318154595,
+        "delay_bars": 1,
+        "previous_net_pnl": -25006.745376110408,
+        "strategy": "trend_following",
+        "trade_count": 2040
+      },
+      {
+        "corrected_net_pnl": -21150.29348546071,
+        "delay_bars": 2,
+        "previous_net_pnl": -21148.515543416524,
+        "strategy": "trend_following",
+        "trade_count": 1806
+      },
+      {
+        "corrected_net_pnl": -17721.294995789507,
+        "delay_bars": 4,
+        "previous_net_pnl": -17719.51705374532,
+        "strategy": "trend_following",
+        "trade_count": 1465
+      },
+      {
+        "corrected_net_pnl": -186378.71826842023,
+        "delay_bars": 1,
+        "previous_net_pnl": -186376.8081903741,
+        "strategy": "breakout",
+        "trade_count": 14752
+      },
+      {
+        "corrected_net_pnl": -157734.4579001926,
+        "delay_bars": 2,
+        "previous_net_pnl": -157732.54782214647,
+        "strategy": "breakout",
+        "trade_count": 12833
+      },
+      {
+        "corrected_net_pnl": -120991.51847460713,
+        "delay_bars": 4,
+        "previous_net_pnl": -120989.60839656102,
+        "strategy": "breakout",
+        "trade_count": 10071
+      },
+      {
+        "corrected_net_pnl": -333474.65815546043,
+        "delay_bars": 1,
+        "previous_net_pnl": -333476.8132752263,
+        "strategy": "mean_reversion",
+        "trade_count": 23425
+      },
+      {
+        "corrected_net_pnl": -283448.4269388788,
+        "delay_bars": 2,
+        "previous_net_pnl": -283450.5820586446,
+        "strategy": "mean_reversion",
+        "trade_count": 19813
+      },
+      {
+        "corrected_net_pnl": -203565.36322359293,
+        "delay_bars": 4,
+        "previous_net_pnl": -203567.51834335877,
+        "strategy": "mean_reversion",
+        "trade_count": 14923
+      }
+    ],
+    "entry_timing_scenarios_changed_count": 9,
+    "input_hash_comparison": {
+      "candles": {
+        "authoritative_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+        "clean_checkout_sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d",
+        "matches": true
+      },
+      "independent_completed_ledger": {
+        "authoritative_sha256": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db",
+        "clean_checkout_sha256": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db",
+        "matches": true
+      },
+      "independent_evaluator_metadata": {
+        "authoritative_sha256": "5ee64a935633dc3464efad11c26b5f0b9972bfa4bd1f47c7138fb6c6ee9a3ff2",
+        "clean_checkout_sha256": "5ee64a935633dc3464efad11c26b5f0b9972bfa4bd1f47c7138fb6c6ee9a3ff2",
+        "matches": true
+      },
+      "phase4_baseline_config": {
+        "authoritative_sha256": "bf5eeff4de2b58487f917cefecd9b8b7dc94ec7a72bf125729f34ab65c861627",
+        "clean_checkout_sha256": "bf5eeff4de2b58487f917cefecd9b8b7dc94ec7a72bf125729f34ab65c861627",
+        "matches": true
+      },
+      "phase4_completed_positions": {
+        "authoritative_sha256": "59a2cc1f7b4993da1b9c4943b5acaccd749059e78bb387c24fe47a2c473e8d82",
+        "clean_checkout_sha256": "59a2cc1f7b4993da1b9c4943b5acaccd749059e78bb387c24fe47a2c473e8d82",
+        "matches": true
+      },
+      "phase4_events": {
+        "authoritative_sha256": "8d66b06d9a4cde5c2cb390728ec7ceb6b1a42ef09c9dfb4b79bfad0c1052f0bd",
+        "clean_checkout_sha256": "8d66b06d9a4cde5c2cb390728ec7ceb6b1a42ef09c9dfb4b79bfad0c1052f0bd",
+        "matches": true
+      },
+      "phase4_manifest": {
+        "authoritative_sha256": "b00d28cfb1a2622a8776a9d6d6a75dafab919dc240ab0c571ddaf2f426f88583",
+        "clean_checkout_sha256": "b00d28cfb1a2622a8776a9d6d6a75dafab919dc240ab0c571ddaf2f426f88583",
+        "matches": true
+      },
+      "phase4_order_fill_events": {
+        "authoritative_sha256": "82785e0747141e7f047d292d276501a675ee5ad52b18df6d14dbd0e178b7f01e",
+        "clean_checkout_sha256": "82785e0747141e7f047d292d276501a675ee5ad52b18df6d14dbd0e178b7f01e",
+        "matches": true
+      },
+      "phase4_order_ledger": {
+        "authoritative_sha256": "a0b87139f51b22798c0bb5784ee4fb3bdad452338ff8f76aeb78f9f8b0390dc6",
+        "clean_checkout_sha256": "a0b87139f51b22798c0bb5784ee4fb3bdad452338ff8f76aeb78f9f8b0390dc6",
+        "matches": true
+      },
+      "preserved_cost_scenario_fee0_slip0": {
+        "authoritative_sha256": "e6371aafa2eb9de9f06b117776959e9c786f8409bcf3b78cef92f968761262e2",
+        "clean_checkout_sha256": "e6371aafa2eb9de9f06b117776959e9c786f8409bcf3b78cef92f968761262e2",
+        "matches": true
+      },
+      "preserved_cost_scenario_fee10_slip10": {
+        "authoritative_sha256": "eb4781a406ea186a0710b9c055cab1b1b770a1d9dcb7aadd59c978d18e734ab5",
+        "clean_checkout_sha256": "eb4781a406ea186a0710b9c055cab1b1b770a1d9dcb7aadd59c978d18e734ab5",
+        "matches": true
+      },
+      "preserved_cost_scenario_fee2_slip2": {
+        "authoritative_sha256": "192ac8606b8fa4e74869d944787add9b41074f0e4897225407478431ec17ae7d",
+        "clean_checkout_sha256": "192ac8606b8fa4e74869d944787add9b41074f0e4897225407478431ec17ae7d",
+        "matches": true
+      },
+      "preserved_cost_scenario_fee5_slip5": {
+        "authoritative_sha256": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db",
+        "clean_checkout_sha256": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db",
+        "matches": true
+      },
+      "preserved_cost_scenario_metadata_fee0_slip0": {
+        "authoritative_sha256": "12b91a13e12dd4c8d72de98c3c21ac024a5fd7427fa9a6673eb6635fb5edc07e",
+        "clean_checkout_sha256": "12b91a13e12dd4c8d72de98c3c21ac024a5fd7427fa9a6673eb6635fb5edc07e",
+        "matches": true
+      },
+      "preserved_cost_scenario_metadata_fee10_slip10": {
+        "authoritative_sha256": "1dda763bfc5269e550437843d1b0e51071e13d9ed56bdd2ab1ddeaefdd0d8b96",
+        "clean_checkout_sha256": "1dda763bfc5269e550437843d1b0e51071e13d9ed56bdd2ab1ddeaefdd0d8b96",
+        "matches": true
+      },
+      "preserved_cost_scenario_metadata_fee2_slip2": {
+        "authoritative_sha256": "9af82a0816ce767203c46172c5c5bebc93faf3817f0a828e56a0073f4589980d",
+        "clean_checkout_sha256": "9af82a0816ce767203c46172c5c5bebc93faf3817f0a828e56a0073f4589980d",
+        "matches": true
+      },
+      "preserved_cost_scenario_metadata_fee5_slip5": {
+        "authoritative_sha256": "cf1c9f61ba40da62a2d8e7f1b9361f62c3989d55eabf30dabc6ac7dda6fa7a31",
+        "clean_checkout_sha256": "cf1c9f61ba40da62a2d8e7f1b9361f62c3989d55eabf30dabc6ac7dda6fa7a31",
+        "matches": true
+      },
+      "signal_metadata": {
+        "authoritative_sha256": "49beadbdb4cca781c20f37c5d8e651d4eebb3e5da429be3b1d7e2e6ef7a1a6cc",
+        "clean_checkout_sha256": "49beadbdb4cca781c20f37c5d8e651d4eebb3e5da429be3b1d7e2e6ef7a1a6cc",
+        "matches": true
+      },
+      "signals": {
+        "authoritative_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+        "clean_checkout_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+        "matches": true
+      }
+    },
+    "input_hashes_match_previous_authoritative_run": true,
+    "outputs_changed": [
+      "entry_timing_sensitivity.csv"
+    ],
+    "outputs_matching_previous_authoritative_run": 11,
+    "phase4_reference": {
+      "completed_positions": 91,
+      "final_equity_usdt": "9051.510973339474987446164828",
+      "insolvency_deficit_usdt": "0",
+      "source_commit": "c97b39f9919e85227aac1266c622fc3bc4468a3a"
+    }
+  },
+  "previous_authoritative_run": {
+    "source_commit": "6b6d3b9e64c80ce99d284b76f86bc79126a09dd5",
+    "source_worktree_dirty": true
+  },
+  "record_type": "Phase 5 clean-checkout reproducibility and funding-timing verification",
+  "source": {
+    "code_file_sha256": {
+      "execution.py": "7decba18d72451951f34385382b256658befa5740a6427cbc573dbcafcff4fa1",
+      "frozen_signal_schema": "74f2aaf7645ace811e34f7313795e89cae7f77f7dd55c7e7e34e9cbe30d719c9",
+      "frozen_signals.py": "9813d9367590511f281daa43d41ac1ab3a49954e44161fc84b7b461c7963b078",
+      "phase5_research.py": "4dc8092ee37ab241429c3621935424f79eb27a89b1ac60cfdafc14d7e005fbd0",
+      "portfolio.py": "b61c4ada772a543f11fe6c413e157f61a183f21e1ac255be490eceef3005599f",
+      "run_phase5_diagnostics.py": "4fc57ae871a6a7058b6e96eb4bb5a446d78bb89ec5a9781c35ff922d69c2b4eb"
+    },
+    "python": "3.13.0 (tags/v3.13.0:60403a5, Oct  7 2024, 09:38:07) [MSC v.1941 64 bit (AMD64)]",
+    "source_commit": "d256a182b578e1daba09e3dbc3c6bce6e82d0479",
+    "source_status_porcelain": "",
+    "source_worktree_dirty": false
+  },
+  "verification_date": "2026-11-18"
+}
