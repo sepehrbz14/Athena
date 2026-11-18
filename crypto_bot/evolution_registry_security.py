@@ -129,6 +129,14 @@ def _content_id(raw: bytes) -> str:
     return "sha256:" + _sha256(raw)
 
 
+def _content_id_stem(value: str) -> str:
+    """Return a portable filename stem for a canonical ``sha256:<hex>`` ID."""
+    if (not isinstance(value, str) or not value.startswith("sha256:") or len(value) != 71
+            or any(char not in "0123456789abcdef" for char in value[7:])):
+        raise SecurityError("content ID cannot be used as a portable artifact name")
+    return value[7:]
+
+
 def _decode_b64(value: str, *, expected_length: int) -> bytes:
     if not isinstance(value, str):
         raise ValueError("base64 field must be a string")
@@ -523,7 +531,10 @@ class ExternalSecurityStore:
                 raise CheckpointError("catalog version/receipt sequence is not the next monotonic version")
             if receipt["parent_catalog_id"] != (existing_anchor and self._latest_catalog_id(existing_anchor)):
                 raise CheckpointError("catalog parent ID does not match the previous frozen catalog")
-            _publish_immutable(self.catalogs_dir / f"{catalog_id}.json", m1.canonical_json_bytes(catalog))
+            _publish_immutable(
+                self.catalogs_dir / f"{_content_id_stem(catalog_id)}.json",
+                m1.canonical_json_bytes(catalog),
+            )
             _publish_immutable(self.receipts_dir / f"{receipt_sha}.json", m1.canonical_json_bytes(receipt))
             anchor = {
                 "schema_version": "athena.evolution.catalog_anchor.v1",
@@ -551,7 +562,9 @@ class ExternalSecurityStore:
         if anchor["anchor_revision"] != anchor["freeze_sequence"]:
             raise CheckpointError("catalog anchor revision is stale or inconsistent")
         receipt = self._read_json(self.receipts_dir / f"{anchor['receipt_sha256']}.json", "catalog receipt")
-        catalog = self._read_json(self.catalogs_dir / f"{receipt['catalog_id']}.json", "frozen catalog")
+        catalog = self._read_json(
+            self.catalogs_dir / f"{_content_id_stem(receipt['catalog_id'])}.json", "frozen catalog"
+        )
         catalog_id = self._verify_catalog_document(catalog)
         receipt_sha = self._verify_receipt(receipt, catalog)
         if receipt_sha != anchor["receipt_sha256"] or receipt["freeze_sequence"] != anchor["freeze_sequence"]:
@@ -566,7 +579,10 @@ class ExternalSecurityStore:
             previous_receipt = self._read_json(self.receipts_dir / f"{previous_hash}.json", "prior catalog receipt")
             if previous_receipt["catalog_version"] != expected_version or previous_receipt["freeze_sequence"] != expected_version:
                 raise CheckpointError("catalog version/receipt sequence has a gap")
-            previous_catalog = self._read_json(self.catalogs_dir / f"{previous_receipt['catalog_id']}.json", "prior frozen catalog")
+            previous_catalog = self._read_json(
+                self.catalogs_dir / f"{_content_id_stem(previous_receipt['catalog_id'])}.json",
+                "prior frozen catalog",
+            )
             if child_catalog["parent_catalog_id"] != previous_receipt["catalog_id"]:
                 raise CheckpointError("catalog parent ID differs from prior receipt")
             self._verify_catalog_document(previous_catalog)

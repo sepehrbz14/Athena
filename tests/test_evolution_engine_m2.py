@@ -276,13 +276,7 @@ class M2Fixture:
             })
         if duplicate_custodian:
             record["approvals"][1]["custodian_key_id"] = record["approvals"][0]["custodian_key_id"]
-        unsigned = copy.deepcopy(record)
-        unsigned.pop("identity_authority_signature", None)
-        unsigned.pop("current_signer_signature", None)
-        unsigned.pop("new_key_possession_signature", None)
-        for approval in unsigned["approvals"]:
-            approval.pop("signature")
-        control_digest = hashlib.sha256(m1.canonical_json_bytes(unsigned)).digest()
+        control_digest = self.security._control_digest(record)
         record["identity_authority_signature"] = _sign_digest(self.root_authority.private, CONTROL_DOMAIN, control_digest)
         if include_old_signer is not None:
             record["current_signer_signature"] = _sign_digest(include_old_signer.private, CONTROL_DOMAIN, control_digest)
