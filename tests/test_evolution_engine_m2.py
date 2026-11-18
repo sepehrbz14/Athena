@@ -599,7 +599,7 @@ class EvolutionEngineM2Tests(unittest.TestCase):
             expected_anchor=self.fixture.security._read_json(self.fixture.security.anchor_path, "anchor"),
             expected_epoch=2, include_old_signer=new_signer, duplicate_custodian=True,
         )
-        with self.assertRaises(AuthorizationError):
+        with self.assertRaises(SecurityError):
             self.fixture.security.apply_control_checkpoint(
                 duplicate_approvals, duplicate_core, third_signer,
             )
