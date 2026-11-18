@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:template_catalog:v2",
+  "title": "Athena Reviewed and Frozen Candidate Template Catalog",
+  "description": "Finite immutable catalog of declarative M0 candidate fragments. Catalog content is approved and externally frozen before generation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "catalog_id", "catalog_version", "parent_catalog_id", "candidate_schema_id", "regime_priority_semantics_id", "approved_content_sha256", "review", "frozen_at_utc", "entries"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.template_catalog.v2" },
+    "catalog_id": { "$ref": "#/$defs/contentId" },
+    "catalog_version": { "type": "integer", "minimum": 1 },
+    "parent_catalog_id": { "oneOf": [{ "$ref": "#/$defs/contentId" }, { "type": "null" }] },
+    "candidate_schema_id": { "const": "urn:athena:schemas:evolution:candidate_spec:v1" },
+    "regime_priority_semantics_id": { "const": "athena.regime_priority.first_eligible_in_declared_order_v1" },
+    "approved_content_sha256": { "$ref": "#/$defs/sha256" },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reviewer_key_id", "approved_at_utc", "signature_algorithm", "signature"],
+      "properties": {
+        "reviewer_key_id": { "$ref": "#/$defs/sha256" },
+        "approved_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "signature_algorithm": { "const": "Ed25519" },
+        "signature": { "type": "string", "contentEncoding": "base64", "minLength": 80, "maxLength": 100 }
+      }
+    },
+    "frozen_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "entries": {
+      "type": "array", "minItems": 1, "maxItems": 36,
+      "items": { "$ref": "#/$defs/template" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "catalog_version": { "const": 1 } }, "required": ["catalog_version"] },
+      "then": { "properties": { "parent_catalog_id": { "type": "null" } } },
+      "else": { "properties": { "parent_catalog_id": { "$ref": "#/$defs/contentId" } } }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "strategyId": { "enum": ["trend_following", "breakout", "momentum", "mean_reversion"] },
+    "parent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference_type", "reference_id", "relation"],
+      "properties": {
+        "reference_type": { "enum": ["incumbent_component", "candidate"] },
+        "reference_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "relation": { "enum": ["baseline", "derived_from", "combined_from"] },
+        "source_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "template": {
+      "type": "object", "additionalProperties": false,
+      "required": ["template_id", "family", "parents", "strategy_members", "policy"],
+      "properties": {
+        "template_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "family": { "enum": ["regime_specialization", "signal_combination", "regime_selection_allocation"] },
+        "parents": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/parent" } },
+        "strategy_members": { "type": "array", "minItems": 1, "maxItems": 4, "uniqueItems": true, "items": { "$ref": "#/$defs/strategyId" } },
+        "policy": { "oneOf": [
+          { "$ref": "urn:athena:schemas:evolution:candidate_spec:v1#/$defs/regimeSpecializationPolicy" },
+          { "$ref": "urn:athena:schemas:evolution:candidate_spec:v1#/$defs/combinationPolicy" },
+          { "$ref": "urn:athena:schemas:evolution:candidate_spec:v1#/$defs/regimeAllocationPolicy" }
+        ] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "family": { "const": "regime_specialization" } }, "required": ["family"] },
+          "then": { "properties": { "policy": { "$ref": "urn:athena:schemas:evolution:candidate_spec:v1#/$defs/regimeSpecializationPolicy" } } }
+        },
+        {
+          "if": { "properties": { "family": { "const": "signal_combination" } }, "required": ["family"] },
+          "then": { "properties": { "policy": { "$ref": "urn:athena:schemas:evolution:candidate_spec:v1#/$defs/combinationPolicy" } } }
+        },
+        {
+          "if": { "properties": { "family": { "const": "regime_selection_allocation" } }, "required": ["family"] },
+          "then": { "properties": { "policy": { "$ref": "urn:athena:schemas:evolution:candidate_spec:v1#/$defs/regimeAllocationPolicy" } } }
+        }
+      ]
+    }
+  }
+}

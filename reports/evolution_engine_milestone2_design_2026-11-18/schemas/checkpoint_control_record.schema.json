@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:checkpoint_control_record:v1",
+  "title": "Human Authorized Checkpoint Key Rotation or Recovery Record",
+  "description": "An externally retained signed authorization for key rotation or explicit checkpoint recovery. authorized_checkpoint_sha256 is the digest of the exact proposed state-bearing checkpoint core, avoiding a hash cycle with this authorization record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "action", "registry_id", "registry_identity_sha256", "expected_anchor_revision", "expected_checkpoint_sha256", "expected_signer_key_epoch", "authorized_checkpoint_sha256", "issued_at_utc", "identity_authority_key_id", "identity_authority_signature", "approvals"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.checkpoint_control_record.v1" },
+    "action": { "enum": ["ROTATE_SIGNING_KEY", "RECOVER_CHECKPOINT"] },
+    "registry_id": { "$ref": "#/$defs/contentId" },
+    "registry_identity_sha256": { "$ref": "#/$defs/sha256" },
+    "expected_anchor_revision": { "type": "integer", "minimum": 0 },
+    "expected_checkpoint_sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+    "expected_signer_key_epoch": { "type": "integer", "minimum": 0 },
+    "authorized_checkpoint_sha256": { "$ref": "#/$defs/sha256" },
+    "issued_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "identity_authority_key_id": { "$ref": "#/$defs/sha256" },
+    "identity_authority_signature": { "type": "string", "contentEncoding": "base64", "minLength": 80, "maxLength": 100 },
+    "current_signer_key_id": { "$ref": "#/$defs/sha256" },
+    "current_signer_signature": { "type": "string", "contentEncoding": "base64", "minLength": 80, "maxLength": 100 },
+    "new_signer_key_id": { "$ref": "#/$defs/sha256" },
+    "new_signer_key_epoch": { "type": "integer", "minimum": 1 },
+    "new_public_key_base64": { "type": "string", "contentEncoding": "base64", "minLength": 40, "maxLength": 64 },
+    "new_key_possession_signature": { "type": "string", "contentEncoding": "base64", "minLength": 80, "maxLength": 100 },
+    "reason": { "type": "string", "minLength": 20, "maxLength": 1000 },
+    "incident_evidence_sha256": { "$ref": "#/$defs/sha256" },
+    "human_review_record_sha256": { "$ref": "#/$defs/sha256" },
+    "approvals": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["custodian_key_id", "signature_algorithm", "signature"],
+        "properties": {
+          "custodian_key_id": { "$ref": "#/$defs/sha256" },
+          "signature_algorithm": { "const": "Ed25519" },
+          "signature": { "type": "string", "contentEncoding": "base64", "minLength": 80, "maxLength": 100 }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "ROTATE_SIGNING_KEY" } }, "required": ["action"] },
+      "then": {
+        "required": ["new_signer_key_id", "new_signer_key_epoch", "new_public_key_base64", "new_key_possession_signature", "current_signer_key_id", "current_signer_signature"],
+        "properties": { "expected_anchor_revision": { "minimum": 1 }, "expected_checkpoint_sha256": { "$ref": "#/$defs/sha256" } }
+      },
+      "else": {
+        "required": ["reason", "incident_evidence_sha256", "human_review_record_sha256", "new_signer_key_id", "new_signer_key_epoch", "new_public_key_base64", "new_key_possession_signature"],
+        "allOf": [
+          {
+            "if": { "properties": { "expected_checkpoint_sha256": { "type": "null" } }, "required": ["expected_checkpoint_sha256"] },
+            "then": { "properties": { "expected_anchor_revision": { "const": 0 } } },
+            "else": { "properties": { "expected_anchor_revision": { "minimum": 1 }, "expected_checkpoint_sha256": { "$ref": "#/$defs/sha256" } } }
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

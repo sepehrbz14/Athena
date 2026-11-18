@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:generation_manifest:v1",
+  "title": "Athena Candidate Generation Reproduction Manifest",
+  "description": "Immutable provenance for a deterministic generation batch. Its digest is committed into the sealed candidate-set event in the same registry transaction.",
+  "type": "object",
+  "additionalProperties": false,
+    "required": ["schema_version", "protocol_id", "request_sha256", "catalog_id", "catalog_version", "catalog_freeze_receipt_sha256", "registry_identity_sha256", "generator_source", "outputs"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.generation_manifest.v1" },
+    "protocol_id": { "$ref": "#/$defs/contentId" },
+    "request_sha256": { "$ref": "#/$defs/sha256" },
+    "catalog_id": { "$ref": "#/$defs/contentId" },
+    "catalog_version": { "type": "integer", "minimum": 1 },
+    "catalog_freeze_receipt_sha256": { "$ref": "#/$defs/sha256" },
+    "registry_identity_sha256": { "$ref": "#/$defs/sha256" },
+    "generator_source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "worktree_clean", "generator_source_sha256", "serializer_id"],
+      "properties": {
+        "commit": { "$ref": "#/$defs/gitCommit" },
+        "worktree_clean": { "type": "boolean" },
+        "generator_source_sha256": { "$ref": "#/$defs/sha256" },
+        "serializer_id": { "const": "athena-rfc8785-jcs-v1" }
+      }
+    },
+    "outputs": {
+      "type": "array", "minItems": 1, "maxItems": 36,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["ordinal", "template_id", "family", "candidate_id", "candidate_spec_bytes_sha256", "attempt_id"],
+        "properties": {
+          "ordinal": { "type": "integer", "minimum": 1, "maximum": 36 },
+          "template_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+          "family": { "enum": ["regime_specialization", "signal_combination", "regime_selection_allocation"] },
+          "candidate_id": { "$ref": "#/$defs/contentId" },
+          "candidate_spec_bytes_sha256": { "$ref": "#/$defs/sha256" },
+          "attempt_id": { "$ref": "#/$defs/contentId" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:checkpoint_anchor:v1",
+  "title": "Athena Protected Latest Checkpoint Anchor",
+  "description": "Monotonic latest-checkpoint pointer stored outside the repository and registry, protected from registry-writer replacement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "registry_identity_sha256", "checkpoint_sequence", "checkpoint_sha256", "previous_checkpoint_sha256", "signer_key_id", "signer_key_epoch", "anchor_revision"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.checkpoint_anchor.v1" },
+    "registry_id": { "$ref": "#/$defs/contentId" },
+    "registry_identity_sha256": { "$ref": "#/$defs/sha256" },
+    "checkpoint_sequence": { "type": "integer", "minimum": 1 },
+    "checkpoint_sha256": { "$ref": "#/$defs/sha256" },
+    "previous_checkpoint_sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+    "signer_key_id": { "$ref": "#/$defs/sha256" },
+    "signer_key_epoch": { "type": "integer", "minimum": 1 },
+    "anchor_revision": { "type": "integer", "minimum": 1 }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

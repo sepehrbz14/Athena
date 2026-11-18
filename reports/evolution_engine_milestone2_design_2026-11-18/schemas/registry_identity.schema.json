@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:registry_identity:v1",
+  "title": "Independently Trusted Registry Identity Bootstrap",
+  "description": "Issued and signed outside the registry database; the trusted identity record binds an independently generated random registry ID to one persistent search family.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "search_family_id", "identity_authority_key_id", "issued_at_utc", "signature_algorithm", "signature"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.registry_identity.v1" },
+    "registry_id": { "$ref": "#/$defs/contentId" },
+    "search_family_id": { "$ref": "#/$defs/contentId" },
+    "identity_authority_key_id": { "$ref": "#/$defs/sha256" },
+    "issued_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "signature_algorithm": { "const": "Ed25519" },
+    "signature": { "type": "string", "contentEncoding": "base64", "minLength": 80, "maxLength": 100 }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}
