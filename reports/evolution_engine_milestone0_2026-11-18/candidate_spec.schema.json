@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:candidate_spec:v1",
+  "title": "Athena Evolution Research Candidate Specification",
+  "description": "Milestone 0 proposal only. Declarative candidate grammar; it cannot execute code or change strategy parameters.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "id_algorithm",
+    "candidate_revision",
+    "experiment_id",
+    "family",
+    "created_at_utc",
+    "baseline",
+    "parents",
+    "strategy_members",
+    "policy",
+    "research_only"
+  ],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.candidate.v1" },
+    "candidate_id": { "$ref": "#/$defs/contentId" },
+    "id_algorithm": { "const": "sha256_rfc8785_jcs_semantic_payload_v1" },
+    "candidate_revision": { "type": "integer", "minimum": 1 },
+    "experiment_id": { "$ref": "#/$defs/contentId" },
+    "family": {
+      "enum": ["regime_specialization", "signal_combination", "regime_selection_allocation"]
+    },
+    "created_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_commit", "phase4_simulator_commit", "phase4_publication_commit", "strategy_source_sha256", "regime_source_sha256", "execution_source_sha256", "phase4_config_sha256", "frozen_input_manifest_sha256"],
+      "properties": {
+        "source_commit": { "$ref": "#/$defs/gitCommit" },
+        "phase4_simulator_commit": { "$ref": "#/$defs/gitCommit" },
+        "phase4_publication_commit": { "$ref": "#/$defs/gitCommit" },
+        "strategy_source_sha256": { "$ref": "#/$defs/sha256" },
+        "regime_source_sha256": { "$ref": "#/$defs/sha256" },
+        "execution_source_sha256": { "$ref": "#/$defs/sha256" },
+        "phase4_config_sha256": { "$ref": "#/$defs/sha256" },
+        "frozen_input_manifest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "parents": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reference_type", "reference_id", "relation"],
+        "properties": {
+          "reference_type": { "enum": ["incumbent_component", "candidate"] },
+          "reference_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "relation": { "enum": ["baseline", "derived_from", "combined_from"] },
+          "source_sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "strategy_members": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/strategyId" }
+    },
+    "policy": {
+      "oneOf": [
+        { "$ref": "#/$defs/regimeSpecializationPolicy" },
+        { "$ref": "#/$defs/combinationPolicy" },
+        { "$ref": "#/$defs/regimeAllocationPolicy" }
+      ]
+    },
+    "research_only": { "const": true },
+    "display_name": { "type": "string", "maxLength": 120 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "family": { "const": "regime_specialization" } }, "required": ["family"] },
+      "then": { "properties": { "policy": { "$ref": "#/$defs/regimeSpecializationPolicy" } } }
+    },
+    {
+      "if": { "properties": { "family": { "const": "signal_combination" } }, "required": ["family"] },
+      "then": { "properties": { "policy": { "$ref": "#/$defs/combinationPolicy" } } }
+    },
+    {
+      "if": { "properties": { "family": { "const": "regime_selection_allocation" } }, "required": ["family"] },
+      "then": { "properties": { "policy": { "$ref": "#/$defs/regimeAllocationPolicy" } } }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "strategyId": { "enum": ["trend_following", "breakout", "momentum", "mean_reversion"] },
+    "regimeId": {
+      "enum": ["bull_trend", "bear_trend", "range", "high_volatility", "low_volatility", "news_or_event_shock", "unknown"]
+    },
+    "regimeMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/regimeId" },
+      "patternProperties": {
+        ".*": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/strategyId" }
+        }
+      }
+    },
+    "regimeSpecializationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "classifier", "regime_allowlist", "unknown_policy"],
+      "properties": {
+        "kind": { "const": "regime_specialization" },
+        "classifier": { "const": "repository_regime_classifier_pinned_by_baseline_hash" },
+        "regime_allowlist": { "$ref": "#/$defs/regimeMap" },
+        "unknown_policy": { "const": "abstain" }
+      }
+    },
+    "combinationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rule", "members", "tie_policy", "signal_resolution"],
+      "properties": {
+        "kind": { "const": "signal_combination" },
+        "rule": { "enum": ["incumbent_ensemble", "unanimous_direction", "majority_direction", "highest_existing_confidence"] },
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/strategyId" }
+        },
+        "tie_policy": { "const": "abstain" },
+        "signal_resolution": { "const": "retain_originating_component_stop_target_and_signal_fields" },
+        "fixed_order": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/strategyId" }
+        }
+      }
+    },
+    "regimeAllocationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "classifier", "regime_priority", "risk_budget_mode", "unknown_policy"],
+      "properties": {
+        "kind": { "const": "regime_selection_allocation" },
+        "classifier": { "const": "repository_regime_classifier_pinned_by_baseline_hash" },
+        "regime_priority": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "propertyNames": { "$ref": "#/$defs/regimeId" },
+          "patternProperties": {
+            ".*": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 4,
+              "items": { "$ref": "#/$defs/strategyId" }
+            }
+          }
+        },
+        "risk_budget_mode": { "const": "frozen_phase4" },
+        "unknown_policy": { "const": "abstain" }
+      }
+    }
+  }
+}

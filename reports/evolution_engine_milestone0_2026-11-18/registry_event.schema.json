@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:registry_event:v1",
+  "title": "Athena Evolution Append-Only Registry Event",
+  "description": "Milestone 0 event envelope proposal. NO_QUALIFYING_CANDIDATE is a successful terminal research event with COMPLETED_VALID status and zero qualifiers, never an error or reason to relax gates. payload_sha256 is SHA-256 of RFC 8785 canonical payload JSON. event_id hashes canonical JSON over sequence, event_time_utc, protocol_id, event_type, actor_type, payload_sha256, and previous_event_sha256. event_sha256 is SHA-256 of canonical full event JSON excluding event_sha256. No registry code is included.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sequence", "event_id", "event_time_utc", "protocol_id", "event_type", "actor_type", "payload_sha256", "previous_event_sha256", "event_sha256", "payload"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.registry_event.v1" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "event_id": { "$ref": "#/$defs/contentId" },
+    "event_time_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "protocol_id": { "$ref": "#/$defs/contentId" },
+    "attempt_id": { "$ref": "#/$defs/contentId" },
+    "event_type": {
+      "enum": [
+        "PROTOCOL_PRE_REGISTERED",
+        "CANDIDATE_ATTEMPT_REGISTERED",
+        "CANDIDATE_SET_SEALED",
+        "CANDIDATE_REGISTERED",
+        "CANDIDATE_INVALID",
+        "EVALUATION_STARTED",
+        "EVALUATION_COMPLETED",
+        "EVALUATION_FAILED",
+        "CANDIDATE_EVALUATION_SKIPPED",
+        "CANDIDATE_TECHNICAL_FAILURE",
+        "CANDIDATE_INSUFFICIENT_EVIDENCE",
+        "CANDIDATE_REJECTED",
+        "NO_QUALIFYING_CANDIDATE",
+        "RESEARCH_ADVANCED_PENDING_PROSPECTIVE",
+        "APPROVED_FOR_FURTHER_RESEARCH",
+        "HOLDOUT_SEALED",
+        "HOLDOUT_RELEASED",
+        "HOLDOUT_CONSUMED",
+        "PROTOCOL_CLOSED"
+      ]
+    },
+    "actor_type": { "enum": ["system", "reviewer", "custodian"] },
+    "payload_sha256": { "$ref": "#/$defs/sha256" },
+    "previous_event_sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+    "event_sha256": { "$ref": "#/$defs/sha256" },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event_type": { "const": "NO_QUALIFYING_CANDIDATE" } }, "required": ["event_type"] },
+      "then": {
+        "properties": {
+          "actor_type": { "enum": ["system", "reviewer"] },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["terminal_outcome", "run_status", "qualifying_candidate_count", "registered_attempt_count", "all_attempts_resolved_terminally", "technical_failure_count", "unevaluated_count", "reason", "acceptance_criteria_unchanged"],
+            "properties": {
+              "terminal_outcome": { "const": "NO_QUALIFYING_CANDIDATE" },
+              "run_status": { "const": "COMPLETED_VALID" },
+              "qualifying_candidate_count": { "const": 0 },
+              "registered_attempt_count": { "type": "integer", "minimum": 1, "maximum": 36 },
+              "all_attempts_resolved_terminally": { "const": true },
+              "technical_failure_count": { "const": 0 },
+              "unevaluated_count": { "const": 0 },
+              "reason": { "const": "no_candidate_met_all_preregistered_qualification_gates" },
+              "acceptance_criteria_unchanged": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

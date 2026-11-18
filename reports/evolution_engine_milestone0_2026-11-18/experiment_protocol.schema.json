@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:experiment_protocol:v1",
+  "title": "Athena Evolution Research Experiment Protocol",
+  "description": "Pre-registered research contract. Schema proposal only; no evaluator or registry implementation is authorized in Milestone 0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "protocol_id", "id_algorithm", "protocol_revision", "created_at_utc", "locked_at_utc",
+    "source", "search_family_id", "protocol_parent_ids", "research_classification", "hypothesis", "confirmatory_estimands", "families", "limits", "candidate_set",
+    "data", "evidence_lanes", "cost_policy", "candidate_vs_incumbent", "chronology", "preprocessing", "statistics",
+    "seed_policy", "holdout_policy", "resource_limits", "output_policy", "research_only"
+  ],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.experiment_protocol.v1" },
+    "protocol_id": { "$ref": "#/$defs/contentId" },
+    "id_algorithm": { "const": "sha256_rfc8785_jcs_semantic_payload_v1" },
+    "protocol_revision": { "type": "integer", "minimum": 1 },
+    "created_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "locked_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "search_family_id": { "$ref": "#/$defs/contentId" },
+    "protocol_parent_ids": {
+      "type": "array", "uniqueItems": true, "maxItems": 36,
+      "items": { "$ref": "#/$defs/contentId" }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "worktree_clean", "strategy_source_sha256", "regime_source_sha256", "execution_source_sha256", "phase4_config_sha256", "schema_bundle_sha256"],
+      "properties": {
+        "commit": { "$ref": "#/$defs/gitCommit" },
+        "worktree_clean": { "type": "boolean" },
+        "strategy_source_sha256": { "$ref": "#/$defs/sha256" },
+        "regime_source_sha256": { "$ref": "#/$defs/sha256" },
+        "execution_source_sha256": { "$ref": "#/$defs/sha256" },
+        "phase4_config_sha256": { "$ref": "#/$defs/sha256" },
+        "schema_bundle_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "research_classification": { "enum": ["previously_observed_historical_diagnostic", "prospective_holdout_confirmatory"] },
+    "hypothesis": {
+      "type": "object", "additionalProperties": false,
+      "required": ["statement", "primary_estimand", "absolute_edge_required"],
+      "properties": {
+        "statement": { "type": "string", "minLength": 20, "maxLength": 2000 },
+        "primary_estimand": { "enum": ["predictive_absolute_weekly_score", "predictive_paired_weekly_delta", "robust_executable_absolute_weekly_return", "executable_paired_weekly_delta"] },
+        "absolute_edge_required": { "const": true }
+      }
+    },
+    "confirmatory_estimands": {
+      "const": ["predictive_absolute_weekly_score", "predictive_paired_weekly_delta", "robust_executable_absolute_weekly_return", "executable_paired_weekly_delta"]
+    },
+    "families": {
+      "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+      "items": { "enum": ["regime_specialization", "signal_combination", "regime_selection_allocation"] }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_candidates_per_family", "max_families", "max_candidates_total", "budget_scope", "candidate_set_sealed_before_outcomes"],
+      "properties": {
+        "max_candidates_per_family": { "const": 12 },
+        "max_families": { "const": 3 },
+        "max_candidates_total": { "const": 36 },
+        "budget_scope": { "const": "cumulative_persistent_search_family_across_protocols_commits_and_reruns" },
+        "candidate_set_sealed_before_outcomes": { "const": true }
+      }
+    },
+    "candidate_set": {
+      "type": "object", "additionalProperties": false,
+      "description": "attempt_count must equal the number of entries in the immutable candidate_attempt_manifest identified by attempt_manifest_sha256; invalid and unevaluated entries remain counted.",
+      "required": ["attempt_count", "attempt_manifest_sha256", "incumbent_control_id", "registered_before_evaluation", "includes_invalid_and_unevaluated_attempts"],
+      "properties": {
+        "attempt_count": { "type": "integer", "minimum": 1, "maximum": 36 },
+        "attempt_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "incumbent_control_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "registered_before_evaluation": { "const": true },
+        "includes_invalid_and_unevaluated_attempts": { "const": true }
+      }
+    },
+    "data": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dataset_id", "signals_sha256", "candles_sha256", "phase5_manifest_sha256", "observed_through_utc", "previously_examined", "availability_clock"],
+      "properties": {
+        "dataset_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "signals_sha256": { "$ref": "#/$defs/sha256" },
+        "candles_sha256": { "$ref": "#/$defs/sha256" },
+        "phase5_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "observed_through_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "previously_examined": { "type": "boolean" },
+        "availability_clock": { "const": "signal_available_at_utc" }
+      }
+    },
+    "evidence_lanes": {
+      "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": { "enum": ["predictive_signal", "independent_counterfactual", "executable_portfolio"] },
+      "allOf": [
+        { "contains": { "const": "predictive_signal" } },
+        { "contains": { "const": "independent_counterfactual" } },
+        { "contains": { "const": "executable_portfolio" } }
+      ]
+    },
+    "cost_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["phase4_config_sha256", "fee_policy", "slippage_policy", "funding_policy", "participation_policy", "fee_bps_per_side", "slippage_bps_per_side", "funding_bps_per_8h", "max_participation_percent", "stress_scenarios", "fee_stress_bps_per_side", "slippage_stress_bps_per_side", "funding_stress_bps_per_8h", "zero_cost_can_qualify"],
+      "properties": {
+        "phase4_config_sha256": { "$ref": "#/$defs/sha256" },
+        "fee_policy": { "const": "frozen_phase4_per_side" },
+        "slippage_policy": { "const": "frozen_phase4_adverse_fill" },
+        "funding_policy": { "const": "frozen_phase4_elapsed_time_and_sign_convention" },
+        "participation_policy": { "const": "frozen_phase4_max_participation" },
+        "fee_bps_per_side": { "const": 5 },
+        "slippage_bps_per_side": { "const": 5 },
+        "funding_bps_per_8h": { "const": 1 },
+        "max_participation_percent": { "const": 5 },
+        "stress_scenarios": { "const": ["fee_10bps_per_side_only", "slippage_10bps_per_side_only", "funding_2bps_per_8h_only"] },
+        "fee_stress_bps_per_side": { "const": 10 },
+        "slippage_stress_bps_per_side": { "const": 10 },
+        "funding_stress_bps_per_8h": { "const": 2 },
+        "zero_cost_can_qualify": { "const": false }
+      }
+    },
+    "candidate_vs_incumbent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mandatory", "same_folds", "same_input_hashes", "same_warmup_and_eligible_time_universe", "same_costs", "same_execution_model", "same_phase4_config", "paired_calendar_weeks", "independent_ledgers"],
+      "properties": {
+        "mandatory": { "const": true },
+        "same_folds": { "const": true },
+        "same_input_hashes": { "const": true },
+        "same_warmup_and_eligible_time_universe": { "const": true },
+        "same_costs": { "const": true },
+        "same_execution_model": { "const": true },
+        "same_phase4_config": { "const": true },
+        "paired_calendar_weeks": { "const": true },
+        "independent_ledgers": { "const": true }
+      }
+    },
+    "chronology": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clock", "fold_method", "min_training_months", "inner_validation_months", "outer_test_months", "outer_step_months", "minimum_eligible_outer_folds", "nonoverlapping_outer_tests", "max_label_horizon_bars", "max_position_horizon_bars", "embargo_bars", "terminal_entry_blackout_bars", "purge_policy", "warmup_policy", "state_reset", "fold_end_policy"],
+      "properties": {
+        "clock": { "const": "UTC_signal_availability" },
+        "fold_method": { "const": "nested_expanding_rolling_origin" },
+        "min_training_months": { "const": 24 },
+        "inner_validation_months": { "const": 6 },
+        "outer_test_months": { "const": 6 },
+        "outer_step_months": { "const": 6 },
+        "minimum_eligible_outer_folds": { "const": 6 },
+        "nonoverlapping_outer_tests": { "const": true },
+        "max_label_horizon_bars": { "const": 96 },
+        "max_position_horizon_bars": { "const": 17664 },
+        "embargo_bars": { "const": 96 },
+        "terminal_entry_blackout_bars": { "const": 96 },
+        "purge_policy": { "const": "purge_label_or_trade_outcome_crossing_boundary" },
+        "warmup_policy": { "const": "816_prior_contiguous_15m_bars_reset_after_gap_causal_only_unscored" },
+        "state_reset": { "const": "fresh_account_orders_and_safety_state_per_fold" },
+        "fold_end_policy": { "const": "frozen_phase4_force_close_at_end_with_costs_reported" },
+        "folds": {
+          "type": "array", "items": { "$ref": "#/$defs/fold" }
+        }
+      }
+    },
+    "preprocessing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed_transforms", "fit_scope", "full_series_fit_allowed"],
+      "properties": {
+        "allowed_transforms": { "type": "array", "uniqueItems": true, "items": { "type": "string", "maxLength": 100 } },
+        "fit_scope": { "const": "training_fold_only" },
+        "full_series_fit_allowed": { "const": false }
+      }
+    },
+    "statistics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["alpha", "multiplicity_method", "correction_family", "all_attempts_count", "no_valid_p_value_policy", "bootstrap", "one_sided_p_value_method", "minimum_samples", "confirmatory_hypotheses_per_attempt", "absolute_profitability_gate", "relative_comparison_also_required", "paired_improvement_gate", "max_single_fold_share_of_positive_total", "no_extra_interval_width_cutoff"],
+      "properties": {
+        "alpha": { "const": 0.05 },
+        "multiplicity_method": { "const": "holm_familywise" },
+        "correction_family": { "const": "persistent_search_family_all_linked_protocols_all_families_all_attempts_four_hypotheses_each" },
+        "all_attempts_count": { "const": true },
+        "no_valid_p_value_policy": { "const": "conservative_p_equals_1_placeholder; attempt remains in denominator and cannot qualify" },
+        "bootstrap": {
+          "type": "object", "additionalProperties": false,
+          "required": ["method", "block_unit", "block_length_weeks", "iterations", "interval", "paired_candidate_control"],
+          "properties": {
+            "method": { "const": "non_circular_moving_block_bootstrap" },
+            "block_unit": { "const": "UTC_calendar_week" },
+            "block_length_weeks": { "const": 4 },
+            "iterations": { "const": 100000 },
+            "interval": { "const": "95_percentile" },
+            "paired_candidate_control": { "const": true }
+          }
+        },
+        "one_sided_p_value_method": { "const": "centered_null_moving_block_bootstrap_plus_one_tail_count_divided_by_100001;_Holm_stepdown" },
+        "minimum_samples": {
+          "type": "object", "additionalProperties": false,
+          "required": ["predictive_signals", "predictive_occupied_weeks", "counterfactual_trades", "counterfactual_occupied_weeks", "executable_positions", "executable_occupied_weeks", "executable_outer_folds", "regime_observations", "regime_occupied_weeks"],
+          "properties": {
+            "predictive_signals": { "const": 200 },
+            "predictive_occupied_weeks": { "const": 30 },
+            "counterfactual_trades": { "const": 100 },
+            "counterfactual_occupied_weeks": { "const": 30 },
+            "executable_positions": { "const": 100 },
+            "executable_occupied_weeks": { "const": 30 },
+            "executable_outer_folds": { "const": 6 },
+            "regime_observations": { "const": 30 },
+            "regime_occupied_weeks": { "const": 12 }
+          }
+        },
+        "confirmatory_hypotheses_per_attempt": { "const": 4 },
+        "absolute_profitability_gate": { "const": "holm_adjusted_robust_executable_absolute_lower_95_bound_above_zero" },
+        "relative_comparison_also_required": { "const": true },
+        "paired_improvement_gate": { "const": "holm_adjusted_baseline_cost_executable_candidate_minus_incumbent_lower_95_bound_above_zero" },
+        "max_single_fold_share_of_positive_total": { "const": 0.5 },
+        "no_extra_interval_width_cutoff": { "const": true }
+      }
+    },
+    "seed_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["master_seed", "derivation", "decision_randomness_allowed"],
+      "properties": {
+        "master_seed": { "const": 20261118 },
+        "derivation": { "const": "sha256(UTF8 protocol_id|attempt_id|fold_id|metric_id|master_seed); first 8 bytes unsigned big-endian" },
+        "decision_randomness_allowed": { "const": false }
+      }
+    },
+    "holdout_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["current_data_through_2026_08_19_is_untouched", "status", "minimum_future_weeks", "trailing_label_tail_bars", "boundary_lock_rule", "single_confirmatory_opening", "inspection_consumes_holdout", "generator_access", "candidate_selection_access", "ordinary_evaluator_access", "confirmatory_evaluator_access"],
+      "properties": {
+        "current_data_through_2026_08_19_is_untouched": { "const": false },
+        "status": { "enum": ["pending", "sealed", "consumed"] },
+        "minimum_future_weeks": { "const": 52 },
+        "trailing_label_tail_bars": { "const": 96 },
+        "boundary_lock_rule": { "const": "exact_UTC_start_end_frozen_before_accrual;_no_sample_or_outcome_driven_extension" },
+        "single_confirmatory_opening": { "const": true },
+        "inspection_consumes_holdout": { "const": true },
+        "generator_access": { "const": "never" },
+        "candidate_selection_access": { "const": "never" },
+        "ordinary_evaluator_access": { "const": "never" },
+        "confirmatory_evaluator_access": { "const": "one_shot_read_only_after_protocol_and_candidate_hash_lock" },
+        "custodian_reference": { "type": "string", "maxLength": 300 }
+      }
+    },
+    "resource_limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_wall_seconds_per_attempt", "max_wall_seconds_search_family", "max_memory_mb", "max_output_bytes_per_attempt", "max_output_bytes_search_family", "max_workers", "offline_only"],
+      "properties": {
+        "max_wall_seconds_per_attempt": { "const": 1800 },
+        "max_wall_seconds_search_family": { "const": 86400 },
+        "max_memory_mb": { "const": 8192 },
+        "max_output_bytes_per_attempt": { "const": 536870912 },
+        "max_output_bytes_search_family": { "const": 10737418240 },
+        "max_workers": { "const": 1 },
+        "offline_only": { "const": true }
+      }
+    },
+    "output_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root_template", "create_exclusively", "overwrite_allowed", "hash_chain_events"],
+      "properties": {
+        "root_template": { "const": "reports/evolution_research/<UTC-date>/<protocol-id>/" },
+        "create_exclusively": { "const": true },
+        "overwrite_allowed": { "const": false },
+        "hash_chain_events": { "const": true }
+      }
+    },
+    "research_only": { "const": true }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "fold": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fold_id", "train_start_utc", "train_end_utc", "validation_start_utc", "validation_end_utc", "outer_test_start_utc", "outer_test_end_utc", "purged_counts", "warmup_bars", "classification"],
+      "properties": {
+        "fold_id": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "train_start_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "train_end_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "validation_start_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "validation_end_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "outer_test_start_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "outer_test_end_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "purged_counts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["crossing_label", "crossing_trade", "embargo", "warmup_only"],
+          "properties": {
+            "crossing_label": { "type": "integer", "minimum": 0 },
+            "crossing_trade": { "type": "integer", "minimum": 0 },
+            "embargo": { "type": "integer", "minimum": 0 },
+            "warmup_only": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "warmup_bars": { "const": 816 },
+        "classification": { "enum": ["previously_observed_historical_diagnostic", "prospective_holdout_confirmatory"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:athena:schemas:evolution:candidate_attempt_manifest:v1",
+  "title": "Athena Evolution Candidate Attempt Manifest",
+  "description": "Sealed inventory of every submitted candidate attempt before candidate parsing, validation, evaluation, or outcome access. Ordinals are globally monotonic within the persistent search_family_id across linked protocols. Schema proposal only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "protocol_id", "search_family_id", "attempt_id_algorithm", "created_at_utc", "sealed_at_utc", "attempt_count", "attempts"],
+  "properties": {
+    "schema_version": { "const": "athena.evolution.candidate_attempt_manifest.v1" },
+    "protocol_id": { "$ref": "#/$defs/contentId" },
+    "search_family_id": { "$ref": "#/$defs/contentId" },
+    "attempt_id_algorithm": { "const": "sha256_rfc8785_jcs_protocol_global_search_ordinal_family_raw_sha256_v1" },
+    "created_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "sealed_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "attempt_count": { "type": "integer", "minimum": 1, "maximum": 36 },
+    "attempts": {
+      "type": "array", "minItems": 1, "maxItems": 36,
+      "items": { "$ref": "#/$defs/attempt" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contentId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "attempt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attempt_id", "ordinal", "assigned_family", "candidate_spec_bytes_sha256", "origin", "submitted_at_utc", "status_at_seal"],
+      "properties": {
+        "attempt_id": { "$ref": "#/$defs/contentId" },
+        "ordinal": { "type": "integer", "minimum": 1, "maximum": 36 },
+        "assigned_family": { "enum": ["regime_specialization", "signal_combination", "regime_selection_allocation"] },
+        "candidate_spec_bytes_sha256": { "$ref": "#/$defs/sha256" },
+        "candidate_id_if_parseable": { "$ref": "#/$defs/contentId" },
+        "origin": { "enum": ["pre_registered_generator_slot", "manually_submitted_for_registered_slot"] },
+        "submitted_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "status_at_seal": { "const": "SUBMITTED_UNVALIDATED" }
+      }
+    }
+  }
+}
