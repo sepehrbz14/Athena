@@ -453,7 +453,7 @@ class ExternalSecurityStore:
             raise TrustError("catalog reviewer key is not in the external trust bundle")
         review_signature = _decode_b64(catalog["review"]["signature"], expected_length=64)
         _verify_ed25519(
-            self.trust.reviewers[reviewer_id], review_signature,
+            self.trust.reviewers[reviewer_id][1], review_signature,
             _DOMAIN_CATALOG_APPROVAL + bytes.fromhex(approved_digest), "catalog review",
         )
         id_projection = json.loads(json.dumps(catalog))
@@ -637,7 +637,7 @@ class ExternalSecurityStore:
             if key_id in approval_ids or key_id not in self.trust.custodians:
                 raise AuthorizationError("control record has duplicate or untrusted custodians")
             approval_ids.add(key_id)
-            _verify_ed25519(self.trust.custodians[key_id],
+            _verify_ed25519(self.trust.custodians[key_id][1],
                             _decode_b64(approval["signature"], expected_length=64),
                             _DOMAIN_CONTROL + digest, "human custodian approval")
         action = control["action"]
@@ -1139,7 +1139,7 @@ class ExternalSecurityStore:
             if key_id in ids or key_id not in self.trust.custodians:
                 raise AuthorizationError("control record needs two distinct trusted custodians")
             ids.add(key_id)
-            _verify_ed25519(self.trust.custodians[key_id],
+            _verify_ed25519(self.trust.custodians[key_id][1],
                             _decode_b64(approval["signature"], expected_length=64),
                             _DOMAIN_CONTROL + digest, "human custodian")
         if control["action"] == "ROTATE_SIGNING_KEY":
