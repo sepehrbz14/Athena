@@ -389,7 +389,9 @@ class EvolutionEngineM2Tests(unittest.TestCase):
             ExternalTrust(self.fixture.bundle, bad_identity)
         bundle_path = self.fixture.external_root / "trust_bundle.json"
         original = bundle_path.read_bytes()
-        bundle_path.write_bytes(original + b" ")
+        changed_bundle = json.loads(original)
+        changed_bundle["initial_checkpoint_signer"]["public_key_base64"] = _b64(bytes(32))
+        bundle_path.write_bytes(m1.canonical_json_bytes(changed_bundle))
         with self.assertRaises(TrustError):
             ExternalSecurityStore.from_files(
                 self.fixture.registry, self.fixture.external_root,

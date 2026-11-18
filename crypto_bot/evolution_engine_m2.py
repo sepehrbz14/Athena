@@ -395,6 +395,7 @@ class M2RegistryCoordinator:
             checkpoint = self._security.publish_after_registry_write(
                 self._checkpoint_signer,
                 expected_previous_anchor=previous_anchor,
+                expected_previous_event_count=len(events),
                 generation_manifest_sha256=generation_manifest_sha,
                 fault_at=fault_at,
             )

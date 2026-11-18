@@ -969,6 +969,7 @@ class ExternalSecurityStore:
             "signature_algorithm": "Ed25519",
         }
         checkpoint["checkpoint_core_sha256"] = self.checkpoint_core_digest(checkpoint)
+        self._verify_generation_manifest(checkpoint, events)
         return checkpoint
 
     def _write_checkpoint(
@@ -1036,6 +1037,7 @@ class ExternalSecurityStore:
         signer: ExternalSigner,
         *,
         expected_previous_anchor: Mapping[str, Any] | None,
+        expected_previous_event_count: int | None = None,
         generation_manifest_sha256: str | None = None,
         fault_at: str | None = None,
     ) -> dict[str, Any]:
@@ -1049,8 +1051,8 @@ class ExternalSecurityStore:
             previous_checkpoint = self._load_checkpoint_by_hash(anchor["checkpoint_sha256"])
             generation_manifest_sha256 = previous_checkpoint["generation_manifest_sha256"]
         if anchor is None:
-            if self.registry.events():
-                raise CheckpointError("registry has events but no trusted checkpoint")
+            if expected_previous_event_count != 0:
+                raise CheckpointError("initial checkpoint requires proof the previously verified registry was empty")
             epoch = 1
             signer_id = self.trust.initial_signer[0]
             sequence = 1
