@@ -1,0 +1,60 @@
+{
+  "all_checks_passed": true,
+  "authoritative_csv_sha256": {
+    "bootstrap_intervals.csv": "ce55ca3ad30278514ab858987f4603e2f3c641bbeaadabbf62b7a4d47278f477",
+    "completed_trade_attribution.csv": "aaedbc271aea4956991bdbf48ffc283533d2a691d20e2282e2c4a415a9a675ea",
+    "cost_sensitivity.csv": "3bbf33e23e01c8892c8580d78b99041b9ce52e5ba04ab48921e6679e81b80dbf",
+    "entry_timing_sensitivity.csv": "e9b6df31f52f126a0201e62297c5b12bd7a79f2877a1673983b571e14a179166",
+    "monthly_performance.csv": "2277f82e327945c0f87a2e8450c3b40e0b4c5e3b732fd45fef6ce119cedbd307",
+    "predictive_performance.csv": "c37b9e60ca82cf2177d13a65737567fc79167fe920f49454c0364cc0d5aa9da4",
+    "regime_performance.csv": "53f35a96c31fb6fe83648b66edc55a5d7b600b239c97ff6b2cd7f8658d98b3a5",
+    "split_audit.csv": "5513217c1eb45456a9cc039e38358f7499a7fac7428101f7065f20df0f28d12b",
+    "strategy_scorecard.csv": "3f4eea663e66b278ab839abce74dd5dd8e5cdc3b34214393c3e34d458b1b1ff9",
+    "trade_clustering.csv": "0f828ee0b43b63266c6c290a0c2a53b39f9761c2a4ba9901bb40cedb80a6cd09",
+    "trade_slice_performance.csv": "74fe34809d0325850151c09467f2edb29203ce65bb6a70b069855b17d02df84d",
+    "weekly_performance.csv": "3bd15ce897860e31802e4f54ab904ad7c01a0cd56524bdf2cd102332bd83ac3b"
+  },
+  "authoritative_run": "run_20261118T120809Z",
+  "csv_output_count": 12,
+  "csv_outputs_match": true,
+  "independent_repeat_run": "repro_check_final4_20261118 (local duplicate outputs; CSVs not duplicated in branch)",
+  "inputs_match": true,
+  "phase": "Athena 2.0 Phase 5 reproducibility verification",
+  "phase4_replay": {
+    "completed_positions": 91,
+    "files": {
+      "portfolio_events_v1.jsonl": {
+        "matches_preserved_audit": true,
+        "preserved_audit_sha256": "0dfd36a24813dc090fb579d102eef67762755dc779987daf6a666cf093f717e1",
+        "sha256": "0dfd36a24813dc090fb579d102eef67762755dc779987daf6a666cf093f717e1"
+      },
+      "portfolio_result_v1.json": {
+        "matches_preserved_audit": true,
+        "preserved_audit_sha256": "f0111014caa1baf99aa9d3e4145eeba582ed99820d0e8f3502e8b66d543b539e",
+        "sha256": "f0111014caa1baf99aa9d3e4145eeba582ed99820d0e8f3502e8b66d543b539e"
+      }
+    },
+    "final_equity_usdt": "9051.510973339474987446164828",
+    "insolvency_deficit_usdt": "0",
+    "local_output_directory": "phase4_reproduction_current_6b6d3b9 (large replay files not duplicated in branch)",
+    "preserved_audit_directory": "reports/phase4_financial_audit_2026-11-14/final_c97b39f"
+  },
+  "phase5_assertions": {
+    "all_inputs_unchanged": true,
+    "all_trade_reconciliation_deltas_within_1e-7": true,
+    "counterfactual_count_matches_evaluator_metadata": true,
+    "portfolio_net_matches_phase4_manifest_within_1e-7": true,
+    "portfolio_positions_joined_to_signal_and_lifecycle_events": true
+  },
+  "source_code_hashes_match": true,
+  "source_code_sha256": {
+    "execution.py": "2cbd89e50650640d1de479dff1ffc2fcbfeab93681d2ecf41dfada9d701a5799",
+    "frozen_signal_schema": "9584fbfeeb6352fb89d0ab1255729c784bc15c8fd14dff6cd6cc795b3bbbb021",
+    "frozen_signals.py": "29f379b96811d3414ba3a77f906cadd59a50631027e0fd77d90da36fb621802a",
+    "phase5_research.py": "edcc2ddca47ecc94a06e2d4137a0db68684127d2411db6c3116263d8fa78ac87",
+    "portfolio.py": "17a935b84f5f12bab900fc4c128c45128832cef34096aaf64b8292f3b632ec3d",
+    "run_phase5_diagnostics.py": "18afc761cf1eb5ab43d3a9779ae3c9288ceb843aac0490548f7b9bb4c59e0225"
+  },
+  "source_commit": "6b6d3b9e64c80ce99d284b76f86bc79126a09dd5",
+  "verified_at_utc": "2026-11-18T12:09:47.862911+00:00"
+}

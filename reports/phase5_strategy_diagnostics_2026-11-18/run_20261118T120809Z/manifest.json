@@ -1,0 +1,429 @@
+{
+  "phase": "Athena 2.0 Phase 5 Strategy Diagnostics and Validation",
+  "classification": "historical diagnostics; independent counterfactual and signal-label results are not executable portfolio performance",
+  "created_at_utc": "2026-11-18T12:09:47.862911+00:00",
+  "source": {
+    "source_commit": "6b6d3b9e64c80ce99d284b76f86bc79126a09dd5",
+    "source_worktree_dirty": true,
+    "source_status_porcelain": "?? crypto_bot/phase5_research.py\n?? reports/athena_2_phase_5_strategy_diagnostics_validation_plan.md\n?? reports/fixed_reference_clean_repro_2026-11-09/clean_checkout/\n?? reports/historical_comparison_2026-11-05/research/events.jsonl\n?? reports/historical_comparison_2026-11-05/safety/events.jsonl\n?? reports/phase4_financial_audit_2026-11-14/\n?? reports/phase5_strategy_diagnostics_2026-11-18/\n?? tests/test_phase5_research.py\n?? tools/run_phase5_diagnostics.py",
+    "python": "3.13.0 (tags/v3.13.0:60403a5, Oct  7 2024, 09:38:07) [MSC v.1941 64 bit (AMD64)]",
+    "code_file_sha256": {
+      "phase5_research.py": "edcc2ddca47ecc94a06e2d4137a0db68684127d2411db6c3116263d8fa78ac87",
+      "run_phase5_diagnostics.py": "18afc761cf1eb5ab43d3a9779ae3c9288ceb843aac0490548f7b9bb4c59e0225",
+      "execution.py": "2cbd89e50650640d1de479dff1ffc2fcbfeab93681d2ecf41dfada9d701a5799",
+      "portfolio.py": "17a935b84f5f12bab900fc4c128c45128832cef34096aaf64b8292f3b632ec3d",
+      "frozen_signals.py": "29f379b96811d3414ba3a77f906cadd59a50631027e0fd77d90da36fb621802a",
+      "frozen_signal_schema": "9584fbfeeb6352fb89d0ab1255729c784bc15c8fd14dff6cd6cc795b3bbbb021"
+    }
+  },
+  "input_paths_and_sha256": {
+    "signals": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\signals.csv",
+      "sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7"
+    },
+    "signal_metadata": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\run_metadata.json",
+      "sha256": "49beadbdb4cca781c20f37c5d8e651d4eebb3e5da429be3b1d7e2e6ef7a1a6cc"
+    },
+    "candles": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\tests\\tests\\combined.csv",
+      "sha256": "5a9a149c5e35cd543280ca432daacf05fe3842ff063358df3d386e8140e1cf3d"
+    },
+    "independent_completed_ledger": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\fixed_reference_clean_repro_2026-11-09\\result\\completed_trade_ledger.csv",
+      "sha256": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db"
+    },
+    "independent_evaluator_metadata": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\fixed_reference_clean_repro_2026-11-09\\result\\run_metadata.json",
+      "sha256": "5ee64a935633dc3464efad11c26b5f0b9972bfa4bd1f47c7138fb6c6ee9a3ff2"
+    },
+    "phase4_baseline_config": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\configs\\athena2_portfolio_baseline_v1.json",
+      "sha256": "bf5eeff4de2b58487f917cefecd9b8b7dc94ec7a72bf125729f34ab65c861627"
+    },
+    "phase4_completed_positions": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\phase4_financial_audit_2026-11-14\\final_c97b39f\\completed_positions_decimal_v1.jsonl",
+      "sha256": "59a2cc1f7b4993da1b9c4943b5acaccd749059e78bb387c24fe47a2c473e8d82"
+    },
+    "phase4_order_ledger": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\phase4_financial_audit_2026-11-14\\final_c97b39f\\order_ledger_decimal_v1.jsonl",
+      "sha256": "a0b87139f51b22798c0bb5784ee4fb3bdad452338ff8f76aeb78f9f8b0390dc6"
+    },
+    "phase4_events": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\phase4_financial_audit_2026-11-14\\final_c97b39f\\portfolio_events_decimal_v1.jsonl",
+      "sha256": "8d66b06d9a4cde5c2cb390728ec7ceb6b1a42ef09c9dfb4b79bfad0c1052f0bd"
+    },
+    "phase4_order_fill_events": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\phase4_financial_audit_2026-11-14\\final_c97b39f\\order_fill_event_ledger_v1.jsonl",
+      "sha256": "82785e0747141e7f047d292d276501a675ee5ad52b18df6d14dbd0e178b7f01e"
+    },
+    "phase4_manifest": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\phase4_financial_audit_2026-11-14\\final_c97b39f\\run_manifest_v1.json",
+      "sha256": "b00d28cfb1a2622a8776a9d6d6a75dafab919dc240ab0c571ddaf2f426f88583"
+    },
+    "preserved_cost_scenario_fee0_slip0": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee0_slip0\\completed_trade_ledger.csv",
+      "sha256": "e6371aafa2eb9de9f06b117776959e9c786f8409bcf3b78cef92f968761262e2"
+    },
+    "preserved_cost_scenario_metadata_fee0_slip0": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee0_slip0\\run_metadata.json",
+      "sha256": "12b91a13e12dd4c8d72de98c3c21ac024a5fd7427fa9a6673eb6635fb5edc07e"
+    },
+    "preserved_cost_scenario_fee2_slip2": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee2_slip2\\completed_trade_ledger.csv",
+      "sha256": "192ac8606b8fa4e74869d944787add9b41074f0e4897225407478431ec17ae7d"
+    },
+    "preserved_cost_scenario_metadata_fee2_slip2": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee2_slip2\\run_metadata.json",
+      "sha256": "9af82a0816ce767203c46172c5c5bebc93faf3817f0a828e56a0073f4589980d"
+    },
+    "preserved_cost_scenario_fee5_slip5": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee5_slip5\\completed_trade_ledger.csv",
+      "sha256": "041630998ef1979f6ed2b5b5004f01d241e1be4a201edbc86e94d85e061754db"
+    },
+    "preserved_cost_scenario_metadata_fee5_slip5": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee5_slip5\\run_metadata.json",
+      "sha256": "cf1c9f61ba40da62a2d8e7f1b9361f62c3989d55eabf30dabc6ac7dda6fa7a31"
+    },
+    "preserved_cost_scenario_fee10_slip10": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee10_slip10\\completed_trade_ledger.csv",
+      "sha256": "eb4781a406ea186a0710b9c055cab1b1b770a1d9dcb7aadd59c978d18e734ab5"
+    },
+    "preserved_cost_scenario_metadata_fee10_slip10": {
+      "path": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\execution_cost_sensitivity_2026-11-09\\fee10_slip10\\run_metadata.json",
+      "sha256": "1dda763bfc5269e550437843d1b0e51071e13d9ed56bdd2ab1ddeaefdd0d8b96"
+    }
+  },
+  "dataset_period": {
+    "start": "2019-12-31T00:00:00+00:00",
+    "end": "2026-08-19T23:45:00+00:00",
+    "candles": 232608,
+    "signals": 51292
+  },
+  "strategies": [
+    "trend_following",
+    "breakout",
+    "momentum",
+    "mean_reversion"
+  ],
+  "windows": [
+    {
+      "name": "2020_2022",
+      "start_inclusive": "2020-01-01T00:00:00+00:00",
+      "end_exclusive": "2023-01-01T00:00:00+00:00",
+      "status": "previously_observed_historical_diagnostic"
+    },
+    {
+      "name": "2023_2024",
+      "start_inclusive": "2023-01-01T00:00:00+00:00",
+      "end_exclusive": "2025-01-01T00:00:00+00:00",
+      "status": "previously_observed_historical_diagnostic"
+    },
+    {
+      "name": "2025_2026-08-19_previously_examined",
+      "start_inclusive": "2025-01-01T00:00:00+00:00",
+      "end_exclusive": "2026-08-20T00:00:00+00:00",
+      "status": "previously_observed_historical_diagnostic"
+    }
+  ],
+  "final_out_of_sample_holdout": "pending; no unseen data supplied; data through 2026-08-19 are previously examined",
+  "methodology": {
+    "future_outcomes_are_labels_only": true,
+    "signal_label_horizons_candles": [
+      1,
+      4,
+      16,
+      96
+    ],
+    "signal_label_percent_units": "frozen decimal ratios multiplied by 100 to report percentage points",
+    "confidence_bands": [
+      {
+        "lower_exclusive": 0.0,
+        "upper_inclusive": 0.55,
+        "label": "(0,.55]"
+      },
+      {
+        "lower_exclusive": 0.55,
+        "upper_inclusive": 0.7,
+        "label": "(.55,.70]"
+      },
+      {
+        "lower_exclusive": 0.7,
+        "upper_inclusive": 0.85,
+        "label": "(.70,.85]"
+      },
+      {
+        "lower_exclusive": 0.85,
+        "upper_inclusive": 1.0000001,
+        "label": "(.85,1]"
+      }
+    ],
+    "stop_distance_bands": [
+      {
+        "lower_exclusive": 0.0,
+        "upper_inclusive": 0.0025,
+        "label": "<=0.25%"
+      },
+      {
+        "lower_exclusive": 0.0025,
+        "upper_inclusive": 0.005,
+        "label": "0.25-0.5%"
+      },
+      {
+        "lower_exclusive": 0.005,
+        "upper_inclusive": 0.01,
+        "label": "0.5-1%"
+      },
+      {
+        "lower_exclusive": 0.01,
+        "upper_inclusive": "Infinity",
+        "label": ">1%"
+      }
+    ],
+    "momentum_15m_bands": [
+      {
+        "lower_exclusive": "-Infinity",
+        "upper_inclusive": -0.01,
+        "label": "<-1%"
+      },
+      {
+        "lower_exclusive": -0.01,
+        "upper_inclusive": 0.0,
+        "label": "-1%-0%"
+      },
+      {
+        "lower_exclusive": 0.0,
+        "upper_inclusive": 0.01,
+        "label": "0-1%"
+      },
+      {
+        "lower_exclusive": 0.01,
+        "upper_inclusive": "Infinity",
+        "label": ">1%"
+      }
+    ],
+    "trade_excursions": "OHLC extrema inclusive of entry and exit candles; intrabar ordering is unknown",
+    "portfolio_lane": "Phase 4 executable completed-position ledger joined to preserved fill/close events and frozen signal IDs",
+    "independent_lane": "fixed-reference independent per-signal ledger; overlapping counterfactuals; no shared capital/liquidity",
+    "funding_sign_normalization": {
+      "executable_portfolio": "funding_contribution = signed ledger cash movement",
+      "independent_counterfactual": "funding_contribution = -funding_paid (research evaluator field is positive charge)",
+      "net_identity": "executable: realized gross - fees + funding cash contribution; counterfactual: execution gross - fees + funding contribution"
+    },
+    "sample_warning_threshold": 30,
+    "bootstrap": {
+      "seed": 20261118,
+      "iterations": 2000,
+      "block_length_calendar_weeks": 4,
+      "method": "non-circular moving block bootstrap over weekly trade clusters; 95% percentile intervals"
+    },
+    "cost_sensitivity": "fixed-quantity one-factor re-marking; zero cost is hypothetical; preserved all-in re-sizing scenarios separately identified",
+    "entry_timing": "fixed quantity, delays of 1/2/4 bars, original stop/target retained; hypothetical",
+    "parameter_changes_or_optimization": false,
+    "historical_periods_are_untouched_holdout": false
+  },
+  "research_configuration": {
+    "reference_equity": 10000.0,
+    "risk_per_trade_pct": 0.005,
+    "risk_budget": 50.0,
+    "leverage": 2.0,
+    "fee_bps": 5.0,
+    "slippage_bps": 5.0,
+    "funding_bps_8h": 1.0,
+    "max_position_notional_pct": 1.0,
+    "max_margin_fraction": 0.8,
+    "max_participation_rate": 0.05,
+    "min_quantity": 1e-06,
+    "candle_minutes": 15,
+    "stop_target_policy": "existing stops/targets; adverse stop first; gap through stop fills at open",
+    "sizing_policy": "$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown",
+    "overlap_policy": "each signal is a separate independent counterfactual trade; no shared capital or aggregate liquidity; overlaps retained"
+  },
+  "preserved_cost_scenario_run_metadata": {
+    "fee0_slip0": {
+      "source_signal_dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\signals.csv",
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "dataset_timestamp_start": "2019-12-31T00:00:00+00:00",
+      "dataset_timestamp_end": "2026-08-19T23:45:00+00:00",
+      "candle_count": 232608,
+      "signal_rows": 51292,
+      "configuration": {
+        "reference_equity": 10000.0,
+        "risk_per_trade_pct": 0.005,
+        "risk_budget": 50.0,
+        "leverage": 2.0,
+        "fee_bps": 0,
+        "slippage_bps": 0,
+        "funding_bps_8h": 1.0,
+        "max_position_notional_pct": 1.0,
+        "max_margin_fraction": 0.8,
+        "max_participation_rate": 0.05,
+        "min_quantity": 1e-06,
+        "candle_minutes": 15,
+        "stop_target_policy": "existing stops/targets; adverse stop first; gap through stop fills at open",
+        "sizing_policy": "$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown",
+        "overlap_policy": "each signal is a separate independent counterfactual trade; no shared capital or aggregate liquidity; overlaps retained"
+      },
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "random_seed": 20261105,
+      "bootstrap_iterations": 2000,
+      "evaluation_timestamp_utc": "2026-11-09T19:28:45.779381+00:00",
+      "excluded_signals": {},
+      "trades": 51292
+    },
+    "fee2_slip2": {
+      "source_signal_dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\signals.csv",
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "dataset_timestamp_start": "2019-12-31T00:00:00+00:00",
+      "dataset_timestamp_end": "2026-08-19T23:45:00+00:00",
+      "candle_count": 232608,
+      "signal_rows": 51292,
+      "configuration": {
+        "reference_equity": 10000.0,
+        "risk_per_trade_pct": 0.005,
+        "risk_budget": 50.0,
+        "leverage": 2.0,
+        "fee_bps": 2,
+        "slippage_bps": 2,
+        "funding_bps_8h": 1.0,
+        "max_position_notional_pct": 1.0,
+        "max_margin_fraction": 0.8,
+        "max_participation_rate": 0.05,
+        "min_quantity": 1e-06,
+        "candle_minutes": 15,
+        "stop_target_policy": "existing stops/targets; adverse stop first; gap through stop fills at open",
+        "sizing_policy": "$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown",
+        "overlap_policy": "each signal is a separate independent counterfactual trade; no shared capital or aggregate liquidity; overlaps retained"
+      },
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "random_seed": 20261105,
+      "bootstrap_iterations": 2000,
+      "evaluation_timestamp_utc": "2026-11-09T19:29:42.568073+00:00",
+      "excluded_signals": {},
+      "trades": 51292
+    },
+    "fee5_slip5": {
+      "source_signal_dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\signals.csv",
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "dataset_timestamp_start": "2019-12-31T00:00:00+00:00",
+      "dataset_timestamp_end": "2026-08-19T23:45:00+00:00",
+      "candle_count": 232608,
+      "signal_rows": 51292,
+      "configuration": {
+        "reference_equity": 10000.0,
+        "risk_per_trade_pct": 0.005,
+        "risk_budget": 50.0,
+        "leverage": 2.0,
+        "fee_bps": 5,
+        "slippage_bps": 5,
+        "funding_bps_8h": 1.0,
+        "max_position_notional_pct": 1.0,
+        "max_margin_fraction": 0.8,
+        "max_participation_rate": 0.05,
+        "min_quantity": 1e-06,
+        "candle_minutes": 15,
+        "stop_target_policy": "existing stops/targets; adverse stop first; gap through stop fills at open",
+        "sizing_policy": "$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown",
+        "overlap_policy": "each signal is a separate independent counterfactual trade; no shared capital or aggregate liquidity; overlaps retained"
+      },
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "random_seed": 20261105,
+      "bootstrap_iterations": 2000,
+      "evaluation_timestamp_utc": "2026-11-09T19:30:48.694565+00:00",
+      "excluded_signals": {},
+      "trades": 51292
+    },
+    "fee10_slip10": {
+      "source_signal_dataset": "C:\\Users\\admin\\OneDrive\\Documents\\Athena\\reports\\independent_signal_research_gap_parity_2026-11-05\\signals.csv",
+      "source_signal_sha256": "0135f4f2329303662ffcb8d63a4d8aa954cde77cfb65accc51c815de5d9fc6f7",
+      "dataset_timestamp_start": "2019-12-31T00:00:00+00:00",
+      "dataset_timestamp_end": "2026-08-19T23:45:00+00:00",
+      "candle_count": 232608,
+      "signal_rows": 51292,
+      "configuration": {
+        "reference_equity": 10000.0,
+        "risk_per_trade_pct": 0.005,
+        "risk_budget": 50.0,
+        "leverage": 2.0,
+        "fee_bps": 10,
+        "slippage_bps": 10,
+        "funding_bps_8h": 1.0,
+        "max_position_notional_pct": 1.0,
+        "max_margin_fraction": 0.8,
+        "max_participation_rate": 0.05,
+        "min_quantity": 1e-06,
+        "candle_minutes": 15,
+        "stop_target_policy": "existing stops/targets; adverse stop first; gap through stop fills at open",
+        "sizing_policy": "$50 stop-risk includes entry/exit slippage and fees; funding is variable elapsed-time carry, included in net P&L but excluded from ex-ante stop-risk sizing because exit time is unknown",
+        "overlap_policy": "each signal is a separate independent counterfactual trade; no shared capital or aggregate liquidity; overlaps retained"
+      },
+      "code_commit_sha": "1bb70314e62f73b227f1e0a0652ef8acc0727250",
+      "code_worktree_dirty": false,
+      "code_file_sha256": {
+        "research_evaluation.py": "a8b671b70d801220ff00e6e9bdc59230baf8f9d0485255727dbb0fd39f1bf68a",
+        "research.py": "5a66c1a112be75530b40c4d7b22a2a6fad287cd395a663ae21c3e983c76dd108",
+        "run_fixed_reference_research.py": "cf8eaf758531f465ff40ee182d77e503057ddf6470b98a8c8bc538a2de855ddc",
+        "run_execution_cost_sensitivity.py": "9e351d48fe07c28c0798429c7355040d70c8c0acb580a5bb97125adeeea13760"
+      },
+      "random_seed": 20261105,
+      "bootstrap_iterations": 2000,
+      "evaluation_timestamp_utc": "2026-11-09T19:31:55.420639+00:00",
+      "excluded_signals": {},
+      "trades": 51292
+    }
+  },
+  "counts": {
+    "independent_counterfactual_trades": 51292,
+    "executable_portfolio_positions": 91,
+    "signal_rows": 51292
+  },
+  "phase4_reference": {
+    "source_commit": "c97b39f9919e85227aac1266c622fc3bc4468a3a",
+    "completed_positions": 91,
+    "final_equity_usdt": "9051.510973339474987446164828",
+    "insolvency_deficit_usdt": "0"
+  },
+  "output_sha256": {
+    "completed_trade_attribution.csv": "aaedbc271aea4956991bdbf48ffc283533d2a691d20e2282e2c4a415a9a675ea",
+    "strategy_scorecard.csv": "3f4eea663e66b278ab839abce74dd5dd8e5cdc3b34214393c3e34d458b1b1ff9",
+    "regime_performance.csv": "53f35a96c31fb6fe83648b66edc55a5d7b600b239c97ff6b2cd7f8658d98b3a5",
+    "weekly_performance.csv": "3bd15ce897860e31802e4f54ab904ad7c01a0cd56524bdf2cd102332bd83ac3b",
+    "monthly_performance.csv": "2277f82e327945c0f87a2e8450c3b40e0b4c5e3b732fd45fef6ce119cedbd307",
+    "predictive_performance.csv": "c37b9e60ca82cf2177d13a65737567fc79167fe920f49454c0364cc0d5aa9da4",
+    "trade_slice_performance.csv": "74fe34809d0325850151c09467f2edb29203ce65bb6a70b069855b17d02df84d",
+    "trade_clustering.csv": "0f828ee0b43b63266c6c290a0c2a53b39f9761c2a4ba9901bb40cedb80a6cd09",
+    "bootstrap_intervals.csv": "ce55ca3ad30278514ab858987f4603e2f3c641bbeaadabbf62b7a4d47278f477",
+    "split_audit.csv": "5513217c1eb45456a9cc039e38358f7499a7fac7428101f7065f20df0f28d12b",
+    "cost_sensitivity.csv": "3bbf33e23e01c8892c8580d78b99041b9ce52e5ba04ab48921e6679e81b80dbf",
+    "entry_timing_sensitivity.csv": "e9b6df31f52f126a0201e62297c5b12bd7a79f2877a1673983b571e14a179166",
+    "report.md": "252c5cc5c6ba6ad6d4fede856b7e0a24516f9a449c4394e50326cab43de90ddb"
+  },
+  "assertions": {
+    "all_inputs_unchanged": true,
+    "portfolio_positions_joined_to_signal_and_lifecycle_events": true,
+    "counterfactual_count_matches_evaluator_metadata": true,
+    "all_trade_reconciliation_deltas_within_1e-7": true,
+    "portfolio_net_matches_phase4_manifest_within_1e-7": true
+  }
+}

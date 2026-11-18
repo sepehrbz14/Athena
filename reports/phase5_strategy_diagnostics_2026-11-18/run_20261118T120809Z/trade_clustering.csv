@@ -1,0 +1,11 @@
+lane,strategy,trade_count,overlap_trade_count,overlap_trade_pct,maximum_concurrent_trades,occupied_trade_weeks,sample_warning,interpretation
+independent_counterfactual,all_strategies,51292,45424,0.8855961943382984,25,347,,independent counterfactual overlap is not shared-capital executable concurrency
+independent_counterfactual,trend_following,2226,1556,0.6990116801437556,8,193,,independent counterfactual overlap is not shared-capital executable concurrency
+independent_counterfactual,breakout,16288,10011,0.6146242632612967,6,347,,independent counterfactual overlap is not shared-capital executable concurrency
+independent_counterfactual,momentum,4809,4438,0.9228529839883551,18,174,,independent counterfactual overlap is not shared-capital executable concurrency
+independent_counterfactual,mean_reversion,27969,19411,0.6940183774893632,8,347,,independent counterfactual overlap is not shared-capital executable concurrency
+executable_portfolio,all_strategies,91,0,0.0,1,4,,account-constrained executable position concurrency
+executable_portfolio,trend_following,17,0,0.0,1,2,SMALL_SAMPLE,account-constrained executable position concurrency
+executable_portfolio,breakout,6,0,0.0,1,2,SMALL_SAMPLE,account-constrained executable position concurrency
+executable_portfolio,momentum,10,0,0.0,1,1,SMALL_SAMPLE,account-constrained executable position concurrency
+executable_portfolio,mean_reversion,58,0,0.0,1,3,,account-constrained executable position concurrency
