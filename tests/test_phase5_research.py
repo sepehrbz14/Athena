@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import unittest
+from datetime import datetime, timedelta, timezone
 
+from crypto_bot.models import Candle
 from crypto_bot.phase5_research import (
     _band,
     _clustering_rows,
+    _entry_timing,
     _moving_block_bootstrap,
     _predictive_rows,
     _split_audit,
@@ -126,6 +129,36 @@ class Phase5ResearchTests(unittest.TestCase):
         all_rows = next(row for row in result if row["strategy"] == "all_strategies")
         self.assertEqual(all_rows["overlap_trade_count"], 2)
         self.assertEqual(all_rows["maximum_concurrent_trades"], 2)
+
+    def test_entry_timing_funding_uses_phase4_open_gap_convention_for_both_sides(self) -> None:
+        origin = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        metadata = {"configuration": {"fee_bps": 0, "slippage_bps": 0,
+            "funding_bps_8h": 800, "max_participation_rate": 1}}
+
+        scenarios = (
+            ("opening_gap_stop", 60, (90, 92, 80, 85), (110, 120, 108, 115), -10.925, -8.925),
+            ("survives_open", 15, (99, 102, 98, 100), (101, 102, 98, 100), -0.5, 0.5),
+            ("intrabar_stop", 15, (100, 101, 94, 96), (100, 106, 99, 104), -5.49, -4.49),
+        )
+        for name, gap_minutes, long_ohlc, short_ohlc, long_expected, short_expected in scenarios:
+            for direction, stop, ohlc, expected in (("long", 95, long_ohlc, long_expected),
+                    ("short", 105, short_ohlc, short_expected)):
+                with self.subTest(scenario=name, direction=direction):
+                    base = Candle(origin, 100, 101, 99, 100, 10)
+                    entry = Candle(origin + timedelta(minutes=15), 100, 101, 99, 100, 10)
+                    exit_bar = Candle(origin + timedelta(minutes=15 + gap_minutes), *ohlc, 10)
+                    candles = [base, entry, exit_bar]
+                    times = {candle.timestamp.isoformat(): index for index, candle in enumerate(candles)}
+                    row = {"strategy": "trend_following", "direction": direction,
+                        "entry_timestamp": base.timestamp.isoformat(),
+                        "exit_timestamp": exit_bar.timestamp.isoformat(), "quantity": 1.0,
+                        "stop_price": stop, "target_price": ""}
+
+                    result = _entry_timing([row], candles, times, metadata)
+                    delayed = next(item for item in result if item["strategy"] == "trend_following"
+                        and item["delay_bars"] == 1)
+                    self.assertEqual(delayed["trade_count"], 1)
+                    self.assertAlmostEqual(delayed["net_pnl"], expected, places=10)
 
 
 if __name__ == "__main__":

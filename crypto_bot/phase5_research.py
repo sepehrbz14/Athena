@@ -14,7 +14,7 @@ import random
 import subprocess
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from statistics import mean
 from typing import Any, Iterable
@@ -728,20 +728,25 @@ def _entry_timing(rows: list[dict[str, Any]], candles: list[Candle], index_by_ti
                     continue
                 exit_raw, exit_reason, exit_index = None, None, None
                 funding = 0.0
-                prior_close = entry_bar.close
+                last_funding_timestamp = entry_bar.timestamp
                 for i in range(entry_index, end_index + 1):
                     bar = candles[i]
-                    if i == entry_index:
-                        elapsed_hours = 0.25
-                    else:
-                        elapsed_hours = 0.25
-                    funding += execution.funding_amount(side, float(row["quantity"]), bar.close, funding_rate, elapsed_hours)
-                    exit_request = execution.intrabar_exit_request(side, stop, target, bar)
+                    gap_exit_request = execution.opening_stop_gap_request(side, stop, bar)
+                    funding_timestamp = (bar.timestamp if gap_exit_request is not None else
+                        bar.timestamp + timedelta(minutes=execution.candle_minutes))
+                    funding_mark = bar.open if gap_exit_request is not None else bar.close
+                    elapsed_hours = max(0.0, (funding_timestamp - last_funding_timestamp).total_seconds() / 3600)
+                    funding += execution.funding_amount(side, float(row["quantity"]), funding_mark,
+                        funding_rate, elapsed_hours)
+                    last_funding_timestamp = funding_timestamp
+                    # Match Phase 4: a stop crossed at the observed open exits
+                    # and accrues funding only through that open. All other
+                    # paths retain the close-mark, candle-close approximation.
+                    exit_request = gap_exit_request or execution.intrabar_exit_request(side, stop, target, bar)
                     if exit_request:
                         exit_raw, exit_reason = exit_request
                         exit_index = i
                         break
-                    prior_close = bar.close
                 if exit_raw is None:
                     end_bar = candles[end_index]
                     exit_raw = end_bar.close
