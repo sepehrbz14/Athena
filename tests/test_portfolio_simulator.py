@@ -249,6 +249,51 @@ class PortfolioSimulatorTests(unittest.TestCase):
         self.assertLessEqual(abs(posted + expected_charge), Decimal("1e-18"))
         result.ledger.reconcile({})
 
+    def test_gap_stop_funding_ends_at_first_observed_open_after_multi_interval_gap(self):
+        candles = make_candles(count=5, highs=[101] * 5, lows=[99] * 5, volumes=[1000] * 5)
+        candles[3] = Candle(candles[2].timestamp + timedelta(minutes=60), 90, 92, 88, 91, 1000)
+        candles[4] = Candle(candles[3].timestamp + timedelta(minutes=15), 91, 92, 90, 91, 1000)
+        sig = signal(candles, stop=95, target=130)
+        result = PortfolioSimulator(CONFIG).run(candles, [sig])
+
+        gap_open = candles[3].timestamp
+        last_funding = candles[2].timestamp + timedelta(minutes=15)
+        elapsed_hours = Decimal(str((gap_open - last_funding).total_seconds() / 3600))
+        quantity = result.ledger.completed_positions[0].quantity_closed
+        expected_legacy_charge = Decimal(str(CONFIG.execution.funding_amount(
+            Side.LONG, float(quantity), candles[3].open, CONFIG.execution.funding_rate_per_8h,
+            float(elapsed_hours))))
+        funding = [entry for entry in result.ledger.journal
+            if entry.entry_type == "FUNDING" and entry.event_time == gap_open.isoformat()]
+        self.assertEqual(len(funding), 1)
+        self.assertEqual(funding[0].amount_usdt, -expected_legacy_charge)
+        closure = next(event for event in result.events if event["event_type"] == "POSITION_CLOSED")
+        self.assertTrue(closure["payload"]["gap_at_open"])
+        self.assertEqual(closure["payload"]["raw_price"], Decimal("90"))
+        result.ledger.reconcile({})
+
+    def test_position_surviving_gap_open_keeps_close_mark_funding_approximation(self):
+        candles = make_candles(count=5, highs=[101] * 5, lows=[99] * 5, volumes=[1000] * 5)
+        candles[3] = Candle(candles[2].timestamp + timedelta(minutes=60), 100, 101, 99, 100, 1000)
+        candles[4] = Candle(candles[3].timestamp + timedelta(minutes=15), 100, 101, 99, 100, 1000)
+        sig = signal(candles, stop=95, target=130)
+        result = PortfolioSimulator(CONFIG).run(candles, [sig])
+
+        gap_close = candles[3].timestamp + timedelta(minutes=15)
+        last_funding = candles[2].timestamp + timedelta(minutes=15)
+        elapsed_hours = Decimal(str((gap_close - last_funding).total_seconds() / 3600))
+        quantity = result.ledger.completed_positions[0].quantity_closed
+        expected_legacy_charge = Decimal(str(CONFIG.execution.funding_amount(
+            Side.LONG, float(quantity), candles[3].close, CONFIG.execution.funding_rate_per_8h,
+            float(elapsed_hours))))
+        funding = [entry for entry in result.ledger.journal
+            if entry.entry_type == "FUNDING" and entry.event_time == gap_close.isoformat()]
+        self.assertEqual(len(funding), 1)
+        self.assertEqual(funding[0].amount_usdt, -expected_legacy_charge)
+        self.assertFalse(any(event["event_type"] == "POSITION_CLOSED"
+            and event["event_time"] == gap_close.isoformat() for event in result.events))
+        result.ledger.reconcile({})
+
     def test_minimum_equity_is_entry_lock_not_existing_position_liquidation(self):
         # A deliberately high test floor makes the distinction observable
         # without changing the frozen baseline configuration.
@@ -301,9 +346,10 @@ class PortfolioSimulatorTests(unittest.TestCase):
         summary = result.financial_summary()
         self.assertEqual(Decimal(summary["insolvency_deficit_usdt"]), -result.ledger.cash)
         self.assertTrue(summary["insolvent"])
-        closure = next(event for event in result.events if event["event_type"] == "POSITION_CLOSED"
-            and event["payload"].get("reason") == "insolvency")
-        self.assertEqual(closure["payload"]["raw_price"], Decimal("0.0005"))
+        closure = next(event for event in result.events if event["event_type"] == "POSITION_CLOSED")
+        self.assertEqual(closure["payload"]["reason"], "stop_loss")
+        self.assertTrue(closure["payload"]["gap_at_open"])
+        self.assertEqual(closure["payload"]["raw_price"], Decimal("0.001"))
         result.ledger.reconcile({})
 
     def test_single_position_cash_result_matches_canonical_legacy_trade_accounting(self):

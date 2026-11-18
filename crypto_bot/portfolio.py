@@ -298,26 +298,33 @@ class PortfolioSimulator:
             # 4. Funding posts at close before intrabar stop/target handling.
             # The legacy BarExecutionModel value is a charge; the ledger takes
             # signed cash movement, so invert the sign exactly once. A fill at
-            # this open receives only open-to-close elapsed time; carried size
-            # receives its prior-close-to-close interval.
+            # this open receives only open-to-close elapsed time. A carried
+            # position stopped by an opening gap accrues only through that
+            # observed open, valued at the open; other positions retain the
+            # frozen close-mark funding approximation.
             for pid in list(ledger.positions):
                 position = ledger.positions[pid]
                 state = meta[pid]
                 newly_filled = filled_this_bar.get(pid, ZERO)
                 carried_qty = position.quantity - newly_filled
-                elapsed_old = max(0.0, (available_at - state.last_funding_timestamp).total_seconds() / 3600)
-                elapsed_new = max(0.0, (available_at - bar_time).total_seconds() / 3600)
-                legacy_charge = self.execution.funding_amount(position.side, float(carried_qty), candle.close,
+                gap_exit = self.execution.opening_stop_gap_request(position.side,
+                    float(state.stop_price), candle)
+                exits_at_open = gap_exit is not None
+                funding_time = bar_time if exits_at_open else available_at
+                funding_mark = candle.open if exits_at_open else candle.close
+                elapsed_old = max(0.0, (funding_time - state.last_funding_timestamp).total_seconds() / 3600)
+                elapsed_new = max(0.0, (funding_time - bar_time).total_seconds() / 3600)
+                legacy_charge = self.execution.funding_amount(position.side, float(carried_qty), funding_mark,
                     self.execution.funding_rate_per_8h, elapsed_old)
-                legacy_charge += self.execution.funding_amount(position.side, float(newly_filled), candle.close,
+                legacy_charge += self.execution.funding_amount(position.side, float(newly_filled), funding_mark,
                     self.execution.funding_rate_per_8h, elapsed_new)
                 funding_cash = -D(legacy_charge)
                 if funding_cash != ZERO:
-                    ledger.apply_funding(pid, funding_cash, available_at,
-                        f"funding:{pid}:{available_at.isoformat()}")
-                    self._event(event_records, available_at, "funding", pid,
+                    ledger.apply_funding(pid, funding_cash, funding_time,
+                        f"funding:{pid}:{funding_time.isoformat()}")
+                    self._event(event_records, funding_time, "funding", pid,
                         {"legacy_charge": D(legacy_charge), "ledger_cash_movement": funding_cash})
-                state.last_funding_timestamp = available_at
+                state.last_funding_timestamp = funding_time
 
             # 5. Resolve gap and intrabar exits after the frozen funding accrual.
             # BarExecutionModel preserves adverse-stop-first gap/collision rules.
@@ -332,7 +339,9 @@ class PortfolioSimulator:
                 worst_mark = candle.low if position.side is Side.LONG else candle.high
                 gap_exit_request = self.execution.opening_stop_gap_request(position.side,
                     float(state.stop_price), candle)
-                if ledger.equity({pid: D(worst_mark)}) <= ZERO:
+                if gap_exit_request is not None:
+                    exit_request = gap_exit_request
+                elif ledger.equity({pid: D(worst_mark)}) <= ZERO:
                     exit_request = (worst_mark, "insolvency")
                     status = "insolvent"
                     equity_entry_locked = True
