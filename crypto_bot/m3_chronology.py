@@ -37,7 +37,7 @@ _SIGNAL_FIELDS = ("signal_id", "timestamp", "available_at", "strategy",
 def _utc(value: str) -> datetime:
     try:
         stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except (TypeError, ValueError) as exc:
+    except (AttributeError, TypeError, ValueError) as exc:
         raise ChronologyError("timestamps must be ISO-8601 UTC") from exc
     if stamp.tzinfo is None or stamp.utcoffset() != timedelta(0):
         raise ChronologyError("timestamps must be ISO-8601 UTC")
@@ -131,7 +131,7 @@ def _candle_stamp(value: str) -> datetime:
     except (InvalidOperation, TypeError):
         try:
             stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except (TypeError, ValueError) as exc:
+        except (AttributeError, TypeError, ValueError) as exc:
             raise ChronologyError("pinned candle timestamp is invalid") from exc
         return _datetime_utc(stamp)
     if not numeric.is_finite():
@@ -150,8 +150,10 @@ def candle_timeline_from_bytes(candle_bytes: bytes) -> CandleTimeline:
         reader = csv.DictReader(text)
         if not reader.fieldnames or "timestamp" not in reader.fieldnames:
             raise ChronologyError("pinned candle bytes lack a timestamp column")
+        if len(reader.fieldnames) != len(set(reader.fieldnames)):
+            raise ChronologyError("pinned candle bytes contain duplicate column names")
         timestamps = [_candle_stamp(row["timestamp"]) for row in reader]
-    except (KeyError, UnicodeDecodeError, csv.Error) as exc:
+    except (AttributeError, KeyError, TypeError, UnicodeDecodeError, csv.Error) as exc:
         raise ChronologyError("pinned candle timeline is malformed") from exc
     return CandleTimeline.from_timestamps(timestamps)
 
@@ -273,6 +275,8 @@ def build_opportunity_universe(
         reader = csv.DictReader(text)
         if not reader.fieldnames or not set(_SIGNAL_FIELDS).issubset(reader.fieldnames):
             raise ChronologyError("frozen signal bytes are missing required decision-time fields")
+        if len(reader.fieldnames) != len(set(reader.fieldnames)):
+            raise ChronologyError("frozen signal bytes contain duplicate column names")
         for row in reader:
             # Deliberately project an allowlist; forward_outcomes and other columns
             # are never deserialized or exposed to this construction path.
@@ -314,7 +318,7 @@ def build_opportunity_universe(
                 raise ChronologyError("duplicate strategy signal at an opportunity timestamp")
             seen.add(duplicate_key)
             groups.setdefault(ref.available_at, []).append(ref)
-    except (KeyError, ValueError, UnicodeDecodeError, csv.Error) as exc:
+    except (AttributeError, KeyError, TypeError, ValueError, UnicodeDecodeError, csv.Error) as exc:
         if isinstance(exc, ChronologyError):
             raise
         raise ChronologyError("frozen signal row is malformed") from exc
