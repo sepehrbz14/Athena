@@ -210,6 +210,20 @@ class M3ChronologyTests(unittest.TestCase):
                                                instrument_id="BTCUSDT", dataset_manifest_sha256="a"*64,
                                                eligible_interval=(t0, t0 + timedelta(days=1)))
 
+    def test_missing_signal_timestamp_cell_and_duplicate_headers_fail_closed(self):
+        t0 = stamp(2024, 2, 1)
+        base = {"signal_id": "1", "timestamp": _iso(t0), "available_at": _iso(t0 + BAR),
+                "strategy": "breakout", "direction": "long"}
+        payload = signal_csv([{**base, "timestamp": None}])
+        with self.assertRaises(ChronologyError):
+            build_opportunity_universe(payload, instrument_id="BTC", dataset_manifest_sha256="a"*64,
+                                       eligible_interval=(t0, t0 + timedelta(days=1)))
+        duplicate_header = payload.replace(b"signal_id,timestamp,available_at",
+                                           b"signal_id,timestamp,available_at,timestamp")
+        with self.assertRaisesRegex(ChronologyError, "duplicate column"):
+            build_opportunity_universe(duplicate_header, instrument_id="BTC", dataset_manifest_sha256="a"*64,
+                                       eligible_interval=(t0, t0 + timedelta(days=1)))
+
     def test_exact_pinned_candle_timeline_resolves_by_signal_timestamp(self):
         t0 = stamp(2024, 1, 1)
         raw = "timestamp,open,high,low,close,volume\n" + "".join(
@@ -229,6 +243,12 @@ class M3ChronologyTests(unittest.TestCase):
             CandleTimeline.from_timestamps([t0, t0])
         with self.assertRaisesRegex(ChronologyError, "strictly chronological"):
             CandleTimeline.from_timestamps([t0 + BAR, t0])
+
+    def test_missing_or_duplicate_pinned_candle_timestamp_column_fails_closed(self):
+        with self.assertRaises(ChronologyError):
+            candle_timeline_from_bytes(b"timestamp,open\\n,1\\n")
+        with self.assertRaisesRegex(ChronologyError, "duplicate column"):
+            candle_timeline_from_bytes(b"timestamp,timestamp,open\\n1,1,1\\n")
 
     def test_utc_week_calendar_includes_empty_weeks_and_normalizes_offsets(self):
         start = datetime(2024, 2, 5, 3, tzinfo=timezone(timedelta(hours=3)))
