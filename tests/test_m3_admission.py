@@ -76,6 +76,8 @@ def test_admission_verifies_valid_attempt_and_exact_pinned_inputs(tmp_path):
     assert admitted.attempt_id == "attempt-1"
     assert admitted.research_classification == "previously_observed_historical_diagnostic"
     assert admitted.previously_observed is True
+    assert admitted.eligible_for_evaluation is True
+    assert admitted.authoritative_evaluation_authorized is False
     assert {record.key for record in admitted.inputs} == {"signals", "candles", "phase5_manifest"}
 
 
@@ -107,6 +109,51 @@ def test_admission_rejects_checkpoint_mismatch(tmp_path):
     security.verify_latest = lambda **_kwargs: {"protocol_id": "wrong", "event_tip_sha256": "a" * 64}
     with pytest.raises(AdmissionError, match="does not bind"):
         admit_attempt(registry, security, "attempt-1", inputs)
+
+
+def test_admission_rejects_untrusted_checkpoint_exception(tmp_path):
+    registry, security, inputs = _registry(tmp_path)
+    security.verify_latest = lambda **_kwargs: (_ for _ in ()).throw(ValueError("bad signature"))
+    with pytest.raises(AdmissionError, match="checkpoint verification failed"):
+        admit_attempt(registry, security, "attempt-1", inputs)
+
+
+def test_admission_rejects_missing_m1_registration(tmp_path):
+    registry, security, inputs = _registry(tmp_path)
+    registry._events = [e for e in registry._events if e["event_type"] != "CANDIDATE_REGISTERED"]
+    with pytest.raises(AdmissionError, match="required registry event not found"):
+        admit_attempt(registry, security, "attempt-1", inputs)
+
+
+def test_admission_rejects_invalid_m1_attempt_state(tmp_path):
+    registry, security, inputs = _registry(tmp_path)
+    registry.attempt_states = lambda: {"attempt-1": "INVALID_CANDIDATE"}
+    with pytest.raises(AdmissionError, match="M1-validated"):
+        admit_attempt(registry, security, "attempt-1", inputs)
+
+
+def test_admission_rejects_candidate_byte_mismatch(tmp_path):
+    registry, security, inputs = _registry(tmp_path)
+    registry._events[-1]["payload"]["candidate_spec_bytes_sha256"] = "0" * 64
+    with pytest.raises(AdmissionError, match="candidate bytes differ"):
+        admit_attempt(registry, security, "attempt-1", inputs)
+
+
+@pytest.mark.parametrize("input_key", ["signals", "candles", "phase5_manifest"])
+def test_admission_rejects_each_pinned_input_hash_mismatch(tmp_path, input_key):
+    registry, security, inputs = _registry(tmp_path)
+    inputs[input_key].write_bytes(b"tampered-" + input_key.encode())
+    with pytest.raises(AdmissionError, match=f"hash mismatch for {input_key}"):
+        admit_attempt(registry, security, "attempt-1", inputs)
+
+
+def test_preflight_is_read_only_and_has_no_evaluation_side_effects(tmp_path):
+    registry, security, inputs = _registry(tmp_path)
+    before = json.dumps(registry.events(), sort_keys=True)
+    admitted = admit_attempt(registry, security, "attempt-1", inputs)
+    assert json.dumps(registry.events(), sort_keys=True) == before
+    assert admitted.authoritative_evaluation_authorized is False
+    assert not hasattr(registry, "record_evaluation_started_called")
 
 
 def test_admission_rejects_symlinked_input(tmp_path):

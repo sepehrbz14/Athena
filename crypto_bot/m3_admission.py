@@ -38,6 +38,8 @@ class AdmittedAttempt:
     inputs: tuple[PinnedInput, ...]
     research_classification: str
     previously_observed: bool
+    eligible_for_evaluation: bool
+    authoritative_evaluation_authorized: bool
 
 
 _REQUIRED_INPUTS = {
@@ -170,4 +172,6 @@ def admit_attempt(
         inputs=tuple(pinned),
         research_classification=protocol["research_classification"],
         previously_observed=True,
+        eligible_for_evaluation=True,
+        authoritative_evaluation_authorized=False,
     )
