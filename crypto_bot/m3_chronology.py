@@ -1,0 +1,247 @@
+"""Frozen M0 chronology and candidate-independent opportunity construction.
+
+Only registered fold boundaries and frozen signal bytes are accepted. This
+module does not execute candidates, score outcomes, or read future labels.
+"""
+from __future__ import annotations
+
+import csv
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+import calendar
+import hashlib
+from io import BytesIO, TextIOWrapper
+from typing import Iterable, Mapping, Sequence
+
+from .experiment_registry import canonical_json_bytes
+
+
+class ChronologyError(ValueError):
+    """Frozen chronology or signal universe is malformed."""
+
+
+BAR = timedelta(minutes=15)
+LABEL_HORIZON_BARS = 96
+EMBARGO_BARS = 96
+WARMUP_BARS = 816
+TERMINAL_ENTRY_BLACKOUT_BARS = 96
+MAX_POSITION_HORIZON_BARS = 17_664
+_STRATEGIES = {"trend_following", "breakout", "momentum", "mean_reversion"}
+_SIGNAL_FIELDS = ("signal_id", "candle_index", "timestamp", "available_at", "strategy",
+                  "direction", "confidence", "regime", "reference_price", "stop_price", "take_profit")
+
+
+def _utc(value: str) -> datetime:
+    try:
+        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError) as exc:
+        raise ChronologyError("timestamps must be ISO-8601 UTC") from exc
+    if stamp.tzinfo is None or stamp.utcoffset() != timedelta(0):
+        raise ChronologyError("timestamps must be ISO-8601 UTC")
+    return stamp.astimezone(timezone.utc)
+
+
+def _add_months(stamp: datetime, count: int) -> datetime:
+    absolute = stamp.year * 12 + stamp.month - 1 + count
+    year, month0 = divmod(absolute, 12)
+    month = month0 + 1
+    return stamp.replace(year=year, month=month, day=min(stamp.day, calendar.monthrange(year, month)[1]))
+
+
+@dataclass(frozen=True, slots=True)
+class FoldWindow:
+    fold_id: str
+    train: tuple[datetime, datetime]
+    validation: tuple[datetime, datetime]
+    outer_test: tuple[datetime, datetime]
+    train_validation_embargo: tuple[datetime, datetime]
+    validation_test_embargo: tuple[datetime, datetime]
+
+
+@dataclass(frozen=True, slots=True)
+class SignalRef:
+    signal_id: str
+    strategy: str
+    signal_timestamp: datetime
+    available_at: datetime
+    candle_index: int
+    direction: str
+    confidence: str
+    regime: str
+    reference_price: str
+    stop_price: str
+    take_profit: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class Opportunity:
+    opportunity_id: str
+    instrument_id: str
+    available_at: datetime
+    signals: tuple[SignalRef, ...]
+    utc_week: str
+
+
+def build_fold_windows(protocol: Mapping) -> tuple[FoldWindow, ...]:
+    """Validate and materialize the exact fold boundaries pre-registered in M0."""
+    chronology = protocol.get("chronology")
+    if not isinstance(chronology, Mapping):
+        raise ChronologyError("protocol is missing frozen chronology")
+    frozen = {
+        "clock": "UTC_signal_availability", "fold_method": "nested_expanding_rolling_origin",
+        "min_training_months": 24, "inner_validation_months": 6,
+        "outer_test_months": 6, "outer_step_months": 6,
+        "minimum_eligible_outer_folds": 6, "nonoverlapping_outer_tests": True,
+        "max_label_horizon_bars": 96, "max_position_horizon_bars": 17664,
+        "embargo_bars": 96, "terminal_entry_blackout_bars": 96,
+    }
+    for key, expected in frozen.items():
+        if chronology.get(key) != expected:
+            raise ChronologyError(f"protocol chronology changes frozen M0 value: {key}")
+    rows = chronology.get("folds")
+    if not isinstance(rows, list) or len(rows) < 6:
+        raise ChronologyError("at least six explicitly pre-registered outer folds are required")
+    windows: list[FoldWindow] = []
+    previous_test_end: datetime | None = None
+    for row in rows:
+        try:
+            fold_id = row["fold_id"]
+            train = (_utc(row["train_start_utc"]), _utc(row["train_end_utc"]))
+            validation = (_utc(row["validation_start_utc"]), _utc(row["validation_end_utc"]))
+            test = (_utc(row["outer_test_start_utc"]), _utc(row["outer_test_end_utc"]))
+        except (KeyError, TypeError) as exc:
+            raise ChronologyError("fold row lacks frozen UTC boundaries") from exc
+        if not (train[0] < train[1] <= validation[0] < validation[1] <= test[0] < test[1]):
+            raise ChronologyError("fold boundaries must be chronological half-open intervals")
+        if train[1] < _add_months(train[0], 24):
+            raise ChronologyError("training history is shorter than 24 calendar months")
+        if validation[1] < _add_months(validation[0], 6):
+            raise ChronologyError("inner validation is shorter than six calendar months")
+        if test[1] < _add_months(test[0], 6):
+            raise ChronologyError("outer test is shorter than six calendar months")
+        if validation[0] < train[1] + timedelta(hours=24):
+            raise ChronologyError("train-to-validation embargo is shorter than 96 bars/24 hours")
+        if test[0] < validation[1] + timedelta(hours=24):
+            raise ChronologyError("validation-to-test embargo is shorter than 96 bars/24 hours")
+        if previous_test_end is not None and test[0] < previous_test_end:
+            raise ChronologyError("outer test intervals overlap or are not chronological")
+        if windows and test[0] < _add_months(windows[-1].outer_test[0], 6):
+            raise ChronologyError("outer test step is shorter than six calendar months")
+        previous_test_end = test[1]
+        windows.append(FoldWindow(
+            str(fold_id), train, validation, test,
+            (train[1], validation[0]), (validation[1], test[0]),
+        ))
+    return tuple(windows)
+
+
+def _week(stamp: datetime) -> str:
+    iso = stamp.isocalendar()
+    return f"{iso.year}-W{iso.week:02d}"
+
+
+def build_opportunity_universe(
+    signal_bytes: bytes,
+    *,
+    instrument_id: str,
+    dataset_manifest_sha256: str,
+    eligible_interval: tuple[datetime, datetime],
+) -> tuple[Opportunity, ...]:
+    """Build union of raw frozen signals; never parse/use forward outcome fields."""
+    if not instrument_id or len(dataset_manifest_sha256) != 64:
+        raise ChronologyError("instrument and frozen dataset-manifest digest are required")
+    start, end = eligible_interval
+    if start.tzinfo is None or end.tzinfo is None or start >= end:
+        raise ChronologyError("eligible interval must be ordered and timezone-aware")
+    groups: dict[datetime, list[SignalRef]] = {}
+    seen: set[tuple[datetime, str]] = set()
+    try:
+        text = TextIOWrapper(BytesIO(signal_bytes), encoding="utf-8", newline="")
+        reader = csv.DictReader(text)
+        if not reader.fieldnames or not set(_SIGNAL_FIELDS).issubset(reader.fieldnames):
+            raise ChronologyError("frozen signal bytes are missing required decision-time fields")
+        for row in reader:
+            # Deliberately project an allowlist; forward_outcomes and other columns
+            # are never deserialized or exposed to this construction path.
+            ref = SignalRef(
+                signal_id=row["signal_id"], strategy=row["strategy"],
+                signal_timestamp=_utc(row["timestamp"]), available_at=_utc(row["available_at"]),
+                candle_index=int(row["candle_index"]), direction=row["direction"],
+                confidence=row["confidence"], regime=row["regime"],
+                reference_price=row["reference_price"], stop_price=row["stop_price"],
+                take_profit=row["take_profit"] or None,
+            )
+            if ref.strategy not in _STRATEGIES or ref.direction not in {"long", "short"}:
+                raise ChronologyError("unsupported frozen strategy or direction")
+            if ref.available_at != ref.signal_timestamp + BAR:
+                raise ChronologyError("available_at must be one bar after original signal timestamp")
+            if ref.candle_index < 0:
+                raise ChronologyError("signal candle index must be nonnegative")
+            if not (start <= ref.available_at < end):
+                continue
+            duplicate_key = (ref.available_at, ref.strategy)
+            if duplicate_key in seen:
+                raise ChronologyError("duplicate strategy signal at an opportunity timestamp")
+            seen.add(duplicate_key)
+            groups.setdefault(ref.available_at, []).append(ref)
+    except (KeyError, ValueError, UnicodeDecodeError, csv.Error) as exc:
+        if isinstance(exc, ChronologyError):
+            raise
+        raise ChronologyError("frozen signal row is malformed") from exc
+
+    opportunities = []
+    for available_at in sorted(groups):
+        signals = tuple(sorted(groups[available_at], key=lambda item: item.strategy))
+        identity = {
+            "schema_version": "athena.m3.opportunity.v1",
+            "dataset_manifest_sha256": dataset_manifest_sha256,
+            "instrument_id": instrument_id,
+            "available_at_utc": available_at.isoformat().replace("+00:00", "Z"),
+        }
+        oid = hashlib.sha256(canonical_json_bytes(identity)).hexdigest()
+        opportunities.append(Opportunity(oid, instrument_id, available_at, signals, _week(available_at)))
+    return tuple(opportunities)
+
+
+def label_endpoint(
+    signal_timestamp: datetime,
+    signal_index: int,
+    candle_timestamps: Sequence[datetime],
+) -> datetime | None:
+    """Return original-signal-time + 96 contiguous bars; None if a gap censors it."""
+    if signal_index < 0 or signal_index >= len(candle_timestamps):
+        raise ChronologyError("signal index lies outside candle timeline")
+    if candle_timestamps[signal_index] != signal_timestamp:
+        raise ChronologyError("signal timestamp/index do not identify the same original candle")
+    endpoint_index = signal_index + LABEL_HORIZON_BARS
+    if endpoint_index >= len(candle_timestamps):
+        return None
+    for index in range(signal_index + 1, endpoint_index + 1):
+        if candle_timestamps[index] - candle_timestamps[index - 1] != BAR:
+            return None
+    return candle_timestamps[endpoint_index]
+
+
+def label_survives_boundary(endpoint: datetime | None, boundary: datetime) -> bool:
+    """M0 strict rule: endpoint must exist and be strictly before boundary."""
+    return endpoint is not None and endpoint < boundary
+
+
+def is_entry_in_terminal_blackout(available_at: datetime, scored_end: datetime) -> bool:
+    """No entries in the final 96 expected bars (24 elapsed hours) of a block."""
+    return scored_end - timedelta(hours=24) <= available_at < scored_end
+
+
+def warmup_ready(signal_index: int, candle_timestamps: Sequence[datetime]) -> bool:
+    """Require 816 immediately prior contiguous bars; gaps reset causal warm-up."""
+    if signal_index < WARMUP_BARS or signal_index >= len(candle_timestamps):
+        return False
+    start = signal_index - WARMUP_BARS
+    return all(candle_timestamps[i] - candle_timestamps[i - 1] == BAR
+               for i in range(start + 1, signal_index + 1))
+
+
+def position_horizon_within_fold(entry_index: int, exit_index: int) -> bool:
+    """A position cannot exceed the frozen six-month/17,664 expected-bar cap."""
+    return 0 <= entry_index <= exit_index and exit_index - entry_index <= MAX_POSITION_HORIZON_BARS
+
