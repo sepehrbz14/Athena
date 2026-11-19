@@ -90,6 +90,10 @@ class M3AdmissionTests(unittest.TestCase):
         self.assertTrue(admitted.eligible_for_evaluation)
         self.assertFalse(admitted.authoritative_evaluation_authorized)
         self.assertEqual({item.key for item in admitted.inputs}, set(self.inputs))
+        signal_snapshot = next(item for item in admitted.inputs if item.key == "signals")
+        old_bytes = signal_snapshot.content
+        signal_snapshot.path.write_bytes(b"replaced after verification")
+        self.assertEqual(signal_snapshot.content, old_bytes)
 
     def test_admission_rejects_holdout_before_reading_inputs(self):
         registry, security, _ = self._make_fixture("prospective_holdout_confirmatory")
