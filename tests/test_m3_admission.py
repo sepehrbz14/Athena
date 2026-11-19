@@ -24,6 +24,7 @@ class _Registry:
             {"event_type": "CANDIDATE_REGISTERED", "protocol_id": self.protocol_id,
              "payload": {"attempt_id": attempt_id, "candidate_spec_bytes_sha256": spec_sha}},
         ]
+        self.write_calls = 0
 
     def verify(self):
         return m1.VerificationResult(True, 3, 1, 1, "sha256:" + "1" * 64, "a" * 64)
@@ -36,6 +37,15 @@ class _Registry:
 
     def attempt_bytes(self, _attempt_id):
         return self.candidate_bytes
+
+    def record_evaluation_started(self, *_args, **_kwargs):
+        self.write_calls += 1
+
+    def complete_evaluation(self, *_args, **_kwargs):
+        self.write_calls += 1
+
+    def write_evidence(self, *_args, **_kwargs):
+        self.write_calls += 1
 
 
 class _Security:
@@ -139,7 +149,7 @@ class M3AdmissionTests(unittest.TestCase):
         result = admit_attempt(self.registry, self.security, "attempt-1", self.inputs)
         self.assertEqual(json.dumps(self.registry.events(), sort_keys=True), before)
         self.assertFalse(result.authoritative_evaluation_authorized)
-        self.assertFalse(hasattr(self.registry, "record_evaluation_started"))
+        self.assertEqual(self.registry.write_calls, 0)
 
     def test_admission_rejects_symlinked_input(self):
         link = self.root / "signals-link.bin"
