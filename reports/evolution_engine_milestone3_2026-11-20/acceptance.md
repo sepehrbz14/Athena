@@ -14,7 +14,7 @@ This checklist is subordinate to [design.md](design.md). M0/M1/M2 contracts rema
 ## Scientific and integrity checks
 
 - [x] Owner explicitly approves the carried-position weekly return decision before implementation; Sunday-entry/Monday-carry/Tuesday-exit and true no-exposure zero-week fixtures are specified. The fixture test remains to be implemented in the accounting slice.
-- [ ] 96-bar label is anchored at original signal timestamp/index; `available_at` only controls decision eligibility; purge/embargo tests prove no boundary leakage.
+- [x] 96-bar label is anchored at original signal timestamp/index; `available_at` only controls decision eligibility; strict label purge and minimum 96-bar/24-hour embargo checks are covered by deterministic synthetic tests. Frozen boundaries are materialized from the registered protocol without deriving or shifting them; warm-up, terminal blackout, maximum horizon and gap behavior are covered. (Slice 2 CI: [run 44624340208](https://github.com/sepehrbz14/Athena/actions/runs/44624340208), 218 tests passed on Ubuntu and Windows.)
 - [ ] Candidate cannot manufacture signals or timestamps; all candidate/incumbent rows cover exactly the same opportunity IDs and UTC weekly keys, including abstentions, rejected entries, and no-fills.
 - [ ] Historical signals are consumed only as exact hash-pinned frozen rows; no regeneration/substitution; source-generation provenance limitation appears in every package.
 - [ ] All data through 2026-08-19 are marked previously observed; no holdout access or mount exists.
