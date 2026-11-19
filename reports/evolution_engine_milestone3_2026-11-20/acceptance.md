@@ -27,7 +27,8 @@ This checklist is subordinate to [design.md](design.md). M0/M1/M2 contracts rema
 
 
 - [x] Initial declarative policy interpreter requires exact candidate bytes matching the admitted digest, maps every shared opportunity to one selection or abstention, and returns only existing signal records; candidate/incumbent outputs retain identical opportunity IDs. It supports only the frozen finite M0/M2 rules. (Synthetic focused tests and full CI run [44629822568](https://github.com/sepehrbz14/Athena/actions/runs/44629822568), 234 tests both platforms.)
-- [ ] Predictive label scoring, independent counterfactual evaluation, executable simulation, paired accounting, and no-fill/rejection dispositions remain unimplemented. No historical evaluations or label scoring have been run.
+- [x] Post-decision predictive scoring consumes only admitted signal/candle snapshots, resolves label endpoints against the pinned timeline, enforces strict boundary purge, retains abstention/censored/purged rows, and never feeds labels to policy selection. Synthetic fixtures only; no historical labels were scored. (Full CI [run 44631609786](https://github.com/sepehrbz14/Athena/actions/runs/44631609786), 239 tests on both platforms.)
+- [ ] Independent counterfactual evaluation, executable simulation, paired accounting, weekly aggregation/uncertainty, and no-fill/rejection dispositions remain unimplemented.
 
 ## Isolation gate
 
