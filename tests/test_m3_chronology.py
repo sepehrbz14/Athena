@@ -80,7 +80,9 @@ class M3ChronologyTests(unittest.TestCase):
         with self.assertRaises(ChronologyError):
             build_fold_windows(protocol)
         protocol = protocol_fixture()
-        protocol["chronology"]["folds"][1]["outer_test_start_utc"] = protocol["chronology"]["folds"][0]["outer_test_end_utc"]
+        protocol["chronology"]["folds"][1]["outer_test_start_utc"] = _iso(
+            _months(datetime.fromisoformat(
+                protocol["chronology"]["folds"][0]["outer_test_end_utc"].replace("Z", "+00:00")), -1))
         with self.assertRaises(ChronologyError):
             build_fold_windows(protocol)
 
