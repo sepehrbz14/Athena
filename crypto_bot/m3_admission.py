@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Mapping
 
@@ -24,6 +25,7 @@ class PinnedInput:
     path: Path
     sha256: str
     size_bytes: int
+    content: bytes
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,14 +51,14 @@ _REQUIRED_INPUTS = {
 }
 
 
-def _sha256_file(path: Path) -> tuple[str, int]:
-    digest = hashlib.sha256()
-    size = 0
+def _snapshot_file(path: Path) -> tuple[bytes, str]:
     with path.open("rb") as handle:
-        while chunk := handle.read(1024 * 1024):
-            digest.update(chunk)
-            size += len(chunk)
-    return digest.hexdigest(), size
+        before = os.fstat(handle.fileno())
+        content = handle.read()
+        after = os.fstat(handle.fileno())
+    if before.st_size != after.st_size or before.st_mtime_ns != after.st_mtime_ns:
+        raise AdmissionError("pinned input changed while its immutable snapshot was read")
+    return content, hashlib.sha256(content).hexdigest()
 
 
 def _resolve_regular_file(value: str | Path) -> Path:
@@ -158,11 +160,11 @@ def admit_attempt(
     pinned: list[PinnedInput] = []
     for key, protocol_field in _REQUIRED_INPUTS.items():
         path = _resolve_regular_file(input_paths[key])
-        actual, size = _sha256_file(path)
+        content, actual = _snapshot_file(path)
         expected = data.get(protocol_field)
         if not isinstance(expected, str) or actual != expected:
             raise AdmissionError(f"pinned input hash mismatch for {key}")
-        pinned.append(PinnedInput(key, path, actual, size))
+        pinned.append(PinnedInput(key, path, actual, len(content), content))
 
     protocol_digest = hashlib.sha256(m1.canonical_json_bytes(protocol)).hexdigest()
     return AdmittedAttempt(
