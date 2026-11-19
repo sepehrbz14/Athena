@@ -9,9 +9,12 @@ import csv
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import calendar
+from decimal import Decimal, InvalidOperation
 import hashlib
 from io import BytesIO, TextIOWrapper
-from typing import Iterable, Mapping, Sequence
+import re
+from types import MappingProxyType
+from typing import Mapping, Sequence
 
 from .experiment_registry import canonical_json_bytes
 
@@ -27,7 +30,7 @@ WARMUP_BARS = 816
 TERMINAL_ENTRY_BLACKOUT_BARS = 96
 MAX_POSITION_HORIZON_BARS = 17_664
 _STRATEGIES = {"trend_following", "breakout", "momentum", "mean_reversion"}
-_SIGNAL_FIELDS = ("signal_id", "candle_index", "timestamp", "available_at", "strategy",
+_SIGNAL_FIELDS = ("signal_id", "timestamp", "available_at", "strategy",
                   "direction", "confidence", "regime", "reference_price", "stop_price", "take_profit")
 
 
@@ -60,11 +63,10 @@ class FoldWindow:
 
 @dataclass(frozen=True, slots=True)
 class SignalRef:
-    signal_id: str
+    signal_id: int
     strategy: str
     signal_timestamp: datetime
     available_at: datetime
-    candle_index: int
     direction: str
     confidence: str
     regime: str
@@ -80,6 +82,100 @@ class Opportunity:
     available_at: datetime
     signals: tuple[SignalRef, ...]
     utc_week: str
+
+
+@dataclass(frozen=True, slots=True)
+class OpportunityUniverse:
+    """Shared opportunity rows plus the complete scored UTC-week calendar."""
+
+    opportunities: tuple[Opportunity, ...]
+    utc_week_keys: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CandleTimeline:
+    """Immutable index of timestamps parsed from the exact pinned candle bytes."""
+
+    timestamps: tuple[datetime, ...]
+    index_by_timestamp: Mapping[datetime, int]
+
+    @classmethod
+    def from_timestamps(cls, timestamps: Sequence[datetime]) -> "CandleTimeline":
+        normalized = tuple(_datetime_utc(value) for value in timestamps)
+        if not normalized:
+            raise ChronologyError("pinned candle timeline is empty")
+        if any(right <= left for left, right in zip(normalized, normalized[1:])):
+            raise ChronologyError("pinned candle timeline must be strictly chronological and unique")
+        index = MappingProxyType({stamp: i for i, stamp in enumerate(normalized)})
+        return cls(normalized, index)
+
+    def resolve(self, signal_timestamp: datetime) -> int:
+        stamp = _datetime_utc(signal_timestamp)
+        try:
+            return self.index_by_timestamp[stamp]
+        except KeyError as exc:
+            raise ChronologyError("signal timestamp is absent from the pinned candle timeline") from exc
+
+
+def _datetime_utc(value: datetime) -> datetime:
+    if not isinstance(value, datetime) or value.tzinfo is None:
+        raise ChronologyError("timestamps must be timezone-aware")
+    return value.astimezone(timezone.utc)
+
+
+def _candle_stamp(value: str) -> datetime:
+    """Parse the pinned OHLCV timestamp representation (ISO, seconds, or ms)."""
+    try:
+        numeric = Decimal(value)
+    except (InvalidOperation, TypeError):
+        try:
+            stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (TypeError, ValueError) as exc:
+            raise ChronologyError("pinned candle timestamp is invalid") from exc
+        return _datetime_utc(stamp)
+    if not numeric.is_finite():
+        raise ChronologyError("pinned candle timestamp must be finite")
+    seconds = numeric / Decimal(1000) if numeric > Decimal("10000000000") else numeric
+    try:
+        return datetime.fromtimestamp(float(seconds), tz=timezone.utc)
+    except (OverflowError, OSError, ValueError) as exc:
+        raise ChronologyError("pinned candle timestamp is outside supported range") from exc
+
+
+def candle_timeline_from_bytes(candle_bytes: bytes) -> CandleTimeline:
+    """Build a timeline without reopening a path or changing pinned input bytes."""
+    try:
+        text = TextIOWrapper(BytesIO(candle_bytes), encoding="utf-8", newline="")
+        reader = csv.DictReader(text)
+        if not reader.fieldnames or "timestamp" not in reader.fieldnames:
+            raise ChronologyError("pinned candle bytes lack a timestamp column")
+        timestamps = [_candle_stamp(row["timestamp"]) for row in reader]
+    except (KeyError, UnicodeDecodeError, csv.Error) as exc:
+        raise ChronologyError("pinned candle timeline is malformed") from exc
+    return CandleTimeline.from_timestamps(timestamps)
+
+
+def _positive_decimal(value: str, field: str, *, allow_zero: bool = False) -> Decimal:
+    try:
+        number = Decimal(value)
+    except (InvalidOperation, TypeError) as exc:
+        raise ChronologyError(f"signal {field} must be numeric") from exc
+    if not number.is_finite() or (number < 0 if allow_zero else number <= 0):
+        raise ChronologyError(f"signal {field} must be finite and positive")
+    return number
+
+
+def complete_utc_week_keys(interval: tuple[datetime, datetime]) -> tuple[str, ...]:
+    """All ISO UTC weeks intersecting a scored half-open interval, including empty weeks."""
+    start, end = (_datetime_utc(interval[0]), _datetime_utc(interval[1]))
+    if start >= end:
+        raise ChronologyError("eligible interval must be ordered")
+    monday = start.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=start.weekday())
+    keys = []
+    while monday < end:
+        keys.append(_week(monday))
+        monday += timedelta(days=7)
+    return tuple(keys)
 
 
 def build_fold_windows(protocol: Mapping) -> tuple[FoldWindow, ...]:
@@ -150,15 +246,16 @@ def build_opportunity_universe(
     instrument_id: str,
     dataset_manifest_sha256: str,
     eligible_interval: tuple[datetime, datetime],
-) -> tuple[Opportunity, ...]:
+) -> OpportunityUniverse:
     """Build union of raw frozen signals; never parse/use forward outcome fields."""
-    if not instrument_id or len(dataset_manifest_sha256) != 64:
+    if not instrument_id or not re.fullmatch(r"[a-f0-9]{64}", dataset_manifest_sha256):
         raise ChronologyError("instrument and frozen dataset-manifest digest are required")
-    start, end = eligible_interval
-    if start.tzinfo is None or end.tzinfo is None or start >= end:
-        raise ChronologyError("eligible interval must be ordered and timezone-aware")
+    start, end = (_datetime_utc(eligible_interval[0]), _datetime_utc(eligible_interval[1]))
+    if start >= end:
+        raise ChronologyError("eligible interval must be ordered")
     groups: dict[datetime, list[SignalRef]] = {}
     seen: set[tuple[datetime, str]] = set()
+    seen_signal_ids: set[int] = set()
     try:
         text = TextIOWrapper(BytesIO(signal_bytes), encoding="utf-8", newline="")
         reader = csv.DictReader(text)
@@ -167,10 +264,28 @@ def build_opportunity_universe(
         for row in reader:
             # Deliberately project an allowlist; forward_outcomes and other columns
             # are never deserialized or exposed to this construction path.
+            try:
+                signal_id_decimal = Decimal(row["signal_id"])
+            except (InvalidOperation, TypeError) as exc:
+                raise ChronologyError("signal_id must be a positive integer") from exc
+            if (not signal_id_decimal.is_finite() or signal_id_decimal <= 0 or
+                    signal_id_decimal != signal_id_decimal.to_integral_value()):
+                raise ChronologyError("signal_id must be a positive integer")
+            signal_id = int(signal_id_decimal)
+            if signal_id in seen_signal_ids:
+                raise ChronologyError("duplicate frozen signal_id")
+            seen_signal_ids.add(signal_id)
+            confidence = _positive_decimal(row["confidence"], "confidence")
+            if confidence > 1:
+                raise ChronologyError("signal confidence must be at most 1")
+            _positive_decimal(row["reference_price"], "reference_price")
+            _positive_decimal(row["stop_price"], "stop_price")
+            if row["take_profit"] not in (None, ""):
+                _positive_decimal(row["take_profit"], "take_profit")
             ref = SignalRef(
-                signal_id=row["signal_id"], strategy=row["strategy"],
+                signal_id=signal_id, strategy=row["strategy"],
                 signal_timestamp=_utc(row["timestamp"]), available_at=_utc(row["available_at"]),
-                candle_index=int(row["candle_index"]), direction=row["direction"],
+                direction=row["direction"],
                 confidence=row["confidence"], regime=row["regime"],
                 reference_price=row["reference_price"], stop_price=row["stop_price"],
                 take_profit=row["take_profit"] or None,
@@ -179,8 +294,6 @@ def build_opportunity_universe(
                 raise ChronologyError("unsupported frozen strategy or direction")
             if ref.available_at != ref.signal_timestamp + BAR:
                 raise ChronologyError("available_at must be one bar after original signal timestamp")
-            if ref.candle_index < 0:
-                raise ChronologyError("signal candle index must be nonnegative")
             if not (start <= ref.available_at < end):
                 continue
             duplicate_key = (ref.available_at, ref.strategy)
@@ -204,19 +317,24 @@ def build_opportunity_universe(
         }
         oid = hashlib.sha256(canonical_json_bytes(identity)).hexdigest()
         opportunities.append(Opportunity(oid, instrument_id, available_at, signals, _week(available_at)))
-    return tuple(opportunities)
+    return OpportunityUniverse(tuple(opportunities), complete_utc_week_keys((start, end)))
 
 
 def label_endpoint(
     signal_timestamp: datetime,
-    signal_index: int,
-    candle_timestamps: Sequence[datetime],
+    candle_timeline: CandleTimeline,
+    *,
+    recorded_signal_index: int | None = None,
 ) -> datetime | None:
-    """Return original-signal-time + 96 contiguous bars; None if a gap censors it."""
-    if signal_index < 0 or signal_index >= len(candle_timestamps):
-        raise ChronologyError("signal index lies outside candle timeline")
-    if candle_timestamps[signal_index] != signal_timestamp:
-        raise ChronologyError("signal timestamp/index do not identify the same original candle")
+    """Resolve by original timestamp on pinned candles, then return its 96-bar endpoint.
+
+    The optional CSV index is only a cross-check. It is never used to locate the
+    signal, so absence of that non-schema field cannot shift or invent labels.
+    """
+    signal_index = candle_timeline.resolve(signal_timestamp)
+    if recorded_signal_index is not None and recorded_signal_index != signal_index:
+        raise ChronologyError("recorded candle_index disagrees with pinned timestamp mapping")
+    candle_timestamps = candle_timeline.timestamps
     endpoint_index = signal_index + LABEL_HORIZON_BARS
     if endpoint_index >= len(candle_timestamps):
         return None
