@@ -115,8 +115,12 @@ def admit_attempt(
     if states.get(attempt_id) != "VALIDATED":
         raise AdmissionError("attempt must be registered and M1-validated, with no prior evaluation")
     registration = _event_payload(events, "CANDIDATE_REGISTERED", attempt_id)
-    attempt_event = _event_payload(events, "CANDIDATE_ATTEMPT_REGISTERED", attempt_id)
-    protocol_id = attempt_event.get("protocol_id")
+    attempt_event = next((
+        event for event in events
+        if event["event_type"] == "CANDIDATE_ATTEMPT_REGISTERED"
+        and event["payload"].get("attempt_id") == attempt_id
+    ), None)
+    protocol_id = attempt_event.get("protocol_id") if attempt_event is not None else None
     if not isinstance(protocol_id, str):
         raise AdmissionError("attempt registration has no protocol identity")
     protocol_event = next((e for e in events if e["event_type"] == "PROTOCOL_PRE_REGISTERED" and e["protocol_id"] == protocol_id), None)
@@ -175,3 +179,4 @@ def admit_attempt(
         eligible_for_evaluation=True,
         authoritative_evaluation_authorized=False,
     )
+
