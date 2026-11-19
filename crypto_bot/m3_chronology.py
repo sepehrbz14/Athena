@@ -94,6 +94,10 @@ def build_fold_windows(protocol: Mapping) -> tuple[FoldWindow, ...]:
         "minimum_eligible_outer_folds": 6, "nonoverlapping_outer_tests": True,
         "max_label_horizon_bars": 96, "max_position_horizon_bars": 17664,
         "embargo_bars": 96, "terminal_entry_blackout_bars": 96,
+        "purge_policy": "purge_label_or_trade_outcome_crossing_boundary",
+        "warmup_policy": "816_prior_contiguous_15m_bars_reset_after_gap_causal_only_unscored",
+        "state_reset": "fresh_account_orders_and_safety_state_per_fold",
+        "fold_end_policy": "frozen_phase4_force_close_at_end_with_costs_reported",
     }
     for key, expected in frozen.items():
         if chronology.get(key) != expected:
