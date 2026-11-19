@@ -25,6 +25,10 @@ This checklist is subordinate to [design.md](design.md). M0/M1/M2 contracts rema
 - [ ] Every experiment records source commit/dirty state, candidate/protocol/M2 identity, dataset/config hashes, image/runtime digest, fold plan, seeds, method, resource use, and per-artifact hashes.
 - [ ] Outputs are exclusive, immutable, dated, and separate from all historical output directories.
 
+
+- [x] Initial declarative policy interpreter requires exact candidate bytes matching the admitted digest, maps every shared opportunity to one selection or abstention, and returns only existing signal records; candidate/incumbent outputs retain identical opportunity IDs. It supports only the frozen finite M0/M2 rules. (Synthetic focused tests and full CI run [44629822568](https://github.com/sepehrbz14/Athena/actions/runs/44629822568), 234 tests both platforms.)
+- [ ] Predictive label scoring, independent counterfactual evaluation, executable simulation, paired accounting, and no-fill/rejection dispositions remain unimplemented. No historical evaluations or label scoring have been run.
+
 ## Isolation gate
 
 - [ ] VM hypervisor, host/guest configuration, reviewed immutable image digest, and independent verifier are recorded.
