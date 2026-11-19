@@ -73,6 +73,7 @@ class SignalRef:
     reference_price: str
     stop_price: str
     take_profit: str | None
+    incumbent_selected: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +164,17 @@ def _positive_decimal(value: str, field: str, *, allow_zero: bool = False) -> De
     if not number.is_finite() or (number < 0 if allow_zero else number <= 0):
         raise ChronologyError(f"signal {field} must be finite and positive")
     return number
+
+
+def _optional_bool(row: Mapping[str, str], field: str) -> bool | None:
+    if field not in row or row[field] in (None, ""):
+        return None
+    normalized = row[field].strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    raise ChronologyError(f"signal {field} must be a strict boolean when supplied")
 
 
 def complete_utc_week_keys(interval: tuple[datetime, datetime]) -> tuple[str, ...]:
@@ -289,6 +301,7 @@ def build_opportunity_universe(
                 confidence=row["confidence"], regime=row["regime"],
                 reference_price=row["reference_price"], stop_price=row["stop_price"],
                 take_profit=row["take_profit"] or None,
+                incumbent_selected=_optional_bool(row, "ensemble_selected"),
             )
             if ref.strategy not in _STRATEGIES or ref.direction not in {"long", "short"}:
                 raise ChronologyError("unsupported frozen strategy or direction")

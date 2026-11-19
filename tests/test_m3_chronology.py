@@ -61,13 +61,14 @@ def _iso(value):
 def signal_csv(rows):
     fields = ["signal_id", "timestamp", "available_at", "strategy",
               "direction", "confidence", "regime", "reference_price", "stop_price",
-              "take_profit", "forward_outcomes"]
+              "take_profit", "ensemble_selected", "forward_outcomes"]
     output = StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=fields)
     writer.writeheader()
     for row in rows:
         writer.writerow({"confidence": "0.7", "regime": "range", "reference_price": "100",
-                         "stop_price": "95", "take_profit": "110", "forward_outcomes": "SECRET_FUTURE",
+                         "stop_price": "95", "take_profit": "110", "ensemble_selected": "False",
+                         "forward_outcomes": "SECRET_FUTURE",
                          **row})
     return output.getvalue().encode()
 
