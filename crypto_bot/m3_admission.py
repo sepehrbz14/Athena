@@ -42,12 +42,17 @@ class AdmittedAttempt:
     previously_observed: bool
     eligible_for_evaluation: bool
     authoritative_evaluation_authorized: bool
+    candidate_bytes: bytes = b""
+    protocol_bytes: bytes = b""
 
 
 _REQUIRED_INPUTS = {
     "signals": "signals_sha256",
     "candles": "candles_sha256",
     "phase5_manifest": "phase5_manifest_sha256",
+    "counterfactual_ledger": None,
+    "counterfactual_metadata": None,
+    "phase4_config": None,
 }
 
 
@@ -102,7 +107,7 @@ def admit_attempt(
     an evaluator. Holdout protocols are rejected before input paths are read.
     """
     if set(input_paths) != set(_REQUIRED_INPUTS):
-        raise AdmissionError("input set must be exactly signals, candles, and phase5_manifest")
+        raise AdmissionError("input set must be exactly signals, candles, phase5_manifest, counterfactual_ledger, counterfactual_metadata, and phase4_config")
 
     try:
         registry_verification = registry.verify()
@@ -157,14 +162,39 @@ def admit_attempt(
     if checkpoint.get("event_tip_sha256") != registry_verification.tip_sha256:
         raise AdmissionError("trusted M2 checkpoint tip differs from verified M1 registry")
 
-    pinned: list[PinnedInput] = []
+    pinned_by_key: dict[str, PinnedInput] = {}
     for key, protocol_field in _REQUIRED_INPUTS.items():
         path = _resolve_regular_file(input_paths[key])
         content, actual = _snapshot_file(path)
-        expected = data.get(protocol_field)
-        if not isinstance(expected, str) or actual != expected:
+        if key == "phase4_config":
+            expected = protocol.get("source", {}).get("phase4_config_sha256")
+        elif protocol_field is not None:
+            expected = data.get(protocol_field)
+        else:
+            expected = None
+        if protocol_field is not None and (not isinstance(expected, str) or actual != expected):
             raise AdmissionError(f"pinned input hash mismatch for {key}")
-        pinned.append(PinnedInput(key, path, actual, len(content), content))
+        pinned_by_key[key] = PinnedInput(key, path, actual, len(content), content)
+
+    try:
+        phase5_manifest = json.loads(pinned_by_key["phase5_manifest"].content.decode("utf-8"))
+        phase5_inputs = phase5_manifest["input_paths_and_sha256"]
+        expected_ledger = phase5_inputs["independent_completed_ledger"]["sha256"]
+        expected_counterfactual_metadata = phase5_inputs["independent_evaluator_metadata"]["sha256"]
+        expected_config = phase5_inputs["phase4_baseline_config"]["sha256"]
+    except (KeyError, TypeError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AdmissionError("pinned Phase 5 manifest lacks frozen ledger/configuration hashes") from exc
+    if pinned_by_key["counterfactual_ledger"].sha256 != expected_ledger:
+        raise AdmissionError("pinned input hash mismatch for counterfactual_ledger")
+    if pinned_by_key["counterfactual_metadata"].sha256 != expected_counterfactual_metadata:
+        raise AdmissionError("pinned input hash mismatch for counterfactual_metadata")
+    if pinned_by_key["phase4_config"].sha256 != expected_config:
+        raise AdmissionError("pinned input hash mismatch for phase4_config")
+    if protocol.get("source", {}).get("phase4_config_sha256") != expected_config:
+        raise AdmissionError("Phase 5 manifest and frozen protocol disagree on Phase 4 configuration")
+
+    protocol_bytes = m1.canonical_json_bytes(protocol)
+    pinned = tuple(pinned_by_key[key] for key in _REQUIRED_INPUTS)
 
     protocol_digest = hashlib.sha256(m1.canonical_json_bytes(protocol)).hexdigest()
     return AdmittedAttempt(
@@ -175,10 +205,11 @@ def admit_attempt(
         protocol_sha256=protocol_digest,
         registry_tip_sha256=registry_verification.tip_sha256 or "",
         checkpoint_sha256=checkpoint["checkpoint_sha256"],
-        inputs=tuple(pinned),
+        inputs=pinned,
         research_classification=protocol["research_classification"],
         previously_observed=True,
         eligible_for_evaluation=True,
         authoritative_evaluation_authorized=False,
+        candidate_bytes=raw_candidate,
+        protocol_bytes=protocol_bytes,
     )
-

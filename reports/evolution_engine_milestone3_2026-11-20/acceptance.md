@@ -1,43 +1,42 @@
 # Milestone 3 Acceptance Criteria
 
-This checklist is subordinate to [design.md](design.md). M0/M1/M2 contracts remain authoritative and unchanged.
+This checklist is subordinate to [design.md](design.md). M0/M1/M2 contracts remain authoritative and unchanged. No historical evaluation or holdout access is part of implementation verification.
 
-## Implementation slices
+## Implementation batches
 
-1. **Admission and input integrity:** only valid registered M1 attempts with verified M2 provenance and exact protocol/input hashes enter internal evaluation code. Holdout and mismatched provenance denied.
-2. **Chronology and opportunity construction:** exact frozen M0 folds, purge, embargo, warm-up, blackout, and label timing; deterministic candidate-independent universe; one row per opportunity including abstentions/rejections.
-3. **Declarative evaluation engine:** finite M0/M2 grammar only; no generated-code execution; predictive/counterfactual/executable lanes remain separate.
-4. **Accounting and evidence validation:** candidate/incumbent paired on identical ex-ante inputs and assumptions; separate fresh ledgers; all lane equations reconcile; M0 uncertainty outputs preserved; M4 alone does persistent-family correction/qualification.
-5. **Lifecycle, recovery, and isolation:** M1 transitions only; crash recovery idempotent; incomplete output cannot be complete; Linux VM adversarial verification required before evaluation is enabled.
-6. **Final acceptance:** full tests, clean-checkout reproduction, Ubuntu/Windows Python 3.13 CI, immutable output and preservation checks. Authoritative historical execution still requires separate explicit authorization.
+1. **Admission and chronology:** only valid registered M1 attempts with verified M2 provenance and exact byte snapshots enter the fold pipeline; exact M0 fold and opportunity boundaries apply.
+2. **Evidence lanes:** frozen declarative decisions feed separate predictive labels, read-only independent counterfactuals, and fresh executable portfolio ledgers; rows are paired and reconciled on the shared opportunity universe.
+3. **Statistics and publication:** raw M0 per-attempt uncertainty, sample gates, immutable dated packages, and public M1 lifecycle transitions are implemented. M4 retains persistent-family correction and qualification.
+4. **Isolation and acceptance:** signed independent Linux proof and separate exact-scope human authorization gate any evaluator invocation. Full suite, clean-checkout reproducibility, CI, and preservation checks remain required.
 
 ## Scientific and integrity checks
 
-- [x] Owner explicitly approves the carried-position weekly return decision before implementation; Sunday-entry/Monday-carry/Tuesday-exit and true no-exposure zero-week fixtures are specified. The fixture test remains to be implemented in the accounting slice.
-- [x] 96-bar label is anchored at the original signal timestamp and resolved by exact lookup against the hash-pinned candle timeline; `available_at` controls decision eligibility only. The optional raw `candle_index` is not required by M3 and, if supplied to label scoring, is only a consistency check. Strict label purge and minimum 96-bar/24-hour embargo checks are covered by synthetic tests. Frozen boundaries are materialized from the registered protocol without deriving or shifting them; warm-up, terminal blackout, maximum horizon, and gap behavior are covered. The actual raw CSV has a `candle_index` column, while the normalized frozen signal schema does not; M3 requires neither the schema-absent field nor row-order inference. Duplicate IDs/headers, missing or malformed numeric/timestamp cells fail closed; complete UTC week calendars, including empty weeks, remain explicit. (Final correction CI: [run 44633649137](https://github.com/sepehrbz14/Athena/actions/runs/44633649137), 241 tests passed on Ubuntu and Windows.)
-- [ ] Candidate cannot manufacture signals or timestamps; all candidate/incumbent rows cover exactly the same opportunity IDs and UTC weekly keys, including abstentions, rejected entries, and no-fills.
-- [ ] Historical signals are consumed only as exact hash-pinned frozen rows; no regeneration/substitution; source-generation provenance limitation appears in every package.
-- [ ] All data through 2026-08-19 are marked previously observed; no holdout access or mount exists.
-- [ ] Predictive, counterfactual, and executable reconciliation fixtures pass independently. Candidate and incumbent executable ledgers are fresh, separate, and distinct from the frozen Phase 4 ledger.
-- [ ] M0 sample floors and warnings are exact. M3 emits raw/unadjusted evidence only; failed, invalid, skipped, insufficient, and unevaluated attempts remain in persistent M0 accounting, with required p=1 handling. No M3 Holm or qualification output.
-- [ ] M1 transition tests use only the frozen public API and permitted states.
-- [ ] Sealed-package recovery finalizes the same attempt without rerun; corrupted/unsealed/incomplete packages fail; repeated recovery is idempotent.
-- [ ] Every experiment records source commit/dirty state, candidate/protocol/M2 identity, dataset/config hashes, image/runtime digest, fold plan, seeds, method, resource use, and per-artifact hashes.
-- [ ] Outputs are exclusive, immutable, dated, and separate from all historical output directories.
-
-
-- [x] Initial declarative policy interpreter requires exact candidate bytes matching the admitted digest, maps every shared opportunity to one selection or abstention, and returns only existing signal records; candidate/incumbent outputs retain identical opportunity IDs. It supports only the frozen finite M0/M2 rules. (Synthetic focused tests and full CI run [44629822568](https://github.com/sepehrbz14/Athena/actions/runs/44629822568), 234 tests both platforms.)
-- [x] Post-decision predictive scoring consumes only admitted signal/candle snapshots and resolves label endpoints against the pinned timeline. Abstention scores zero only when the complete shared opportunity has a complete eligible 96-bar label; purged or censored labels remain `PURGED`/`CENSORED`. Multi-signal opportunities use candidate-independent eligibility, and exactly one row remains per shared opportunity. Labels never feed policy decisions. Synthetic fixtures only; no historical labels were scored. (Full CI [run 44711705448](https://github.com/sepehrbz14/Athena/actions/runs/44711705448), 245 tests on both platforms.)
-- [ ] Independent counterfactual evaluation, executable simulation, paired accounting, weekly aggregation/uncertainty, and no-fill/rejection dispositions remain unimplemented.
+- [x] Protocol owner approved weekly mark-to-market treatment for open exposure; the Sunday-entry/Monday-carry/Tuesday-exit fixture and no-exposure zero-week fixture pass.
+- [x] The 96-bar label endpoint is anchored to original signal timestamp; `available_at` controls decision eligibility only. Strict purge, gap censoring, 96-bar embargo, 816-bar warm-up, terminal blackout, and 17,664-bar position horizon are enforced by synthetic chronology tests.
+- [x] Candidate grammar can only select or abstain on records in the frozen union. Candidate and incumbent use identical opportunity IDs and UTC week keys; abstentions, missing counterfactual trades, and executable no-fills remain explicit.
+- [x] Frozen rows are consumed from exact admitted in-memory bytes. No signal regeneration or substitution occurs; every package carries the source-generation provenance limitation.
+- [x] Previously observed historical classification is checked by admission. Holdout protocols are rejected before inputs are read; isolation attestation requires `holdout_mounted=false`.
+- [x] Predictive, independent counterfactual, and executable rows are validated against one candidate-independent opportunity order. Candidate/incumbent and each cost stress use independent fresh ledgers; the Phase 4 ledger is never loaded or changed.
+- [x] Frozen M0 sample floors and raw bootstrap rules are implemented: paired non-circular four-week blocks, 100,000 replicates, paired UTC keys, 95% intervals, centered raw p-values, and four p=1 placeholders on insufficient samples. Regime floors apply only when making regime-specific claims. Raw fold concentration is recorded; no Holm correction, ranking, or qualification is performed by M3.
+- [x] Lifecycle integration uses M1 public methods only: `VALIDATED → RUNNING → COMPLETED → INSUFFICIENT_EVIDENCE`; missing/corrupt recovery packages record `RUNNING → TECHNICAL_EVALUATION_FAILURE`; skipped attempts retain the existing M1 skip transition. The sealed `statistics.json` is the sole source for all four raw M0 p-values; insufficient evidence supplies four p=1 values to M1, with no Holm adjustment.
+- [x] Package recovery verifies canonical manifest and every artifact hash; recovery finalizes only the same RUNNING attempt, never reruns it, and is idempotent after completion.
+- [x] Package metadata can record source commit/dirty state, candidate/protocol/M2 identity, pinned input/configuration hashes, folds, M1-derived seeds, methodology, resources, and artifact hashes. The frozen 512 MiB attempt output cap is enforced.
+- [x] Dated output paths are exclusive and cannot overwrite prior attempt packages or historical reports.
+- [x] Admission remains read-only; it does not write M1, inspect forward outcomes, start evaluation, or create evaluation evidence.
+- [x] Fold execution fails closed unless a signed isolation permit binds the exact admitted attempt, protocol, candidate, source commit, and input hashes, plus a separate one-attempt authorization.
+- [ ] Independently provision and verify the restricted Linux VM, hypervisor boundary, immutable image digest, transfer path, output cap, runtime isolation, and adversarial tests. No authoritative VM has yet been verified.
+- [ ] Run final Ubuntu/Windows Python 3.13 GitHub Actions against the pushed final batch.
+- [ ] Record final clean-checkout CI reproduction for the final source commit. It must not launch historical evaluation.
 
 ## Isolation gate
 
-- [ ] VM hypervisor, host/guest configuration, reviewed immutable image digest, and independent verifier are recorded.
-- [ ] Read-only inputs, bounded exclusive output, offline network state, unprivileged identity, denied privilege/device/host namespace access, and resource limits are independently inspected.
-- [ ] In-VM adversarial tests deny network/DNS, host/secret/registry/holdout reads, input writes, path/symlink escapes, output overwrite, privilege escalation, device access, process escape, resource exhaustion, and timeout escape.
-- [ ] Transfer-in/out hashes are checked outside the VM; tampered image/input prevents launch.
-- [ ] No authoritative evaluation can launch before this section is complete and a separate user evaluation authorization is recorded.
+- [ ] Record independently verified hypervisor, host/guest configuration, reviewed immutable image digest, and verifier identity.
+- [ ] Independently inspect read-only inputs, bounded exclusive outputs, disabled networking, absent credentials, unprivileged runtime, denied devices/host namespaces, and resource/time limits.
+- [x] The signed gate requires adversarial evidence for network/DNS, host/secret/registry/holdout reads, input writes, path/symlink escapes, output overwrite, privilege escalation, device access, process escape, resource limits, timeout, and input/output transfer hashes.
+- [x] The authorization verifier rejects expired, untrusted, malformed, replayed-to-another-attempt, or hash-mismatched proof; a separate authorization is required for each historical attempt.
+- [ ] Execute the adversarial suite in the independently provisioned Linux VM. The local host and Windows CI do not establish equivalent isolation.
+- [x] No authoritative evaluation was launched during development. No holdout was opened.
 
-## Per-slice completion record
+## Completion record
 
-Each vertical slice reports: changed files; commit SHA; acceptance rows satisfied; focused/full test results; reproducibility evidence; unresolved limitations. No new approval is needed for ordinary engineering choices within this design. Material scientific, security, or frozen-contract changes stop the affected work for review.
+The implementation log records the batch commit, changed files, focused/full tests, platform CI, reproducibility evidence, and remaining infrastructure limits. M3 is not operationally ready for historical evaluation until every unchecked isolation and final acceptance item above is completed and the user separately authorizes evaluation.

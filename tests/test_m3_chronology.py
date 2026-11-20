@@ -216,7 +216,7 @@ class M3ChronologyTests(unittest.TestCase):
                 "strategy": "breakout", "direction": "long"}
         payload = signal_csv([{**base, "timestamp": None}])
         with self.assertRaises(ChronologyError):
-            build_opportunity_universe(payload, instrument_id="BTC", dataset_manifest_sha256="a"*64,
+            build_opportunity_universe(payload, instrument_id="BTCUSDT", dataset_manifest_sha256="a"*64,
                                        eligible_interval=(t0, t0 + timedelta(days=1)))
         duplicate_header = payload.replace(b"signal_id,timestamp,available_at",
                                            b"signal_id,timestamp,available_at,timestamp")
@@ -246,9 +246,9 @@ class M3ChronologyTests(unittest.TestCase):
 
     def test_missing_or_duplicate_pinned_candle_timestamp_column_fails_closed(self):
         with self.assertRaises(ChronologyError):
-            candle_timeline_from_bytes(b"timestamp,open\\n,1\\n")
+            candle_timeline_from_bytes(b"timestamp,open\n,1\n")
         with self.assertRaisesRegex(ChronologyError, "duplicate column"):
-            candle_timeline_from_bytes(b"timestamp,timestamp,open\\n1,1,1\\n")
+            candle_timeline_from_bytes(b"timestamp,timestamp,open\n1,1,1\n")
 
     def test_utc_week_calendar_includes_empty_weeks_and_normalizes_offsets(self):
         start = datetime(2024, 2, 5, 3, tzinfo=timezone(timedelta(hours=3)))
@@ -264,4 +264,3 @@ class M3ChronologyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

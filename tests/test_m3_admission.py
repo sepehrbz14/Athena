@@ -69,13 +69,28 @@ class M3AdmissionTests(unittest.TestCase):
     def _make_fixture(self, classification="previously_observed_historical_diagnostic"):
         input_paths = {}
         hashes = {}
-        for key in ("signals", "candles", "phase5_manifest"):
+        ledger_bytes = b"counterfactual_ledger"
+        counterfactual_metadata_bytes = b"counterfactual_metadata"
+        config_bytes = b"phase4_config"
+        manifest = {"input_paths_and_sha256": {
+            "independent_completed_ledger": {"sha256": hashlib.sha256(ledger_bytes).hexdigest()},
+            "independent_evaluator_metadata": {"sha256": hashlib.sha256(counterfactual_metadata_bytes).hexdigest()},
+            "phase4_baseline_config": {"sha256": hashlib.sha256(config_bytes).hexdigest()},
+        }}
+        contents = {"signals": b"signals", "candles": b"candles",
+                    "phase5_manifest": json.dumps(manifest, sort_keys=True).encode(),
+                    "counterfactual_ledger": ledger_bytes,
+                    "counterfactual_metadata": counterfactual_metadata_bytes,
+                    "phase4_config": config_bytes}
+        for key, content in contents.items():
             path = self.root / f"{key}.bin"
-            path.write_bytes(key.encode())
+            path.write_bytes(content)
             input_paths[key] = path
-            hashes[key + "_sha256"] = hashlib.sha256(key.encode()).hexdigest()
+            if key in {"signals", "candles", "phase5_manifest"}:
+                hashes[key + "_sha256"] = hashlib.sha256(content).hexdigest()
         protocol_id = "sha256:" + "2" * 64
         protocol = {"protocol_id": protocol_id, "research_classification": classification,
+                    "source": {"phase4_config_sha256": hashlib.sha256(config_bytes).hexdigest()},
                     "data": {**hashes, "previously_examined": True,
                              "observed_through_utc": "2026-08-19T23:45:00Z"}}
         candidate = {"candidate_id": "placeholder", "experiment_id": protocol_id, "research_only": True}
@@ -90,6 +105,8 @@ class M3AdmissionTests(unittest.TestCase):
         self.assertTrue(admitted.eligible_for_evaluation)
         self.assertFalse(admitted.authoritative_evaluation_authorized)
         self.assertEqual({item.key for item in admitted.inputs}, set(self.inputs))
+        self.assertTrue(admitted.candidate_bytes)
+        self.assertTrue(admitted.protocol_bytes)
         signal_snapshot = next(item for item in admitted.inputs if item.key == "signals")
         old_bytes = signal_snapshot.content
         signal_snapshot.path.write_bytes(b"replaced after verification")
@@ -141,7 +158,8 @@ class M3AdmissionTests(unittest.TestCase):
             admit_attempt(self.registry, self.security, "attempt-1", self.inputs)
 
     def test_admission_rejects_each_pinned_input_hash_mismatch(self):
-        for key in ("signals", "candles", "phase5_manifest"):
+        for key in ("signals", "candles", "phase5_manifest", "counterfactual_ledger",
+                    "counterfactual_metadata", "phase4_config"):
             with self.subTest(input_key=key):
                 registry, security, inputs = self._make_fixture()
                 inputs[key].write_bytes(b"tampered-" + key.encode())
@@ -168,4 +186,3 @@ class M3AdmissionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
