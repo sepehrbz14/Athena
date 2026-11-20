@@ -38,7 +38,7 @@ class M3IsolationGateTests(unittest.TestCase):
                   "protocol_sha256": "p"*64, "source_commit": "commit", "input_hashes": {"signals": "s"*64},
                   "registry_tip_sha256": "r"*64, "checkpoint_sha256": "k"*64}
         attestation = {**common, "signing_key_id": "attest-key", "expires_at_utc": "2026-11-21T00:00:00Z",
-            "platform": "linux_vm", "hypervisor_boundary": "KVM", "image_digest": "sha256:"+"i"*64,
+            "platform": "linux_vm", "hypervisor_boundary": "KVM", "image_digest": "sha256:"+"a"*64,
             "network": "disabled", "credentials_present": False, "input_mount": "read_only",
             "output_mount": "bounded_exclusive", "holdout_mounted": False,
             "resource_limits": {"max_wall_seconds": 1800, "max_memory_mb": 8192,
