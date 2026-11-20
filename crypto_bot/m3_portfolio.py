@@ -25,6 +25,7 @@ from .m3_chronology import (
     candle_timeline_from_bytes, is_entry_in_terminal_blackout, warmup_ready,
 )
 from .m3_policy import OpportunityDecision, PolicyError
+from .m3_isolation import VerifiedEvaluationPermit
 from .models import Candle, Side
 from .portfolio import PortfolioResult, PortfolioSimulator
 from .portfolio_ledger import D
@@ -298,15 +299,30 @@ def run_paired_executable_fold(
     opportunities: OpportunityUniverse,
     *,
     scored_interval: tuple[datetime, datetime],
+    permit: VerifiedEvaluationPermit,
 ) -> PairedPortfolioFoldResult:
     """Run synthetic or separately-authorized candidate/incumbent fresh ledgers.
 
-    This function is not an authorization gate. Production orchestration must
-    verify the independent Linux attestation and explicit evaluation permit
-    before calling it; historical calls are currently disabled in orchestration.
+    A verified Linux attestation and separate exact-scope evaluation permit are
+    mandatory even for direct callers. Synthetic fixtures may construct an
+    in-memory permit solely in tests.
     """
     if not admission.eligible_for_evaluation:
         raise PortfolioEvaluationError("executable portfolio evaluation requires M1-validated admission")
+    import json
+    input_hashes = {item.key: item.sha256 for item in admission.inputs}
+    input_digest = hashlib.sha256(json.dumps(dict(sorted(input_hashes.items())), sort_keys=True,
+        separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+    try:
+        protocol = json.loads(admission.protocol_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PortfolioEvaluationError("admitted protocol snapshot is malformed") from exc
+    if (not isinstance(permit, VerifiedEvaluationPermit) or permit.attempt_id != admission.attempt_id or
+            permit.protocol_id != admission.protocol_id or permit.candidate_sha256 != admission.candidate_sha256 or
+            permit.protocol_sha256 != admission.protocol_sha256 or permit.registry_tip_sha256 != admission.registry_tip_sha256 or
+            permit.checkpoint_sha256 != admission.checkpoint_sha256 or permit.input_hashes_sha256 != input_digest or
+            permit.source_commit != protocol.get("source", {}).get("commit")):
+        raise PortfolioEvaluationError("verified Linux isolation/authorization permit is absent or mismatched")
     if len(candidate_decisions) != len(incumbent_decisions):
         raise PortfolioEvaluationError("candidate and incumbent decision counts differ")
     for candidate, incumbent in zip(candidate_decisions, incumbent_decisions):

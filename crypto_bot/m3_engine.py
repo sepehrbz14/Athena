@@ -104,7 +104,7 @@ def evaluate_fold_evidence(
             scored_interval=(start, end))
         paired_cf = pair_counterfactual_opportunities(candidate_cf, incumbent_cf)
         executable = run_paired_executable_fold(admission, candidate, incumbent, universe,
-            scored_interval=(start, end))
+            scored_interval=(start, end), permit=permit)
         ids = tuple(item.opportunity_id for item in universe.opportunities)
         weeks = {item.opportunity_id: item.utc_week for item in universe.opportunities}
         paired_rows = validate_paired_opportunity_evidence(opportunity_ids=ids,

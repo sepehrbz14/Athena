@@ -13,6 +13,7 @@ from crypto_bot.m3_admission import AdmittedAttempt, PinnedInput
 from crypto_bot.m3_chronology import BAR, Opportunity, OpportunityUniverse, SignalRef
 from crypto_bot.m3_policy import OpportunityDecision
 from crypto_bot.m3_portfolio import PortfolioEvaluationError, run_paired_executable_fold
+from crypto_bot.m3_isolation import VerifiedEvaluationPermit
 
 
 UTC = timezone.utc
@@ -41,7 +42,7 @@ def _admission(candles):
     canonical_config = json.dumps(config_doc, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     config_hash = hashlib.sha256(canonical_config).hexdigest()
     signal_bytes = b"synthetic-signal-snapshot"
-    protocol = {"source": {"phase4_config_sha256": config_hash},
+    protocol = {"source": {"phase4_config_sha256": config_hash, "commit": "synthetic-commit"},
                 "cost_policy": {"phase4_config_sha256": config_hash,
                     "fee_bps_per_side": 5, "slippage_bps_per_side": 5,
                     "funding_bps_per_8h": 1, "max_participation_percent": 5}}
@@ -52,6 +53,15 @@ def _admission(candles):
     return AdmittedAttempt("synthetic-attempt", "synthetic-protocol", "synthetic-candidate",
         "a"*64, hashlib.sha256(protocol_bytes).hexdigest(), "b"*64, "c"*64, tuple(items),
         "previously_observed_historical_diagnostic", True, True, False, b"{}", protocol_bytes)
+
+
+def _permit(admission):
+    input_hashes = {item.key: item.sha256 for item in admission.inputs}
+    digest = hashlib.sha256(json.dumps(dict(sorted(input_hashes.items())), sort_keys=True,
+        separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+    return VerifiedEvaluationPermit(admission.attempt_id, admission.protocol_id, admission.candidate_sha256,
+        admission.protocol_sha256, "synthetic-commit", digest, admission.registry_tip_sha256,
+        admission.checkpoint_sha256, "sha256:"+"a"*64, "attestation", "authorization")
 
 
 class M3PortfolioTests(unittest.TestCase):
@@ -65,7 +75,7 @@ class M3PortfolioTests(unittest.TestCase):
         universe = OpportunityUniverse((opportunity,), ("2024-W02",))
         pair = run_paired_executable_fold(
             admission, (_decision("opp-7", signal),), (_decision("opp-7", None),), universe,
-            scored_interval=(t_signal, T0 + BAR*920))
+            scored_interval=(t_signal, T0 + BAR*920), permit=_permit(admission))
         self.assertIsNot(pair.candidate.ledger, pair.incumbent.ledger)
         self.assertNotEqual(pair.candidate.ledger.account_id, pair.incumbent.ledger.account_id)
         self.assertEqual(len(pair.candidate.ledger.completed_positions), 1)
@@ -86,7 +96,18 @@ class M3PortfolioTests(unittest.TestCase):
         universe = OpportunityUniverse((opportunity,), ("2024-W02",))
         with self.assertRaisesRegex(PortfolioEvaluationError, "not paired"):
             run_paired_executable_fold(admission, (_decision("opp-7", signal),),
-                (_decision("wrong", None),), universe, scored_interval=(t_signal, T0+BAR*920))
+                (_decision("wrong", None),), universe, scored_interval=(t_signal, T0+BAR*920),
+                permit=_permit(admission))
+
+    def test_direct_executable_call_requires_exact_signed_isolation_permit(self):
+        admission = _admission(_candle_bytes())
+        signal = SignalRef(7, "breakout", T0+BAR*816, T0+BAR*817, "long", "0.7", "range", "100", "95", "110", False)
+        opportunity = Opportunity("opp-7", "BTCUSDT", signal.available_at, (signal,), "2024-W02")
+        universe = OpportunityUniverse((opportunity,), ("2024-W02",))
+        with self.assertRaisesRegex(PortfolioEvaluationError, "permit is absent"):
+            run_paired_executable_fold(admission, (_decision("opp-7", signal),),
+                (_decision("opp-7", None),), universe, scored_interval=(signal.signal_timestamp,
+                T0+BAR*920), permit=None)
 
 
 if __name__ == "__main__":
