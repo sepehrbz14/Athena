@@ -116,6 +116,78 @@ def _signal_rows(signal_bytes: bytes) -> dict[int, dict[str, str]]:
         raise PredictiveEvidenceError("pinned signal CSV is malformed") from exc
 
 
+def _source_row(signal, raw: dict[str, str]) -> None:
+    """Verify a universe signal is the same frozen decision-time row."""
+    if (_utc(raw.get("timestamp")) != signal.signal_timestamp or
+            _utc(raw.get("available_at")) != signal.available_at or
+            raw.get("strategy") != signal.strategy or
+            raw.get("direction") != signal.direction or
+            _decimal(raw.get("reference_price"), "reference_price") !=
+            _decimal(signal.reference_price, "reference_price")):
+        raise PredictiveEvidenceError("opportunity signal fields differ from admitted frozen row")
+
+
+def _complete_label(raw: dict[str, str], endpoint: datetime) -> Decimal | None:
+    """Return a complete 96-bar score, or None when the frozen label is censored."""
+    try:
+        container = json.loads(raw.get("forward_outcomes", ""))
+        label = container[str(LABEL_HORIZON_BARS)]
+    except (KeyError, TypeError, json.JSONDecodeError):
+        return None
+    if (not isinstance(label, dict) or label.get("status") != "complete" or
+            label.get("bars_observed") != LABEL_HORIZON_BARS):
+        return None
+    if _utc(label.get("timestamp")) != endpoint:
+        raise PredictiveEvidenceError("stored 96-bar label endpoint differs from pinned candle timeline")
+    try:
+        return _decimal(label.get("direction_adjusted_return_pct"), "direction_adjusted_return_pct")
+    except PredictiveEvidenceError:
+        return None
+
+
+def _opportunity_label_state(
+    opportunity, signals: dict[int, dict[str, str]], timeline,
+    scored_end: datetime,
+) -> tuple[str, str, dict[int, Decimal]]:
+    """Determine label eligibility independently of candidate select/abstain choice.
+
+    A shared opportunity may contain several strategy rows. Its timestamp-derived
+    horizon eligibility must agree for all of them; a missing/incomplete row
+    censors the whole opportunity so policy selection cannot change the eligible
+    observation universe.
+    """
+    if not opportunity.signals:
+        return "CENSORED", "opportunity_has_no_frozen_signal_rows", {}
+    timestamps = {signal.signal_timestamp for signal in opportunity.signals}
+    if len(timestamps) != 1 or any(signal.available_at != opportunity.available_at for signal in opportunity.signals):
+        raise PredictiveEvidenceError("signals at one opportunity do not share a single label anchor")
+    signal_timestamp = next(iter(timestamps))
+    try:
+        endpoint = label_endpoint(signal_timestamp, timeline)
+    except ChronologyError as exc:
+        raise PredictiveEvidenceError("opportunity signal cannot be resolved on the admitted candle timeline") from exc
+    if endpoint is None:
+        return "CENSORED", "label_horizon_crosses_candle_gap_or_data_end", {}
+    if not label_survives_boundary(endpoint, scored_end):
+        return "PURGED", "96_bar_label_reaches_or_crosses_scored_boundary", {}
+
+    scores: dict[int, Decimal] = {}
+    incomplete = False
+    for signal in opportunity.signals:
+        raw = signals.get(signal.signal_id)
+        if raw is None:
+            raise PredictiveEvidenceError("opportunity signal is absent from admitted frozen signal bytes")
+        _source_row(signal, raw)
+        score = _complete_label(raw, endpoint)
+        if score is None:
+            incomplete = True
+        else:
+            scores[signal.signal_id] = score
+    if incomplete or len(scores) != len(opportunity.signals):
+        return "CENSORED", "96_bar_label_incomplete_for_shared_opportunity", {}
+    return "ELIGIBLE", "complete_eligible_96_bar_label", scores
+
+
 def score_predictive_decisions(
     admission: AdmittedAttempt,
     decisions: Sequence[OpportunityDecision],
@@ -127,7 +199,8 @@ def score_predictive_decisions(
 
     The signal and candle snapshots come from admission memory, never by
     reopening their paths. Censored and purged selected signals remain explicit
-    rows with no numeric score; M0 abstentions score exactly zero.
+    rows with no numeric score. An abstention scores zero only when the shared
+    opportunity has a complete, eligible 96-bar label.
     """
     if not admission.eligible_for_evaluation:
         raise PredictiveEvidenceError("predictive scoring requires an admitted M1-validated attempt")
@@ -144,62 +217,30 @@ def score_predictive_decisions(
     signals = _signal_rows(signal_bytes)
 
     evidence = []
-    for decision in decisions:
-        if decision.status == "ABSTAINED":
+    for decision, opportunity in zip(decisions, universe.opportunities):
+        state, reason, scores = _opportunity_label_state(opportunity, signals, timeline, end)
+        if state == "PURGED":
+            evidence.append(PredictiveOpportunityEvidence(
+                decision.opportunity_id, decision.utc_week, "PURGED", reason,
+                decision.selected_signal.signal_id if decision.selected_signal else None, None,
+            ))
+        elif state == "CENSORED":
+            evidence.append(PredictiveOpportunityEvidence(
+                decision.opportunity_id, decision.utc_week, "CENSORED", reason,
+                decision.selected_signal.signal_id if decision.selected_signal else None, None,
+            ))
+        elif decision.status == "ABSTAINED":
             evidence.append(PredictiveOpportunityEvidence(
                 decision.opportunity_id, decision.utc_week, "SCORED_ZERO",
-                "frozen_abstention", None, "0",
+                "frozen_abstention_on_complete_eligible_opportunity", None, "0",
             ))
-            continue
-
-        selected = decision.selected_signal
-        assert selected is not None
-        raw = signals.get(selected.signal_id)
-        if raw is None:
-            raise PredictiveEvidenceError("selected signal is absent from admitted frozen signal bytes")
-        if (_utc(raw["timestamp"]) != selected.signal_timestamp or
-                raw["direction"] != selected.direction or
-                _decimal(raw["reference_price"], "reference_price") != _decimal(selected.reference_price, "reference_price")):
-            raise PredictiveEvidenceError("selected signal fields differ from the admitted frozen row")
-
-        try:
-            endpoint = label_endpoint(selected.signal_timestamp, timeline)
-        except ChronologyError as exc:
-            raise PredictiveEvidenceError("selected signal cannot be resolved on the admitted candle timeline") from exc
-        if endpoint is None:
+        else:
+            selected = decision.selected_signal
+            assert selected is not None
+            score = scores[selected.signal_id] / Decimal(100)
             evidence.append(PredictiveOpportunityEvidence(
-                decision.opportunity_id, decision.utc_week, "CENSORED",
-                "label_horizon_crosses_candle_gap_or_data_end", selected.signal_id, None,
+                decision.opportunity_id, decision.utc_week, "SCORED",
+                "frozen_direction_adjusted_96_bar_return", selected.signal_id, str(score),
             ))
-            continue
-        if not label_survives_boundary(endpoint, end):
-            evidence.append(PredictiveOpportunityEvidence(
-                decision.opportunity_id, decision.utc_week, "PURGED",
-                "96_bar_label_reaches_or_crosses_scored_boundary", selected.signal_id, None,
-            ))
-            continue
-
-        try:
-            label_container = json.loads(raw["forward_outcomes"])
-            label = label_container[str(LABEL_HORIZON_BARS)]
-        except (KeyError, TypeError, json.JSONDecodeError) as exc:
-            evidence.append(PredictiveOpportunityEvidence(
-                decision.opportunity_id, decision.utc_week, "CENSORED",
-                "96_bar_label_missing", selected.signal_id, None,
-            ))
-            continue
-        if not isinstance(label, dict) or label.get("status") != "complete" or label.get("bars_observed") != LABEL_HORIZON_BARS:
-            evidence.append(PredictiveOpportunityEvidence(
-                decision.opportunity_id, decision.utc_week, "CENSORED",
-                "96_bar_label_not_complete", selected.signal_id, None,
-            ))
-            continue
-        if _utc(label.get("timestamp")) != endpoint:
-            raise PredictiveEvidenceError("stored 96-bar label endpoint differs from pinned candle timeline")
-        score = _decimal(label.get("direction_adjusted_return_pct"), "direction_adjusted_return_pct") / Decimal(100)
-        evidence.append(PredictiveOpportunityEvidence(
-            decision.opportunity_id, decision.utc_week, "SCORED",
-            "frozen_direction_adjusted_96_bar_return", selected.signal_id, str(score),
-        ))
     return tuple(evidence)
 
