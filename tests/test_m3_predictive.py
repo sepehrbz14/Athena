@@ -87,7 +87,7 @@ def fixtures(gap_at=None):
          "reference_price": "100", "forward_outcomes": json.dumps(outcome(stamp(96)))},
         {"signal_id": 2, "timestamp": refs[1].signal_timestamp.isoformat(),
          "available_at": refs[1].available_at.isoformat(), "strategy": "breakout", "direction": "long",
-         "reference_price": "100", "forward_outcomes": "NOT JSON; abstention must not inspect it"},
+         "reference_price": "100", "forward_outcomes": json.dumps(outcome(stamp(97)))},
         {"signal_id": 3, "timestamp": refs[2].signal_timestamp.isoformat(),
          "available_at": refs[2].available_at.isoformat(), "strategy": "breakout", "direction": "long",
          "reference_price": "100", "forward_outcomes": "NOT JSON; boundary purge must precede label access"},
@@ -99,7 +99,7 @@ class M3PredictiveScoringTests(unittest.TestCase):
     def test_postdecision_scores_use_original_timestamp_and_keep_abstain_purge_rows(self):
         admission, decisions, universe = fixtures()
         evidence = score_predictive_decisions(admission, decisions, universe,
-                                              scored_interval=(T0, stamp(97)))
+                                              scored_interval=(T0, stamp(98)))
         self.assertEqual([row.opportunity_id for row in evidence], ["op-1", "op-2", "op-3"])
         self.assertEqual([row.status for row in evidence], ["SCORED", "SCORED_ZERO", "PURGED"])
         self.assertEqual(evidence[0].score_decimal, "0.0125")
@@ -107,6 +107,69 @@ class M3PredictiveScoringTests(unittest.TestCase):
         self.assertEqual(evidence[2].reason, "96_bar_label_reaches_or_crosses_scored_boundary")
         # The source row's available_at is one bar later; label timestamp remains t0+96 bars.
         self.assertEqual(decisions[0].available_at, stamp(1).isoformat().replace("+00:00", "Z"))
+
+    def test_abstention_is_zero_only_when_its_label_is_complete_and_eligible(self):
+        admission, decisions, universe = fixtures()
+        evidence = score_predictive_decisions(
+            admission, decisions[1:2], OpportunityUniverse(universe.opportunities[1:2], universe.utc_week_keys),
+            scored_interval=(T0, stamp(98)))
+        self.assertEqual(len(evidence), 1)
+        self.assertEqual(evidence[0].status, "SCORED_ZERO")
+        self.assertEqual(evidence[0].score_decimal, "0")
+
+    def test_abstention_with_label_at_boundary_is_purged(self):
+        admission, decisions, universe = fixtures()
+        evidence = score_predictive_decisions(
+            admission, decisions[1:2], OpportunityUniverse(universe.opportunities[1:2], universe.utc_week_keys),
+            scored_interval=(T0, stamp(97)))
+        self.assertEqual(len(evidence), 1)
+        self.assertEqual(evidence[0].status, "PURGED")
+        self.assertIsNone(evidence[0].score_decimal)
+
+    def test_abstention_with_gap_or_incomplete_label_is_censored(self):
+        admission, decisions, universe = fixtures(gap_at=50)
+        gap_evidence = score_predictive_decisions(
+            admission, decisions[1:2], OpportunityUniverse(universe.opportunities[1:2], universe.utc_week_keys),
+            scored_interval=(T0, stamp(98)))
+        self.assertEqual(gap_evidence[0].status, "CENSORED")
+
+        admission, decisions, universe = fixtures()
+        rows = list(csv.DictReader(StringIO(admission.inputs[0].content.decode())))
+        rows[1]["forward_outcomes"] = "NOT JSON"
+        incomplete = signal_bytes(*rows)
+        admission = admission_with_inputs(incomplete, admission.inputs[1].content)
+        censored = score_predictive_decisions(
+            admission, decisions[1:2], OpportunityUniverse(universe.opportunities[1:2], universe.utc_week_keys),
+            scored_interval=(T0, stamp(98)))
+        self.assertEqual(censored[0].status, "CENSORED")
+        self.assertIsNone(censored[0].score_decimal)
+
+    def test_mixed_label_completeness_is_candidate_independent_within_opportunity(self):
+        first = SignalRef(10, "breakout", stamp(0), stamp(1), "long", "0.7", "range", "100", "95", "110", False)
+        second = SignalRef(11, "momentum", stamp(0), stamp(1), "short", "0.8", "range", "100", "105", "90", False)
+        opportunity = Opportunity("paired", "BTCUSDT", stamp(1), (first, second), "2024-W06")
+        universe = OpportunityUniverse((opportunity,), ("2024-W06",))
+        labels = signal_bytes(
+            {"signal_id": 10, "timestamp": first.signal_timestamp.isoformat(),
+             "available_at": first.available_at.isoformat(), "strategy": "breakout", "direction": "long",
+             "reference_price": "100", "forward_outcomes": json.dumps(outcome(stamp(96)))},
+            {"signal_id": 11, "timestamp": second.signal_timestamp.isoformat(),
+             "available_at": second.available_at.isoformat(), "strategy": "momentum", "direction": "short",
+             "reference_price": "100", "forward_outcomes": "NOT JSON"},
+        )
+        admission = admission_with_inputs(labels, candle_bytes())
+        start = OpportunityDecision("paired", "BTCUSDT", stamp(1).isoformat().replace("+00:00", "Z"),
+                                    "2024-W06", "SELECTED", "selected", first)
+        abstain = OpportunityDecision("paired", "BTCUSDT", stamp(1).isoformat().replace("+00:00", "Z"),
+                                      "2024-W06", "ABSTAINED", "abstained", None)
+        args = (admission, universe)
+        selected_evidence = score_predictive_decisions(args[0], (start,), args[1],
+                                                        scored_interval=(T0, stamp(98)))
+        abstained_evidence = score_predictive_decisions(args[0], (abstain,), args[1],
+                                                         scored_interval=(T0, stamp(98)))
+        self.assertEqual(selected_evidence[0].status, "CENSORED")
+        self.assertEqual(abstained_evidence[0].status, "CENSORED")
+        self.assertEqual(len(selected_evidence), len(abstained_evidence))
 
     def test_label_equal_to_boundary_is_strictly_purged(self):
         admission, decisions, universe = fixtures()
