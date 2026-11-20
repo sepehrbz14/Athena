@@ -25,8 +25,8 @@ This checklist is subordinate to [design.md](design.md). M0/M1/M2 contracts rema
 - [x] Admission remains read-only; it does not write M1, inspect forward outcomes, start evaluation, or create evaluation evidence.
 - [x] Fold execution fails closed unless a signed isolation permit binds the exact admitted attempt, protocol, candidate, source commit, and input hashes, plus a separate one-attempt authorization.
 - [ ] Independently provision and verify the restricted Linux VM, hypervisor boundary, immutable image digest, transfer path, output cap, runtime isolation, and adversarial tests. No authoritative VM has yet been verified.
-- [x] Final schema validation and full unit suite passed on clean Ubuntu and Windows Python 3.13 runners: [push run 44725215861](https://github.com/sepehrbz14/Athena/actions/runs/44725215861), [pull-request run 44725223524](https://github.com/sepehrbz14/Athena/actions/runs/44725223524).
-- [x] GitHub clean checkouts reproduced the schema/full-suite result for source commit `3e99b6a200aee33dca3b8d1d21f94f449b8cbf1d`; no historical evaluation or research result was launched or reproduced.
+- [x] Final schema validation and full unit suite passed on clean Ubuntu and Windows Python 3.13 runners: [push run 44726844462](https://github.com/sepehrbz14/Athena/actions/runs/44726844462), [pull-request run 44726853161](https://github.com/sepehrbz14/Athena/actions/runs/44726853161).
+- [x] GitHub clean checkouts reproduced the schema/full-suite result for source commit `649a0cf0925f619b2b7c8bf29c40e55649d473db`; no historical evaluation or research result was launched or reproduced.
 
 ## Isolation gate
 
