@@ -257,6 +257,7 @@ class M4FamilyIntegrationTests(unittest.TestCase):
             "signal_generation_provenance": "hash-pinned frozen signal rows; source-generation provenance not reconstructed",
             "artifacts": listed,
         }
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.mkdir()
         for name, data in contents.items():
             (path / name).write_bytes(data)
