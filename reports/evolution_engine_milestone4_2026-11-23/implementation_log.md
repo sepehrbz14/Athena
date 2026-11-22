@@ -17,6 +17,7 @@ Integrated synthetic software implementation is in progress. M4 does not run can
 - Seven fast focused tests: passed.
 - One independent M3/M4 bootstrap reproduction: passed on 156 UTC weeks across six synthetic outer folds (100,000 bootstrap iterations), exact seed map; runtime 45.1 seconds.
 - `python -m unittest tests.test_m4_validation -v`: 10 tests discovered, 8 passed, 2 signed M1/M2 integration tests skipped because local Python lacks declared `cryptography`. CI must execute those two tests without skips.
+- First CI run caught an incomplete synthetic fold fixture that omitted frozen M0 `purged_counts`, `warmup_bars`, and historical classification fields. The fixture now matches the authoritative schema; no frozen contract or implementation behavior changed.
 
 ## Open scientific decision
 

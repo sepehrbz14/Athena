@@ -191,6 +191,10 @@ class M4FamilyIntegrationTests(unittest.TestCase):
                 "train_start_utc": utc_text(train_start), "train_end_utc": utc_text(train_end),
                 "validation_start_utc": utc_text(validation_start), "validation_end_utc": utc_text(validation_end),
                 "outer_test_start_utc": utc_text(outer_start), "outer_test_end_utc": utc_text(outer_end),
+                "purged_counts": {"crossing_label": 0, "crossing_trade": 0,
+                                  "embargo": 0, "warmup_only": 0},
+                "warmup_bars": 816,
+                "classification": "previously_observed_historical_diagnostic",
             })
             outer_start = outer_end
         base = protocol_document(attempt_count=5)
