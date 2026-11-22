@@ -15,12 +15,14 @@ M0–M3 contracts and all historical artifacts remain unchanged. Synthetic imple
 - [ ] Enable qualification only after protocol-owner approval freezes the Holm-adjusted simultaneous lower-bound inversion and mathematical golden fixtures.
 - [x] Keep authoritative NO_QUALIFYING_CANDIDATE emission disabled while the qualification gate is unresolved; retain it as the valid M0 terminal outcome after the approved method is implemented.
 - [x] No evaluation execution, historical input access, holdout access, candidate ranking, promotion, or frozen M0–M3 mutation occurs during M4 software tests.
+- [x] Full clean-checkout regression and frozen-schema/deterministic-replay workflow passed on Ubuntu and Windows Python 3.13 (GitHub Actions run [#99](https://github.com/sepehrbz14/Athena/actions/runs/45073700294), 288 tests per platform).
+- [ ] Authoritative qualification and `NO_QUALIFYING_CANDIDATE` publication remain blocked until the protocol owner versions the simultaneous Holm-adjusted lower-bound inversion rule and its golden fixtures.
 
 ## Verification commands
 
 - Focused deterministic tests: `python -m unittest tests.test_m4_validation -v`
 - Full regression suite: `python -m unittest discover -s tests -v`
 - CI: Ubuntu and Windows Python 3.13 through `.github/workflows/tests.yml`.
-- Clean checkout: checkout the pushed M4 commit and rerun focused plus full suite; compare the deterministic test outputs and schema hashes.
+- Clean checkout: satisfied by the run above, which fetched the pushed commit into clean hosted workspaces and ran the full schema/replay/unit workflow.
 
 The full CI jobs install `.[test]`, including `cryptography>=42,<47`. This local Windows environment did not have `cryptography`; signed-registry integration tests were therefore skipped locally and must pass in CI before implementation acceptance.
