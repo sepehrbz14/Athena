@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/athena_m4_weekly_statistical_input_v1.schema.json",
+  "title": "M4 intake for hash-sealed M3 weekly statistical evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "week_keys", "fold_by_week", "weekly", "sample_counts", "regime_claim_requested"],
+  "properties": {
+    "schema": {"const": "athena.m4.m3-weekly-statistical-input.v1"},
+    "week_keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[0-9]{4}-W[0-9]{2}$"}},
+    "fold_by_week": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+    "weekly": {
+      "type": "object", "additionalProperties": false,
+      "required": ["predictive_candidate", "predictive_incumbent", "executable_incumbent_baseline", "executable_candidate_scenarios"],
+      "properties": {
+        "predictive_candidate": {"$ref": "#/$defs/weekVector"},
+        "predictive_incumbent": {"$ref": "#/$defs/weekVector"},
+        "executable_incumbent_baseline": {"$ref": "#/$defs/weekVector"},
+        "executable_candidate_scenarios": {
+          "type": "object", "additionalProperties": false,
+          "required": ["baseline", "fee_10bps_per_side_only", "slippage_10bps_per_side_only", "funding_2bps_per_8h_only"],
+          "properties": {
+            "baseline": {"$ref": "#/$defs/weekVector"},
+            "fee_10bps_per_side_only": {"$ref": "#/$defs/weekVector"},
+            "slippage_10bps_per_side_only": {"$ref": "#/$defs/weekVector"},
+            "funding_2bps_per_8h_only": {"$ref": "#/$defs/weekVector"}
+          }
+        }
+      }
+    },
+    "sample_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["predictive_opportunities", "predictive_occupied_weeks", "counterfactual_completed_trades", "counterfactual_occupied_weeks", "executable_positions", "executable_occupied_weeks", "executable_outer_folds"],
+      "properties": {
+        "predictive_opportunities": {"type": "integer", "minimum": 0},
+        "predictive_occupied_weeks": {"type": "integer", "minimum": 0},
+        "counterfactual_completed_trades": {"type": "integer", "minimum": 0},
+        "counterfactual_occupied_weeks": {"type": "integer", "minimum": 0},
+        "executable_positions": {"type": "integer", "minimum": 0},
+        "executable_occupied_weeks": {"type": "integer", "minimum": 0},
+        "executable_outer_folds": {"type": "integer", "minimum": 0},
+        "regime_observations": {"type": "integer", "minimum": 0},
+        "regime_occupied_weeks": {"type": "integer", "minimum": 0}
+      }
+    },
+    "regime_claim_requested": {"type": "boolean"}
+  },
+  "$defs": {
+    "weekVector": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}}
+  }
+}
