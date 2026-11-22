@@ -299,7 +299,11 @@ class M4FamilyIntegrationTests(unittest.TestCase):
         }
         protocol_event = next(e for e in events if e["event_type"] == "PROTOCOL_PRE_REGISTERED")
         protocol = protocol_event["payload"]["protocol"]
-        checkpoint = self.fixture.security.verify_latest(allow_empty=False)
+        # Fail/skip events above are M3 lifecycle suffixes after the sealed M2
+        # checkpoint; verify the package against its immutable M2 prefix.
+        checkpoint = self.fixture.security._load_checkpoint_by_hash(
+            self.submission.checkpoint_sha256
+        )
         registered = next(e["payload"] for e in events if e["event_type"] == "CANDIDATE_ATTEMPT_REGISTERED"
                           and e["payload"]["attempt_id"] == attempt_id)
         package = self.root / "packages" / "attempt-four"
