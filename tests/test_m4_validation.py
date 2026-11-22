@@ -160,6 +160,17 @@ class M4FamilyIntegrationTests(unittest.TestCase):
         catalog = json.loads(json.dumps(self.fixture.catalog))
         catalog["entries"][1]["strategy_members"] = catalog["entries"][0]["strategy_members"]
         catalog["entries"][1]["policy"] = json.loads(json.dumps(catalog["entries"][0]["policy"]))
+        # These two registered attempts must exercise M1's terminal invalid
+        # lineage path, rather than accidentally relying on semantic duplicate
+        # detection (which is a different rejection reason).
+        catalog["entries"][0]["parents"] = [{
+            "reference_type": "candidate", "reference_id": "sha256:" + "a" * 64,
+            "relation": "derived_from",
+        }]
+        catalog["entries"][1]["parents"] = [{
+            "reference_type": "candidate", "reference_id": "sha256:" + "b" * 64,
+            "relation": "derived_from",
+        }]
         combo = ["trend_following", "breakout"]
         catalog["entries"][4]["strategy_members"] = combo
         catalog["entries"][4]["policy"]["regime_allowlist"] = {"bull_trend": combo}
