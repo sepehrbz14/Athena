@@ -6,6 +6,7 @@ import calendar
 import json
 import math
 import hashlib
+from itertools import product
 import os
 from pathlib import Path
 import tempfile
@@ -145,6 +146,58 @@ class M4MathTests(unittest.TestCase):
         grown = holm_simultaneous_lower_bounds(
             [low] * 8, [0.5] * 8, [errors] * 8)
         self.assertEqual(grown, (None,) * 8)
+
+    def test_independent_bound_goldens_cover_unequal_discrete_ties_and_placeholder(self):
+        fixture_path = Path(__file__).parent / "fixtures" / "m4_holm_inversion_golden.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertEqual(fixture["fixture_schema"], "athena.test.m4-holm-inversion-golden.v1")
+        for case in fixture["simultaneous_bound_cases"]:
+            estimates = []
+            errors = []
+            p_at_zero = []
+            for hypothesis in case["hypotheses"]:
+                estimate = hypothesis["estimate"]
+                runs = hypothesis["error_runs"]
+                estimates.append(estimate)
+                vector = (None if runs is None else tuple(
+                    run["value"] for run in runs for _ in range(run["count"])))
+                errors.append(vector)
+                p = (1.0 if estimate is None else bootstrap_p_value_at_threshold(
+                    estimate, vector, 0.0))
+                p_at_zero.append(p)
+                self.assertEqual(p, hypothesis["expected_p_at_zero"])
+            self.assertEqual(holm_rejection_set(p_at_zero, alpha=case["alpha"]),
+                             frozenset(case["expected_holm_rejected_indices"]))
+            self.assertEqual(
+                holm_simultaneous_lower_bounds(p_at_zero, estimates, errors, alpha=case["alpha"]),
+                tuple(case["expected_simultaneous_lower_bounds"]))
+
+    def test_exact_holm_fwer_golden_for_unequal_discrete_nulls_and_p1(self):
+        fixture_path = Path(__file__).parent / "fixtures" / "m4_holm_inversion_golden.json"
+        case = json.loads(fixture_path.read_text(encoding="utf-8"))["exact_null_fwer_case"]
+        denominators = case["discrete_uniform_denominators"]
+        alpha = case["alpha"]
+        rejection_count = 0
+        outcome_count = 0
+        # Each k/n is an exact discrete-uniform p-value under its own true
+        # null; the fourth hypothesis is the frozen p=1 placeholder.
+        for numerators in product(*(range(1, denominator + 1) for denominator in denominators)):
+            values = [numerator / denominator
+                      for numerator, denominator in zip(numerators, denominators)]
+            values.append(case["placeholder_p_value"])
+            ordered = sorted(values)
+            rejected = any(
+                ordered[rank] <= alpha / (len(values) - rank)
+                for rank in range(len(values) - 1)
+                if all(ordered[prior] <= alpha / (len(values) - prior)
+                       for prior in range(rank))
+            )
+            rejection_count += int(rejected)
+            outcome_count += 1
+        self.assertEqual(rejection_count, case["expected_rejection_count"])
+        self.assertEqual(outcome_count, case["outcome_count"])
+        self.assertAlmostEqual(rejection_count / outcome_count, case["exact_fwer"])
+        self.assertLessEqual(rejection_count / outcome_count, alpha)
 
     def test_proposed_amendment_hash_and_schema_are_fail_closed(self):
         from crypto_bot.m4_validation import _validate_inversion_amendment

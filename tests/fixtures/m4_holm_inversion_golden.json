@@ -1,0 +1,48 @@
+{
+  "fixture_schema": "athena.test.m4-holm-inversion-golden.v1",
+  "simultaneous_bound_cases": [
+    {
+      "name": "unequal_discrete_bootstraps_tied_pvalues_with_unresolved_placeholder",
+      "alpha": 0.05,
+      "hypotheses": [
+        {
+          "estimate": 0.5,
+          "error_runs": [{"value": -0.1, "count": 99}],
+          "expected_p_at_zero": 0.01
+        },
+        {
+          "estimate": 0.4,
+          "error_runs": [
+            {"value": 0.4, "count": 1},
+            {"value": -0.1, "count": 198}
+          ],
+          "expected_p_at_zero": 0.01
+        },
+        {
+          "estimate": 0.1,
+          "error_runs": [
+            {"value": 0.1, "count": 4},
+            {"value": -1.0, "count": 95}
+          ],
+          "expected_p_at_zero": 0.05
+        },
+        {
+          "estimate": null,
+          "error_runs": null,
+          "expected_p_at_zero": 1.0
+        }
+      ],
+      "expected_holm_rejected_indices": [0, 1],
+      "expected_simultaneous_lower_bounds": [0.0, 0.0, 0.0, null]
+    }
+  ],
+  "exact_null_fwer_case": {
+    "name": "unequal_discrete_uniform_nulls_and_one_p1_placeholder",
+    "alpha": 0.05,
+    "discrete_uniform_denominators": [80, 100, 120],
+    "placeholder_p_value": 1.0,
+    "expected_rejection_count": 29301,
+    "outcome_count": 960000,
+    "exact_fwer": 0.030521875
+  }
+}
