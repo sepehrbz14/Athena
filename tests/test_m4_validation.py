@@ -199,6 +199,44 @@ class M4MathTests(unittest.TestCase):
         self.assertAlmostEqual(rejection_count / outcome_count, case["exact_fwer"])
         self.assertLessEqual(rejection_count / outcome_count, alpha)
 
+    def test_unresolved_family_comparison_holm_compatible_vs_bonferroni_bounds(self):
+        fixture_path = Path(__file__).parent / "fixtures" / "m4_holm_vs_simultaneous_bounds.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertEqual(fixture["fixture_schema"], "athena.test.m4-holm-bound-alternative.v1")
+        replicates = fixture["bootstrap_replicates"]
+        errors = (0.0,) * replicates
+        target_rows = fixture["target_executable_hypotheses"]
+        estimates = [row["estimate"] for row in target_rows]
+        raw_target_p = (1.0 / (replicates + 1),) * len(estimates)
+        family_p = raw_target_p + (fixture["other_family_p_values"],) * fixture[
+            "other_family_hypothesis_count"]
+        self.assertEqual(len(family_p), fixture["family_hypothesis_count"])
+        self.assertEqual(holm_rejection_set(family_p, alpha=fixture["alpha"]),
+                         frozenset(fixture["expected_holm_rejected_indices"]))
+
+        # Under Guilbaud's exact Holm-compatible region, partial family
+        # rejection gives each rejected hypothesis only R_i=(0, infinity),
+        # whose numerical lower endpoint is zero.
+        full_estimates = tuple(estimates) + (None,) * fixture["other_family_hypothesis_count"]
+        full_errors = (errors,) * len(estimates) + (None,) * fixture[
+            "other_family_hypothesis_count"]
+        proposed = holm_simultaneous_lower_bounds(
+            family_p, full_estimates, full_errors, alpha=fixture["alpha"])
+        self.assertEqual(proposed[:len(estimates)],
+                         tuple(fixture["expected_guilbaud_bounds_for_targets"]))
+
+        # The alternative single-step simultaneous rectangle uses alpha/m
+        # for every original family member. By the union bound it has FWER
+        # <= alpha for arbitrary dependence when the marginal p-functions
+        # are valid; unlike the exact Holm-compatible region, placeholders
+        # do not force the target endpoints to zero.
+        marginal_level = fixture["alpha"] / fixture["family_hypothesis_count"]
+        self.assertAlmostEqual(marginal_level, fixture["bonferroni_marginal_level"])
+        alternative = tuple(invert_bootstrap_p_value(estimate, errors, marginal_level)
+                            for estimate in estimates)
+        self.assertEqual(alternative,
+                         tuple(fixture["expected_full_family_bonferroni_bounds_for_targets"]))
+
     def test_proposed_amendment_hash_and_schema_are_fail_closed(self):
         from crypto_bot.m4_validation import _validate_inversion_amendment
         amendment = _proposed_amendment()

@@ -1,0 +1,18 @@
+{
+  "fixture_schema": "athena.test.m4-holm-bound-alternative.v1",
+  "case": "one_candidate_and_35_unresolved_attempts",
+  "alpha": 0.05,
+  "family_hypothesis_count": 144,
+  "bootstrap_replicates": 100000,
+  "target_executable_hypotheses": [
+    {"index": 0, "estimate": 0.5, "p_at_zero": 0.00000999990000099999},
+    {"index": 1, "estimate": 0.4, "p_at_zero": 0.00000999990000099999}
+  ],
+  "other_family_p_values": 1.0,
+  "other_family_hypothesis_count": 142,
+  "expected_holm_rejected_indices": [0, 1],
+  "expected_guilbaud_bounds_for_targets": [0.0, 0.0],
+  "bonferroni_marginal_level": 0.00034722222222222224,
+  "expected_full_family_bonferroni_bounds_for_targets": [0.5, 0.4],
+  "expected_full_family_bonferroni_placeholder_bounds": null
+}
