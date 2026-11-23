@@ -25,6 +25,8 @@ Integrated synthetic software implementation is complete. M4 does not run candid
 - Local Python lacks declared `cryptography`; signed M1/M2 integration fixtures are therefore verified in CI rather than locally.
 - GitHub Actions run [#45101067300](https://github.com/sepehrbz14/Athena/actions/runs/45101067300) checked out commit `79492f0293b88f3e7aa760da18241fd09bd694d6` in clean Ubuntu and Windows Python 3.13 jobs. All 293 tests passed on each platform. The workflow also ran frozen-schema validation and deterministic replay.
 - Earlier CI attempts caught fixture-only issues (frozen fold metadata, invalid lineage expectation, M2 checkpoint-prefix handling, and package parent-directory creation); all are corrected in the final green run. No frozen contract or implementation behavior changed.
+- Follow-up Bonferroni amendment verification: commit `146de4b5bb2c22c853d00090e7fae62c39dd21f3`, GitHub Actions [run #45254237778](https://github.com/sepehrbz14/Athena/actions/runs/45254237778), clean Ubuntu and Windows Python 3.13, 298 tests passed on each. The preceding run found one stale expected report-status string; the assertion was updated and the full matrix passed.
+- Local focused M4 suite: `python -m unittest tests.test_m4_validation -v`, 20 tests passed with two signed-registry integration tests skipped because the workstation lacks `cryptography`. The hosted CI installed declared dependencies and ran those tests. A local full-suite run with CI temp routing was blocked only by the unavailable `cryptography` import; the hosted full suite passed.
 
 ## Open scientific decision
 

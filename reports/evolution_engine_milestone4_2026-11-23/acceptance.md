@@ -18,7 +18,7 @@ M0–M3 contracts and all historical artifacts remain unchanged. Synthetic imple
 - [ ] Enable qualification only after protocol-owner approval of the Bonferroni-bound amendment and its golden fixtures.
 - [x] Keep authoritative NO_QUALIFYING_CANDIDATE emission disabled while the qualification gate is unresolved; retain it as the valid M0 terminal outcome after the approved method is implemented.
 - [x] No evaluation execution, historical input access, holdout access, candidate ranking, promotion, or frozen M0–M3 mutation occurs during M4 software tests.
-- [x] Full clean-checkout regression and frozen-schema/deterministic-replay workflow passed on Ubuntu and Windows Python 3.13 (GitHub Actions run [#45101067300](https://github.com/sepehrbz14/Athena/actions/runs/45101067300), 293 tests per platform).
+- [x] Full clean-checkout regression and frozen-schema/deterministic-replay workflow passed on Ubuntu and Windows Python 3.13 (baseline M4 run [#45101067300](https://github.com/sepehrbz14/Athena/actions/runs/45101067300), 293 tests per platform; Bonferroni-amendment integration run [#45254237778](https://github.com/sepehrbz14/Athena/actions/runs/45254237778), 298 tests per platform).
 - [x] Qualification and authoritative `NO_QUALIFYING_CANDIDATE` publication remain fail-closed while the amendment is proposed; synthetic calculated bounds are explicitly non-authoritative.
 
 ## Current amendment identity
