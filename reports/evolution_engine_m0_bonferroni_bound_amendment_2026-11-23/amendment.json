@@ -1,0 +1,62 @@
+{
+  "amendment_id": "sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9",
+  "schema_version": "athena.evolution.m0-bonferroni-bound-amendment.v1",
+  "status": "PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL",
+  "base_protocol": {
+    "specification_id": "athena.evolution.m0-frozen.v1",
+    "version": 1,
+    "preserved_source_path": "reports/evolution_engine_milestone0_2026-11-18/frozen_protocol.md"
+  },
+  "family_scope": {
+    "attempt_accounting": "all_persistent_registered_attempts_including_invalid_failed_skipped_insufficient_and_unevaluated",
+    "hypotheses_per_attempt": 4,
+    "maximum_hypotheses": 144,
+    "alpha": 0.05
+  },
+  "marginal_p_value": {
+    "null": "H_i(delta): theta_i <= delta",
+    "formula": "p_i(delta)=(1+sum_b I[e_ib>=theta_hat_i-delta])/(B+1)",
+    "comparison": ">=",
+    "plus_one_correction": true,
+    "bootstrap_error_definition": "e_ib=theta_star_ib-theta_hat_i",
+    "monotonicity": "nondecreasing_in_delta"
+  },
+  "holm_stepdown": {
+    "family": "all_four_hypotheses_for_every_persistent_family_attempt",
+    "sort_order": "ascending_raw_p_then_global_attempt_ordinal_then_frozen_hypothesis_order",
+    "critical_value": "alpha/(m-r+1), ranks_are_one_based",
+    "adjusted_p_value": "p_adj_(r)=min(1,max_{s<=r}((m-s+1)*p_(s)))",
+    "ties": "stable_by_global_attempt_ordinal_then_frozen_hypothesis_order",
+    "stopping_rule": "reject_in_order_through_first_failure_and_stop"
+  },
+  "simultaneous_lower_bounds": {
+    "method": "full_family_single_step_Bonferroni_simultaneous_lower_bounds",
+    "marginal_inverse": "q_i(gamma)=sup{delta:p_i(delta)<=gamma}; use right_continuous_plus_one_p_function",
+    "marginal_level": "gamma=alpha/m, where m is all four hypotheses for every registered persistent-family attempt",
+    "coverage_interpretation": "simultaneous_1-alpha_coverage_by_union_bound_if_each_marginal_bootstrap_test_is_valid; arbitrary dependence allowed",
+    "holm_separation": "Holm_adjusted_p_values_are_retained_for_family_testing_and_do_not_define_numeric_bounds"
+  },
+  "sample_and_placeholder_rules": {
+    "sample_floors": "unchanged_frozen_M0_floors; below_floor_attempt_remains_four_p1_placeholders",
+    "unresolved_attempts": "each_of_four_hypotheses_is_p1_and_remains_in_m",
+    "p1_function": "p_i(delta)=1_for_all_finite_delta",
+    "p1_bound": "null_no_finite_confidence_bound"
+  },
+  "constants": {
+    "bootstrap_replicates": 100000,
+    "moving_block_weeks": 4,
+    "ci_level": 0.95,
+    "master_seed": 20261118,
+    "alpha": 0.05,
+    "family_attempt_limit": 36
+  },
+  "qualification_gate": {
+    "status": "DISABLED_UNTIL_EXPLICIT_AMENDMENT_APPROVAL",
+    "required_executable_hypotheses": [
+      "robust_executable_absolute_weekly_return",
+      "executable_paired_weekly_delta"
+    ],
+    "strict_positive_bound": true,
+    "protocol_owner_approval_required": true
+  }
+}

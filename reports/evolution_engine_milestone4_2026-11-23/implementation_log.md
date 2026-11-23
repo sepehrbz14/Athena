@@ -2,7 +2,7 @@
 
 ## Status
 
-Integrated synthetic software implementation is complete. M4 does not run candidate evaluations. A separately versioned proposed M0 Holm-inversion amendment is implemented and mathematically tested; qualification remains disabled pending explicit protocol-owner approval. No historical input or holdout was accessed.
+Integrated synthetic software implementation is complete. M4 does not run candidate evaluations. A separately versioned proposed M0 full-family Bonferroni-bound amendment is implemented and mathematically tested; qualification remains disabled pending explicit protocol-owner approval. No historical input or holdout was accessed.
 
 ## Implementation
 
@@ -11,8 +11,8 @@ Integrated synthetic software implementation is complete. M4 does not run candid
 - Added `tests/test_m4_validation.py`: Holm mathematical vectors, full 144-hypothesis p=1 family, frozen sample floors, regime floor, qualification fail-closed behavior, M3/M4 bootstrap reproduction, and signed M1/M2 end-to-end scenarios for invalid, failed, skipped, and insufficient attempts plus missing/tampered package and registry identity cases.
 - Added this M4 design, acceptance, and implementation record.
 - Final integration fixes kept invalid attempts distinct from valid attempts, bound M3 packages to their original sealed M2 checkpoint prefix, and made the signed package fixture create its parent directory portably.
-- Added a versioned M0 amendment and M4 report v2 for arbitrary-threshold bootstrap p-values and Holm-compatible simultaneous bounds. The amendment is hash-verified and remains proposed; calculated bounds are marked non-authoritative.
-- Added independent golden vectors for threshold p-values, Holm ties and placeholders, inversion boundaries, family growth, and strict amendment identity/schema validation.
+- Added a separate versioned M0 Bonferroni-bound amendment and M4 report v3. It uses full-family alpha/m inversion for numerical bounds while preserving Holm adjusted p-values for family testing. The amendment is hash-verified and remains proposed; calculated bounds are marked non-authoritative and qualification remains disabled.
+- Added independent golden vectors for alpha/m inversion with tied hypotheses, unresolved p=1 placeholders, discrete resolution and family growth; retained the Holm-specific golden vectors and original proposed Holm amendment unchanged.
 
 ## Local verification so far
 
@@ -28,4 +28,4 @@ Integrated synthetic software implementation is complete. M4 does not run candid
 
 ## Open scientific decision
 
-M0 v1 is unchanged. The new proposed amendment specifies arbitrary-threshold raw p-value functions, Holm step-down for each complete threshold-specific family, and the Holm-compatible simultaneous lower-bound construction. It preserves all M0 constants and p=1 accounting. The mathematical fixtures pass locally; the amendment and resulting bounds are not authoritative until protocol-owner approval. Qualification remains disabled. The method's explicit consequence is that any unresolved p=1 placeholder prevents all family hypotheses from receiving strictly positive lower bounds, so the frozen executable gate cannot pass in that case.
+M0 v1 and the earlier proposed Holm-inversion amendment are unchanged. New amendment `athena.evolution.m0-bonferroni-bound-amendment.v1` (`sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9`) specifies the same frozen arbitrary-threshold marginal p-function and full-family alpha/m inverse bounds, with Holm adjusted p-values retained separately. Its strict JSON schema is `schemas/athena_m0_bonferroni_bound_amendment_v1.schema.json`. It preserves M0 constants, sample floors, and all p=1 attempts in the denominator. Under marginal test validity, the union bound gives at least 1-alpha simultaneous coverage without dependence assumptions. A p=1 placeholder has no finite bound itself but does not force other hypotheses' bounds to zero; family growth may still make attainable discrete p-values too coarse for a positive bound. Amendment and calculated bounds are not authoritative until protocol-owner approval. Qualification and historical evaluation remain disabled.

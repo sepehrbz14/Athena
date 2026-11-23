@@ -1,0 +1,37 @@
+{
+  "fixture_schema": "athena.test.m4-bonferroni-bounds-golden.v1",
+  "description": "Discrete bootstrap inversions under full-family Bonferroni levels; placeholders remain in m while Holm remains separately testable.",
+  "cases": [
+    {
+      "name": "two_tied_observed_hypotheses_no_placeholder",
+      "alpha": 0.05,
+      "bootstrap_replicates": 99,
+      "estimates": [0.5, 0.5],
+      "expected_bounds": [0.5, 0.5],
+      "expected_holm_adjusted_p": [0.02, 0.02]
+    },
+    {
+      "name": "two_ties_with_unresolved_p1_placeholder",
+      "alpha": 0.05,
+      "bootstrap_replicates": 99,
+      "estimates": [0.5, 0.5, null],
+      "expected_bounds": [0.5, 0.5, null],
+      "expected_holm_adjusted_p": [0.03, 0.03, 1.0]
+    },
+    {
+      "name": "family_growth_crosses_discrete_resolution_boundary",
+      "alpha": 0.05,
+      "bootstrap_replicates": 99,
+      "estimates": [0.2, 0.2, null, null, null, null],
+      "expected_bounds": [null, null, null, null, null, null]
+    },
+    {
+      "name": "strict_boundary_uses_right_continuous_plus_one_rule",
+      "alpha": 0.05,
+      "bootstrap_replicates": 99,
+      "estimates": [0.7, null],
+      "expected_bounds": [0.7, null],
+      "expected_holm_adjusted_p": [0.02, 1.0]
+    }
+  ]
+}

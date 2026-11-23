@@ -4,7 +4,7 @@ This module never runs a candidate. It verifies registered history, signed
 checkpoints, sealed M3 packages and raw weekly evidence, then independently
 reconstructs M0 bootstrap statistics and family-wide Holm adjusted p-values.
 Qualification is deliberately fail-closed until the proposed, versioned M0
-Holm-inversion amendment is approved by the protocol owner.
+simultaneous-bound amendment is approved by the protocol owner.
 """
 from __future__ import annotations
 
@@ -38,13 +38,13 @@ SCENARIOS = (
     "funding_2bps_per_8h_only",
 )
 EVIDENCE_SCHEMA = "athena.m4.m3-weekly-statistical-input.v1"
-REPORT_SCHEMA = "athena.m4.persistent-family-report.v2"
-INVERSION_AMENDMENT_SCHEMA = "athena.evolution.m0-holm-inversion-amendment.v1"
+REPORT_SCHEMA = "athena.m4.persistent-family-report.v3"
+INVERSION_AMENDMENT_SCHEMA = "athena.evolution.m0-bonferroni-bound-amendment.v1"
 _M4_REPORT_ROOT = Path(__file__).resolve().parents[1] / "reports" / "evolution_engine_milestone4"
 _WEEKLY_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_weekly_statistical_input_v1.schema.json"
-_REPORT_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_persistent_family_report_v2.schema.json"
+_REPORT_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_persistent_family_report_v3.schema.json"
 _INVERSION_AMENDMENT_SCHEMA = (Path(__file__).resolve().parents[1] / "schemas"
-                               / "athena_m0_holm_inversion_amendment_v1.schema.json")
+                               / "athena_m0_bonferroni_bound_amendment_v1.schema.json")
 
 
 class M4ValidationError(RuntimeError):
@@ -52,7 +52,7 @@ class M4ValidationError(RuntimeError):
 
 
 class QualificationBlocked(M4ValidationError):
-    """The proposed M0 Holm-inversion amendment has not been approved."""
+    """The proposed M0 simultaneous-bound amendment has not been approved."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,6 +264,34 @@ def holm_simultaneous_lower_bounds(
         else:
             result.append(invert_bootstrap_p_value(estimate, errors, local_level))
     return tuple(result)
+
+
+def bonferroni_simultaneous_lower_bounds(
+    estimates: Sequence[float | None],
+    centered_errors: Sequence[Sequence[float] | None],
+    *, alpha: float = ALPHA,
+) -> tuple[float | None, ...]:
+    """Invert full-family Bonferroni tests to simultaneous one-sided bounds.
+
+    Every hypothesis in the persistent family uses the same marginal level
+    alpha/m, including unresolved p=1 placeholders. Under valid marginal
+    p-functions, the union bound gives simultaneous coverage at least 1-alpha
+    for arbitrary dependence and unequal marginal distributions. Holm
+    adjusted p-values remain a separate family-testing output.
+    """
+    if not estimates or len(estimates) != len(centered_errors):
+        raise M4ValidationError("Bonferroni estimates/errors must have equal nonzero length")
+    alpha = _finite_number(alpha, "Bonferroni alpha")
+    if not 0 < alpha < 1:
+        raise M4ValidationError("Bonferroni alpha must lie strictly between 0 and 1")
+    local_level = alpha / len(estimates)
+    bounds: list[float | None] = []
+    for estimate, errors in zip(estimates, centered_errors):
+        if estimate is None or errors is None:
+            bounds.append(None)
+        else:
+            bounds.append(invert_bootstrap_p_value(estimate, errors, local_level))
+    return tuple(bounds)
 
 
 def _validate_inversion_amendment(amendment: Mapping[str, Any]) -> tuple[str, str]:
@@ -800,8 +828,7 @@ def validate_family(registry: m1.ExperimentRegistry, *,
     if inversion_amendment is not None:
         ordered_hypotheses = sorted(hypotheses, key=lambda item: (
             item["ordinal"], HYPOTHESES.index(item["hypothesis"])))
-        bounds = holm_simultaneous_lower_bounds(
-            [row["raw_p"] for row in ordered_hypotheses],
+        bounds = bonferroni_simultaneous_lower_bounds(
             [row.get("reconstructed_estimate") for row in ordered_hypotheses],
             [centered_errors_by_hypothesis.get((row["attempt_id"], row["hypothesis"]))
              for row in ordered_hypotheses],
@@ -815,7 +842,7 @@ def validate_family(registry: m1.ExperimentRegistry, *,
                 "P1_PLACEHOLDER_NO_FINITE_BOUND" if missing_function
                 else "NON_AUTHORITATIVE_PROPOSED_AMENDMENT"
             )
-        inversion_status = "PROPOSED_BOUNDS_NON_AUTHORITATIVE"
+        inversion_status = "PROPOSED_BONFERRONI_BOUNDS_NON_AUTHORITATIVE"
     unresolved = [row["attempt_id"] for row in report_attempts
                   if row["status"] in {"UNEVALUATED", "TECHNICAL_EVALUATION_FAILURE", "RUNNING", "VALIDATED", "SUBMITTED"}]
     already_advanced = any(row["status"] == "RESEARCH_ADVANCED_PENDING_PROSPECTIVE" for row in report_attempts)
@@ -847,8 +874,8 @@ def validate_family(registry: m1.ExperimentRegistry, *,
         "unresolved_attempt_ids": unresolved,
         "notes": [
             "M4 reconstructs evidence and Holm adjusted p-values; it does not execute candidates.",
-            "M0 Holm-inversion amendment remains proposed; any calculated bounds are non-authoritative and qualification is disabled.",
-            "Holm-compatible bounds may be zero for rejected hypotheses whenever any family hypothesis is not rejected; frozen strict-positive qualification gates are not relaxed.",
+            "M0 full-family Bonferroni-bound amendment remains proposed; calculated bounds are non-authoritative and qualification is disabled.",
+            "Holm-adjusted p-values remain authoritative family-testing evidence; numerical bounds use the separately proposed alpha/m marginal inversion.",
             "All data through 2026-08-19 remain previously observed research data, never untouched holdout data.",
         ],
     }
@@ -872,5 +899,5 @@ def validate_family(registry: m1.ExperimentRegistry, *,
 def qualify_family(*_args: Any, **_kwargs: Any) -> None:
     """Qualification stays disabled until explicit approval of the proposed M0 amendment."""
     raise QualificationBlocked(
-        "M0 Holm-inversion amendment is not approved; calculated proposed bounds are non-authoritative"
+        "M0 Bonferroni-bound amendment is not approved; calculated proposed bounds are non-authoritative"
     )

@@ -12,13 +12,22 @@ M0–M3 contracts and all historical artifacts remain unchanged. Synthetic imple
 - [x] Include invalid, failed, skipped, insufficient, missing, and unevaluated attempts; unresolved/unsuccessful entries stay at p=1 and in the full denominator.
 - [x] Apply exact Holm step-down adjusted p-values to all 4×attempts, capped at 144; test golden values, ties, p=1 placeholders, and invalid p-values.
 - [x] Publish canonical immutable family reports with exclusive creation and no overwrite.
-- [x] Add a separately versioned, schema-validated proposed M0 Holm inversion amendment without changing frozen M0 v1; keep the approval status explicitly proposed.
-- [x] Verify arbitrary-threshold add-one bootstrap p-values, full-family Holm step-down, deterministic tie order, simultaneous-bound inversion, p=1 placeholders, family growth, and boundary behavior with independent mathematical fixtures.
-- [ ] Enable qualification only after protocol-owner approval of the versioned Holm inversion amendment and its golden fixtures.
+- [x] Preserve the earlier proposed M0 Holm inversion amendment unchanged and add separate schema-validated M0 Bonferroni-bound amendment v1; M0 v1 remains unchanged and the new amendment remains explicitly proposed.
+- [x] Compute numerical lower bounds by inverting each marginal p-function at alpha/m across the complete persistent family; retain Holm adjusted p-values independently for family testing.
+- [x] Verify the union-bound argument and test arbitrary-threshold add-one p-values, Holm ties, Bonferroni ties, discrete boundaries, unresolved p=1 placeholders, family growth, amendment hashing/schema, and strict positivity behavior with synthetic fixtures.
+- [ ] Enable qualification only after protocol-owner approval of the Bonferroni-bound amendment and its golden fixtures.
 - [x] Keep authoritative NO_QUALIFYING_CANDIDATE emission disabled while the qualification gate is unresolved; retain it as the valid M0 terminal outcome after the approved method is implemented.
 - [x] No evaluation execution, historical input access, holdout access, candidate ranking, promotion, or frozen M0–M3 mutation occurs during M4 software tests.
 - [x] Full clean-checkout regression and frozen-schema/deterministic-replay workflow passed on Ubuntu and Windows Python 3.13 (GitHub Actions run [#45101067300](https://github.com/sepehrbz14/Athena/actions/runs/45101067300), 293 tests per platform).
 - [x] Qualification and authoritative `NO_QUALIFYING_CANDIDATE` publication remain fail-closed while the amendment is proposed; synthetic calculated bounds are explicitly non-authoritative.
+
+## Current amendment identity
+
+- Schema: `athena.evolution.m0-bonferroni-bound-amendment.v1`
+- Status: `PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL`
+- ID: `sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9`
+- Holm adjusted p-values remain the family-wide testing result; numeric confidence bounds use full-family Bonferroni inversion.
+- The full report schema is versioned as `athena.m4.persistent-family-report.v3`; prior report schemas are preserved.
 
 ## Verification commands
 

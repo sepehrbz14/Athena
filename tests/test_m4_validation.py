@@ -20,7 +20,8 @@ from crypto_bot.m4_validation import (
     ALPHA, BLOCK_LENGTH_WEEKS, BOOTSTRAP_ITERATIONS, EVIDENCE_SCHEMA,
     HYPOTHESES, M4ValidationError, QualificationBlocked, holm_adjust,
     bootstrap_p_value_at_threshold, holm_adjust_at_thresholds, holm_rejection_set,
-    holm_simultaneous_lower_bounds, invert_bootstrap_p_value,
+    holm_simultaneous_lower_bounds, bonferroni_simultaneous_lower_bounds,
+    invert_bootstrap_p_value,
     qualify_family, reconstruct_raw_statistics,
 )
 
@@ -81,7 +82,7 @@ def _evidence(*, week_keys: list[str] | None = None,
 
 def _proposed_amendment() -> dict:
     path = (Path(__file__).resolve().parents[1] / "reports"
-            / "evolution_engine_m0_holm_inversion_amendment_2026-11-23" / "amendment.json")
+            / "evolution_engine_m0_bonferroni_bound_amendment_2026-11-23" / "amendment.json")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -236,6 +237,33 @@ class M4MathTests(unittest.TestCase):
                             for estimate in estimates)
         self.assertEqual(alternative,
                          tuple(fixture["expected_full_family_bonferroni_bounds_for_targets"]))
+
+    def test_bonferroni_bounds_golden_ties_placeholders_and_family_growth(self):
+        fixture_path = Path(__file__).parent / "fixtures" / "m4_bonferroni_bounds_golden.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertEqual(fixture["fixture_schema"], "athena.test.m4-bonferroni-bounds-golden.v1")
+        for case in fixture["cases"]:
+            errors = (0.0,) * case["bootstrap_replicates"]
+            estimates = tuple(case["estimates"])
+            error_vectors = tuple(None if value is None else errors for value in estimates)
+            bounds = bonferroni_simultaneous_lower_bounds(
+                estimates, error_vectors, alpha=case["alpha"])
+            self.assertEqual(bounds, tuple(case["expected_bounds"]))
+            if "expected_holm_adjusted_p" in case:
+                raw = tuple(1.0 if value is None else 1.0 / (len(errors) + 1)
+                            for value in estimates)
+                self.assertEqual(holm_adjust(raw), tuple(case["expected_holm_adjusted_p"]))
+
+    def test_bonferroni_amendment_is_versioned_and_rejects_contract_drift(self):
+        from crypto_bot.m4_validation import _validate_inversion_amendment
+        amendment = _proposed_amendment()
+        amendment_id, _ = _validate_inversion_amendment(amendment)
+        self.assertEqual(amendment_id, "sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9")
+        self.assertEqual(amendment["status"], "PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL")
+        drifted = json.loads(json.dumps(amendment))
+        drifted["simultaneous_lower_bounds"]["marginal_level"] = "alpha"
+        with self.assertRaises(M4ValidationError):
+            _validate_inversion_amendment(drifted)
 
     def test_proposed_amendment_hash_and_schema_are_fail_closed(self):
         from crypto_bot.m4_validation import _validate_inversion_amendment
