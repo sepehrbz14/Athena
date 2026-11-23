@@ -16,11 +16,14 @@ Integrated synthetic software implementation is complete. M4 does not run candid
 
 ## Local verification so far
 
-- `python -m py_compile crypto_bot/m4_validation.py tests/test_m4_validation.py`: passed.
+- `python -m compileall -q crypto_bot tests`: passed.
+- `git diff --check`: passed.
+- `python -m unittest tests.test_m4_validation -v`: 15 tests, passed; two signed integration tests skipped locally because this desktop Python lacks `cryptography`.
+- `python -m unittest discover -s tests -v`: 272 tests; 5 environment-specific errors and 6 skips. One import error is due to absent `cryptography`; four atomic-replace errors are due to this desktop sandbox's redirected Windows temp volume. The clean GitHub runners install declared dependencies and use the workflow's workspace temp directory.
 - Seven fast focused tests: passed.
 - One independent M3/M4 bootstrap reproduction: passed on 156 UTC weeks across six synthetic outer folds (100,000 bootstrap iterations), exact seed map; runtime 45.1 seconds.
 - Local Python lacks declared `cryptography`; signed M1/M2 integration fixtures are therefore verified in CI rather than locally.
-- GitHub Actions run [#99](https://github.com/sepehrbz14/Athena/actions/runs/45073700294) checked out the pushed commit in clean Ubuntu and Windows Python 3.13 jobs. The full suite passed: 288 tests on each platform. The workflow also ran frozen-schema validation and deterministic replay.
+- GitHub Actions run [#45101067300](https://github.com/sepehrbz14/Athena/actions/runs/45101067300) checked out commit `79492f0293b88f3e7aa760da18241fd09bd694d6` in clean Ubuntu and Windows Python 3.13 jobs. All 293 tests passed on each platform. The workflow also ran frozen-schema validation and deterministic replay.
 - Earlier CI attempts caught fixture-only issues (frozen fold metadata, invalid lineage expectation, M2 checkpoint-prefix handling, and package parent-directory creation); all are corrected in the final green run. No frozen contract or implementation behavior changed.
 
 ## Open scientific decision
