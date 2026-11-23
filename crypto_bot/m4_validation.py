@@ -3,8 +3,8 @@
 This module never runs a candidate. It verifies registered history, signed
 checkpoints, sealed M3 packages and raw weekly evidence, then independently
 reconstructs M0 bootstrap statistics and family-wide Holm adjusted p-values.
-Qualification is deliberately fail-closed until M0 specifies a reproducible
-Holm-adjusted simultaneous-bound inversion algorithm.
+Qualification is deliberately fail-closed until the proposed, versioned M0
+Holm-inversion amendment is approved by the protocol owner.
 """
 from __future__ import annotations
 
@@ -38,10 +38,13 @@ SCENARIOS = (
     "funding_2bps_per_8h_only",
 )
 EVIDENCE_SCHEMA = "athena.m4.m3-weekly-statistical-input.v1"
-REPORT_SCHEMA = "athena.m4.persistent-family-report.v1"
+REPORT_SCHEMA = "athena.m4.persistent-family-report.v2"
+INVERSION_AMENDMENT_SCHEMA = "athena.evolution.m0-holm-inversion-amendment.v1"
 _M4_REPORT_ROOT = Path(__file__).resolve().parents[1] / "reports" / "evolution_engine_milestone4"
 _WEEKLY_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_weekly_statistical_input_v1.schema.json"
-_REPORT_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_persistent_family_report_v1.schema.json"
+_REPORT_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_persistent_family_report_v2.schema.json"
+_INVERSION_AMENDMENT_SCHEMA = (Path(__file__).resolve().parents[1] / "schemas"
+                               / "athena_m0_holm_inversion_amendment_v1.schema.json")
 
 
 class M4ValidationError(RuntimeError):
@@ -49,7 +52,7 @@ class M4ValidationError(RuntimeError):
 
 
 class QualificationBlocked(M4ValidationError):
-    """Frozen M0 does not define an executable adjusted-bound inversion rule."""
+    """The proposed M0 Holm-inversion amendment has not been approved."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +136,149 @@ def holm_adjust(p_values: Sequence[float]) -> tuple[float, ...]:
         running = max(running, (size - rank) * values[index])
         adjusted[index] = min(1.0, running)
     return tuple(adjusted)
+
+
+def holm_rejection_set(p_values: Sequence[float], *, alpha: float = ALPHA) -> frozenset[int]:
+    """Return Holm step-down rejections, preserving input order for exact ties."""
+    values = tuple(_finite_number(value, "p-value") for value in p_values)
+    if not values or any(value < 0 or value > 1 for value in values):
+        raise M4ValidationError("Holm family must contain p-values in [0,1]")
+    alpha = _finite_number(alpha, "Holm alpha")
+    if not 0 < alpha < 1:
+        raise M4ValidationError("Holm alpha must lie strictly between 0 and 1")
+    order = sorted(range(len(values)), key=lambda index: (values[index], index))
+    rejected: set[int] = set()
+    size = len(values)
+    for rank, index in enumerate(order):
+        if values[index] <= alpha / (size - rank):
+            rejected.add(index)
+        else:
+            break
+    return frozenset(rejected)
+
+
+def bootstrap_p_value_at_threshold(estimate: float, centered_errors: Sequence[float],
+                                   threshold: float) -> float:
+    """M0 amendment marginal upper-tail p-value for H0: theta <= threshold.
+
+    The +1 correction and >= comparison preserve the frozen zero-null
+    convention exactly. ``centered_errors`` are bootstrap draws minus the
+    observed estimate, in their deterministic M1-seeded order.
+    """
+    estimate = _finite_number(estimate, "estimand")
+    threshold = _finite_number(threshold, "effect threshold")
+    if not centered_errors:
+        raise M4ValidationError("bootstrap p-value function requires its complete resample vector")
+    errors = tuple(_finite_number(value, "centered bootstrap error") for value in centered_errors)
+    tail = sum(error >= estimate - threshold for error in errors)
+    return (1 + tail) / (len(errors) + 1)
+
+
+def holm_adjust_at_thresholds(
+    estimates: Sequence[float | None],
+    centered_errors: Sequence[Sequence[float] | None],
+    thresholds: Sequence[float],
+) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    """Evaluate each marginal p-function at its own threshold, then Holm-adjust all m."""
+    if not estimates or len(estimates) != len(centered_errors) or len(estimates) != len(thresholds):
+        raise M4ValidationError("threshold vector, estimates, and bootstrap errors must have equal nonzero length")
+    raw: list[float] = []
+    for estimate, errors, threshold in zip(estimates, centered_errors, thresholds):
+        if estimate is None or errors is None:
+            raw.append(1.0)
+        else:
+            raw.append(bootstrap_p_value_at_threshold(estimate, errors, threshold))
+    raw_values = tuple(raw)
+    return raw_values, holm_adjust(raw_values)
+
+
+def invert_bootstrap_p_value(estimate: float, centered_errors: Sequence[float],
+                             local_alpha: float) -> float | None:
+    """Return sup{delta: p(delta) <= local_alpha}, or None for an empty set."""
+    estimate = _finite_number(estimate, "estimand")
+    local_alpha = _finite_number(local_alpha, "local confidence level")
+    if not 0 < local_alpha < 1:
+        raise M4ValidationError("local confidence level must lie strictly between 0 and 1")
+    if not centered_errors:
+        return None
+    errors = tuple(_finite_number(value, "centered bootstrap error") for value in centered_errors)
+    if local_alpha < 1.0 / (len(errors) + 1):
+        return None
+    # p(delta) is right-continuous and changes only at estimate-error.
+    for threshold in sorted({estimate - error for error in errors}):
+        if bootstrap_p_value_at_threshold(estimate, errors, threshold) > local_alpha:
+            return threshold
+    return None
+
+
+def holm_simultaneous_lower_bounds(
+    p_values_at_zero: Sequence[float],
+    estimates: Sequence[float | None],
+    centered_errors: Sequence[Sequence[float] | None],
+    *, alpha: float = ALPHA,
+) -> tuple[float | None, ...]:
+    """Holm-compatible simultaneous one-sided lower confidence bounds.
+
+    This is the equal-weight Holm closed-testing confidence construction. If
+    all family nulls reject, use alpha/m marginal inversions. Otherwise,
+    rejected hypotheses receive their tested boundary (zero), and the
+    nonrejected set shares alpha equally. Missing/p=1 hypotheses stay in the
+    complete family and receive no numeric bound.
+    """
+    p_values = tuple(_finite_number(value, "p-value") for value in p_values_at_zero)
+    if not p_values or any(value < 0 or value > 1 for value in p_values):
+        raise M4ValidationError("Holm-bound family must contain p-values in [0,1]")
+    if len(estimates) != len(p_values) or len(centered_errors) != len(p_values):
+        raise M4ValidationError("Holm-bound estimates/errors must match the persistent family size")
+    for p_value, estimate, errors in zip(p_values, estimates, centered_errors):
+        if estimate is None or errors is None:
+            if p_value != 1.0:
+                raise M4ValidationError("a missing bootstrap function must retain its frozen p=1 placeholder")
+        else:
+            reconstructed_p = bootstrap_p_value_at_threshold(estimate, errors, 0.0)
+            if not math.isclose(p_value, reconstructed_p, rel_tol=0, abs_tol=1e-14):
+                raise M4ValidationError("zero-threshold p-value differs from its arbitrary-threshold function")
+    alpha = _finite_number(alpha, "Holm alpha")
+    if not 0 < alpha < 1:
+        raise M4ValidationError("Holm alpha must lie strictly between 0 and 1")
+    rejected = holm_rejection_set(p_values, alpha=alpha)
+    size = len(p_values)
+    if len(rejected) == size:
+        local_level = alpha / size
+        result = []
+        for estimate, errors in zip(estimates, centered_errors):
+            if estimate is None or errors is None:
+                result.append(None)
+            else:
+                bound = invert_bootstrap_p_value(estimate, errors, local_level)
+                result.append(None if bound is None else max(0.0, bound))
+        return tuple(result)
+    nonrejected_count = size - len(rejected)
+    local_level = alpha / nonrejected_count
+    result = []
+    for index, (estimate, errors) in enumerate(zip(estimates, centered_errors)):
+        if index in rejected:
+            result.append(0.0)
+        elif estimate is None or errors is None:
+            result.append(None)
+        else:
+            result.append(invert_bootstrap_p_value(estimate, errors, local_level))
+    return tuple(result)
+
+
+def _validate_inversion_amendment(amendment: Mapping[str, Any]) -> tuple[str, str]:
+    """Validate proposed amendment identity; never interpret it as approval."""
+    try:
+        schema = json.loads(_INVERSION_AMENDMENT_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator.check_schema(schema)
+        jsonschema.validate(amendment, schema)
+    except Exception as exc:
+        raise M4ValidationError("M0 Holm-inversion amendment fails its strict versioned schema") from exc
+    payload = dict(amendment)
+    amendment_id = payload.pop("amendment_id")
+    if amendment_id != "sha256:" + _sha(_canonical(payload)):
+        raise M4ValidationError("M0 Holm-inversion amendment identity hash mismatch")
+    return amendment_id, _sha(_canonical(amendment))
 
 
 def _block_indices(length: int, rng: random.Random) -> tuple[int, ...]:
@@ -230,6 +376,7 @@ def reconstruct_raw_statistics(evidence: Mapping[str, Any], *, expected_seeds: M
             "estimands": {key: {"estimate": None, "lower_95": None, "upper_95": None,
                                 "raw_one_sided_p": 1.0, "status": "INSUFFICIENT_EVIDENCE_P1_PLACEHOLDER"}
                           for key in HYPOTHESES},
+            "centered_bootstrap_errors": {key: None for key in HYPOTHESES},
             "max_positive_fold_share": concentration,
         }
 
@@ -283,7 +430,12 @@ def reconstruct_raw_statistics(evidence: Mapping[str, Any], *, expected_seeds: M
             "status": "RAW_UNADJUSTED",
         }
     return {"sample_status": "SAMPLE_FLOORS_MET", "sample_warnings": [],
-            "estimands": estimands, "max_positive_fold_share": concentration}
+            "estimands": estimands,
+            "centered_bootstrap_errors": {
+                metric: [value - point[metric] for value in draws[metric]]
+                for metric in HYPOTHESES
+            },
+            "max_positive_fold_share": concentration}
 
 
 def _extract_started_seeds(events: Sequence[Mapping[str, Any]], attempt_id: str) -> dict[str, dict[str, int]]:
@@ -446,9 +598,20 @@ def _completed_hash(events: Sequence[Mapping[str, Any]], attempt_id: str) -> str
 def validate_family(registry: m1.ExperimentRegistry, *,
                     external_store: ExternalSecurityStore,
                     package_paths: Mapping[str, str | Path],
-                    output_path: str | Path) -> FamilyValidation:
+                    output_path: str | Path,
+                    inversion_amendment: Mapping[str, Any] | None = None) -> FamilyValidation:
     """Verify and publish one complete family report; never evaluates candidates."""
     from .m3_lifecycle import PackageError, verify_package
+
+    amendment_identity: dict[str, str] | None = None
+    if inversion_amendment is not None:
+        amendment_id, amendment_sha = _validate_inversion_amendment(inversion_amendment)
+        amendment_identity = {
+            "schema_version": INVERSION_AMENDMENT_SCHEMA,
+            "amendment_id": amendment_id,
+            "document_sha256": amendment_sha,
+            "status": inversion_amendment["status"],
+        }
 
     events = registry.events()
     if Path(external_store.registry.root).resolve() != Path(registry.root).resolve():
@@ -478,6 +641,7 @@ def validate_family(registry: m1.ExperimentRegistry, *,
 
     report_attempts = []
     hypotheses = []
+    centered_errors_by_hypothesis: dict[tuple[str, str], Sequence[float] | None] = {}
     for event in sorted(registrations, key=lambda item: item["payload"]["ordinal"]):
         payload = event["payload"]
         attempt_id = payload["attempt_id"]
@@ -594,15 +758,22 @@ def validate_family(registry: m1.ExperimentRegistry, *,
                     if multiplicity_rows[name]["p_value"] != 1.0 or not multiplicity_rows[name]["placeholder"]:
                         raise M4ValidationError("a missing M1 raw p-value did not receive its conservative p=1 placeholder")
                     family_p, source = 1.0, "frozen_p1_placeholder_missing_m1_stat"
+                    centered_errors_by_hypothesis[(attempt_id, name)] = None
                 else:
                     if not math.isclose(float(completed[name]), p, rel_tol=0, abs_tol=1e-14):
                         raise M4ValidationError("M1 completion p-value differs from independent raw-statistic reconstruction")
                     if not math.isclose(float(multiplicity_rows[name]["p_value"]), p, rel_tol=0, abs_tol=1e-14):
                         raise M4ValidationError("M1 multiplicity entry differs from independently reconstructed attempt p-value")
                     family_p, source = p, "independently_reconstructed"
+                    centered_errors_by_hypothesis[(attempt_id, name)] = rebuilt[
+                        "centered_bootstrap_errors"][name]
                 hypotheses.append({"attempt_id": attempt_id, "ordinal": payload["ordinal"],
                                    "hypothesis": name, "raw_p": family_p,
-                                   "reconstructed_raw_p": p, "source": source})
+                                   "reconstructed_raw_p": p,
+                                   "reconstructed_estimate": rebuilt["estimands"][name]["estimate"],
+                                   "source": source,
+                                   "simultaneous_lower_bound": None,
+                                   "bound_status": "NOT_COMPUTED"})
             row_out["evidence"] = {"package_sha256": package_sha, "sample_status": rebuilt["sample_status"],
                                    "estimands": rebuilt["estimands"],
                                    "max_positive_fold_share": rebuilt["max_positive_fold_share"],
@@ -612,7 +783,11 @@ def validate_family(registry: m1.ExperimentRegistry, *,
             # All incomplete/unsuccessful dispositions count four times at p=1.
             for name in HYPOTHESES:
                 hypotheses.append({"attempt_id": attempt_id, "ordinal": payload["ordinal"],
-                                   "hypothesis": name, "raw_p": 1.0, "source": "frozen_p1_placeholder"})
+                                   "hypothesis": name, "raw_p": 1.0, "source": "frozen_p1_placeholder",
+                                   "reconstructed_estimate": None,
+                                   "simultaneous_lower_bound": None,
+                                   "bound_status": "NOT_COMPUTED"})
+                centered_errors_by_hypothesis[(attempt_id, name)] = None
         for name in HYPOTHESES:
             row_out["hypotheses"].append(name)
         report_attempts.append(row_out)
@@ -621,6 +796,26 @@ def validate_family(registry: m1.ExperimentRegistry, *,
     adjusted = holm_adjust([item["raw_p"] for item in hypotheses])
     for row, value in zip(hypotheses, adjusted):
         row["holm_adjusted_p"] = value
+    inversion_status = "AMENDMENT_NOT_SUPPLIED"
+    if inversion_amendment is not None:
+        ordered_hypotheses = sorted(hypotheses, key=lambda item: (
+            item["ordinal"], HYPOTHESES.index(item["hypothesis"])))
+        bounds = holm_simultaneous_lower_bounds(
+            [row["raw_p"] for row in ordered_hypotheses],
+            [row.get("reconstructed_estimate") for row in ordered_hypotheses],
+            [centered_errors_by_hypothesis.get((row["attempt_id"], row["hypothesis"]))
+             for row in ordered_hypotheses],
+            alpha=ALPHA,
+        )
+        # The amendment is still proposed; output is evidence for review only.
+        for row, bound in zip(ordered_hypotheses, bounds):
+            row["simultaneous_lower_bound"] = bound
+            missing_function = centered_errors_by_hypothesis.get((row["attempt_id"], row["hypothesis"])) is None
+            row["bound_status"] = (
+                "P1_PLACEHOLDER_NO_FINITE_BOUND" if missing_function
+                else "NON_AUTHORITATIVE_PROPOSED_AMENDMENT"
+            )
+        inversion_status = "PROPOSED_BOUNDS_NON_AUTHORITATIVE"
     unresolved = [row["attempt_id"] for row in report_attempts
                   if row["status"] in {"UNEVALUATED", "TECHNICAL_EVALUATION_FAILURE", "RUNNING", "VALIDATED", "SUBMITTED"}]
     already_advanced = any(row["status"] == "RESEARCH_ADVANCED_PENDING_PROSPECTIVE" for row in report_attempts)
@@ -640,7 +835,9 @@ def validate_family(registry: m1.ExperimentRegistry, *,
         "hypotheses": hypotheses,
         "holm_alpha": ALPHA,
         "holm_method": "holm_stepdown_familywise",
-        "qualification_status": "BLOCKED_M0_ADJUSTED_BOUND_INVERSION_UNSPECIFIED",
+        "qualification_status": "BLOCKED_M0_AMENDMENT_UNAPPROVED",
+        "inversion_amendment": amendment_identity,
+        "inversion_status": inversion_status,
         "family_completion_status": "ALL_ATTEMPTS_TERMINAL" if complete_attempt_family else "ATTEMPTS_UNRESOLVED",
         "family_outcome": None,
         "eligible_terminal_outcome_if_qualification_enabled": (
@@ -650,7 +847,8 @@ def validate_family(registry: m1.ExperimentRegistry, *,
         "unresolved_attempt_ids": unresolved,
         "notes": [
             "M4 reconstructs evidence and Holm adjusted p-values; it does not execute candidates.",
-            "Qualification and NO_QUALIFYING_CANDIDATE are non-authoritative until the frozen M0 simultaneous-bound inversion is formally specified.",
+            "M0 Holm-inversion amendment remains proposed; any calculated bounds are non-authoritative and qualification is disabled.",
+            "Holm-compatible bounds may be zero for rejected hypotheses whenever any family hypothesis is not rejected; frozen strict-positive qualification gates are not relaxed.",
             "All data through 2026-08-19 remain previously observed research data, never untouched holdout data.",
         ],
     }
@@ -672,8 +870,7 @@ def validate_family(registry: m1.ExperimentRegistry, *,
 
 
 def qualify_family(*_args: Any, **_kwargs: Any) -> None:
-    """Qualification gate remains disabled pending a versioned M0 decision."""
+    """Qualification stays disabled until explicit approval of the proposed M0 amendment."""
     raise QualificationBlocked(
-        "M0 requires Holm-adjusted simultaneous lower bounds but does not freeze their inversion algorithm; "
-        "M4 will not substitute another method"
+        "M0 Holm-inversion amendment is not approved; calculated proposed bounds are non-authoritative"
     )

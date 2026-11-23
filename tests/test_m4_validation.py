@@ -18,6 +18,8 @@ from crypto_bot.m4_validation import _canonical
 from crypto_bot.m4_validation import (
     ALPHA, BLOCK_LENGTH_WEEKS, BOOTSTRAP_ITERATIONS, EVIDENCE_SCHEMA,
     HYPOTHESES, M4ValidationError, QualificationBlocked, holm_adjust,
+    bootstrap_p_value_at_threshold, holm_adjust_at_thresholds, holm_rejection_set,
+    holm_simultaneous_lower_bounds, invert_bootstrap_p_value,
     qualify_family, reconstruct_raw_statistics,
 )
 
@@ -76,6 +78,12 @@ def _evidence(*, week_keys: list[str] | None = None,
     return evidence, seeds
 
 
+def _proposed_amendment() -> dict:
+    path = (Path(__file__).resolve().parents[1] / "reports"
+            / "evolution_engine_m0_holm_inversion_amendment_2026-11-23" / "amendment.json")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 class M4MathTests(unittest.TestCase):
     def test_holm_step_down_golden_and_tie_order(self):
         self.assertEqual(holm_adjust((0.01, 0.04, 0.03, 1.0, 0.0)),
@@ -86,6 +94,66 @@ class M4MathTests(unittest.TestCase):
         for values in ((), (-0.01,), (1.01,), (math.nan,), (True,)):
             with self.subTest(values=values), self.assertRaises(M4ValidationError):
                 holm_adjust(values)
+
+    def test_arbitrary_threshold_p_function_recovers_frozen_zero_null_and_is_monotone(self):
+        estimate = 0.2
+        errors = (-0.2, 0.0, 0.1, 0.3)
+        self.assertEqual(bootstrap_p_value_at_threshold(estimate, errors, 0.0), 0.4)
+        self.assertEqual(bootstrap_p_value_at_threshold(estimate, errors, 0.1), 0.6)
+        self.assertEqual(bootstrap_p_value_at_threshold(estimate, errors, 0.2), 0.8)
+        # Stay off the binary-float equality boundary at e=0.3.
+        self.assertEqual(bootstrap_p_value_at_threshold(estimate, errors, -0.09), 0.4)
+        values = [bootstrap_p_value_at_threshold(estimate, errors, threshold)
+                  for threshold in (-0.09, 0.0, 0.1, 0.2, 0.3)]
+        self.assertEqual(values, sorted(values))
+
+    def test_threshold_specific_holm_uses_full_family_stable_tie_order(self):
+        p_values = (0.0099, 0.0099, 0.0099, 0.0099, 1.0)
+        self.assertEqual(holm_rejection_set(p_values), frozenset({0, 1, 2, 3}))
+        self.assertEqual(holm_rejection_set((0.0099,) * 4), frozenset({0, 1, 2, 3}))
+        self.assertEqual(holm_rejection_set((0.0099,) * 8), frozenset())
+        raw, adjusted = holm_adjust_at_thresholds(
+            estimates=(0.2, 0.2, None),
+            centered_errors=((0.0,) * 99, (0.0,) * 99, None),
+            thresholds=(0.0, 0.0, 0.0),
+        )
+        self.assertEqual(raw, (0.01, 0.01, 1.0))
+        self.assertEqual(adjusted, (0.03, 0.03, 1.0))
+
+    def test_marginal_p_function_inversion_golden_and_discrete_boundaries(self):
+        # B=4 gives p resolution 1/5 and thresholds at estimate-error.
+        self.assertEqual(invert_bootstrap_p_value(0.4, (0.0, 0.1, 0.2, 0.3), 0.4), 0.2)
+        self.assertAlmostEqual(invert_bootstrap_p_value(0.4, (0.0, 0.1, 0.2, 0.3), 0.2), 0.1)
+        self.assertIsNone(invert_bootstrap_p_value(0.4, (0.0, 0.1, 0.2, 0.3), 0.19))
+
+    def test_holm_compatible_bounds_cover_ties_placeholders_and_family_growth(self):
+        errors = (0.0,) * 100
+        low = 1 / 101
+        small = holm_simultaneous_lower_bounds(
+            [low] * 4, [0.5] * 4, [errors] * 4)
+        self.assertEqual(small, (0.5,) * 4)
+
+        # A frozen p=1 attempt stays in m. Holm can reject the four observed
+        # hypotheses, but the Holm-compatible simultaneous bound for rejected
+        # members is their zero test boundary; the placeholder has no bound.
+        with_placeholder = holm_simultaneous_lower_bounds(
+            [low] * 4 + [1.0], [0.5] * 4 + [None], [errors] * 4 + [None])
+        self.assertEqual(with_placeholder, (0.0, 0.0, 0.0, 0.0, None))
+
+        # Expanding the persistent family from four to eight attempts changes
+        # Holm's first critical value and retains the minimum attainable p.
+        grown = holm_simultaneous_lower_bounds(
+            [low] * 8, [0.5] * 8, [errors] * 8)
+        self.assertEqual(grown, (None,) * 8)
+
+    def test_proposed_amendment_hash_and_schema_are_fail_closed(self):
+        from crypto_bot.m4_validation import _validate_inversion_amendment
+        amendment = _proposed_amendment()
+        self.assertEqual(_validate_inversion_amendment(amendment)[0], amendment["amendment_id"])
+        altered = json.loads(json.dumps(amendment))
+        altered["constants"]["alpha"] = 0.1
+        with self.assertRaises(M4ValidationError):
+            _validate_inversion_amendment(altered)
 
     def test_all_placeholders_remain_one_and_within_full_denominator(self):
         adjusted = holm_adjust([1.0] * 144)
@@ -323,14 +391,18 @@ class M4FamilyIntegrationTests(unittest.TestCase):
         from crypto_bot.m4_validation import validate_family
         result_path = self.report_dir / "family.json"
         result = validate_family(self.fixture.registry, external_store=self.fixture.security,
-                                 package_paths={attempt_id: package}, output_path=result_path)
+                                 package_paths={attempt_id: package}, output_path=result_path,
+                                 inversion_amendment=_proposed_amendment())
         replay = validate_family(self.fixture.registry, external_store=self.fixture.security,
                                  package_paths={attempt_id: package},
-                                 output_path=self.report_dir / "family-replay.json")
+                                 output_path=self.report_dir / "family-replay.json",
+                                 inversion_amendment=_proposed_amendment())
         self.assertEqual(result.report_sha256, replay.report_sha256)
         self.assertEqual(result.report["attempt_count"], 5)
         self.assertEqual(result.report["hypothesis_count"], 20)
-        self.assertEqual(result.report["qualification_status"], "BLOCKED_M0_ADJUSTED_BOUND_INVERSION_UNSPECIFIED")
+        self.assertEqual(result.report["qualification_status"], "BLOCKED_M0_AMENDMENT_UNAPPROVED")
+        self.assertEqual(result.report["inversion_status"], "PROPOSED_BOUNDS_NON_AUTHORITATIVE")
+        self.assertEqual(result.report["inversion_amendment"]["amendment_id"], _proposed_amendment()["amendment_id"])
         self.assertFalse(result.report["no_qualifying_candidate_authoritative"])
         self.assertEqual(sum(row["raw_p"] == 1 for row in result.report["hypotheses"]), 20)
         manifest_path = package / "manifest.json"

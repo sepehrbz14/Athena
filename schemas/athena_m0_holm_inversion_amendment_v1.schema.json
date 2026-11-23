@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/athena_m0_holm_inversion_amendment_v1.schema.json",
+  "title": "Athena M0 Holm inversion amendment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "amendment_id", "status", "base_protocol", "family_scope", "marginal_p_value", "holm_stepdown", "simultaneous_lower_bounds", "sample_and_placeholder_rules", "constants", "qualification_gate"],
+  "properties": {
+    "schema_version": {"const": "athena.evolution.m0-holm-inversion-amendment.v1"},
+    "amendment_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "status": {"const": "PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL"},
+    "base_protocol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["specification_id", "version", "preserved_source_path"],
+      "properties": {
+        "specification_id": {"const": "athena.evolution.m0-frozen.v1"},
+        "version": {"const": 1},
+        "preserved_source_path": {"const": "reports/evolution_engine_milestone0_2026-11-18/frozen_protocol.md"}
+      }
+    },
+    "family_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attempt_accounting", "hypotheses_per_attempt", "maximum_hypotheses", "alpha"],
+      "properties": {
+        "attempt_accounting": {"const": "all_persistent_registered_attempts_including_invalid_failed_skipped_insufficient_and_unevaluated"},
+        "hypotheses_per_attempt": {"const": 4},
+        "maximum_hypotheses": {"const": 144},
+        "alpha": {"const": 0.05}
+      }
+    },
+    "marginal_p_value": {
+      "type": "object", "additionalProperties": false,
+      "required": ["null", "formula", "comparison", "plus_one_correction", "bootstrap_error_definition", "monotonicity"],
+      "properties": {
+        "null": {"const": "H_i(delta): theta_i <= delta"},
+        "formula": {"const": "p_i(delta)=(1+sum_b I[e_ib>=theta_hat_i-delta])/(B+1)"},
+        "comparison": {"const": ">="},
+        "plus_one_correction": {"const": true},
+        "bootstrap_error_definition": {"const": "e_ib=theta_star_ib-theta_hat_i"},
+        "monotonicity": {"const": "nondecreasing_in_delta"}
+      }
+    },
+    "holm_stepdown": {
+      "type": "object", "additionalProperties": false,
+      "required": ["threshold_input", "sort_order", "critical_value", "adjusted_p_value", "ties", "stopping_rule"],
+      "properties": {
+        "threshold_input": {"const": "one_delta_i_per_family_hypothesis; evaluate_each_raw_p_i(delta_i)"},
+        "sort_order": {"const": "ascending_raw_p_then_global_attempt_ordinal_then_frozen_hypothesis_order"},
+        "critical_value": {"const": "alpha/(m-r+1), ranks_are_one_based"},
+        "adjusted_p_value": {"const": "p_adj_(r)=min(1,max_{s<=r}((m-s+1)*p_(s)))"},
+        "ties": {"const": "stable_by_global_attempt_ordinal_then_frozen_hypothesis_order"},
+        "stopping_rule": {"const": "reject_in_order_through_first_failure_and_stop"}
+      }
+    },
+    "simultaneous_lower_bounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "marginal_inverse", "rejection_set", "all_rejected_case", "partial_rejection_case", "coverage_interpretation"],
+      "properties": {
+        "method": {"const": "equal_weight_Holm_compatible_closed_testing_bounds"},
+        "marginal_inverse": {"const": "q_i(gamma)=sup{delta:p_i(delta)<=gamma}; use right_continuous_plus_one_p_function"},
+        "rejection_set": {"const": "R=HolmReject({p_i(0)}_{i=1..m},alpha)"},
+        "all_rejected_case": {"const": "if R is the full family, L_i=max(0,q_i(alpha/m))"},
+        "partial_rejection_case": {"const": "if R is not full, L_i=0 for i in R; L_i=q_i(alpha/|A|) for i in A, A=family\\R"},
+        "coverage_interpretation": {"const": "simultaneous_1-alpha_compatible_bounds_if_each_marginal_bootstrap_test_is_valid"}
+      }
+    },
+    "sample_and_placeholder_rules": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sample_floors", "unresolved_attempts", "p1_function", "p1_bound"],
+      "properties": {
+        "sample_floors": {"const": "unchanged_frozen_M0_floors; below_floor_attempt_remains_four_p1_placeholders"},
+        "unresolved_attempts": {"const": "each_of_four_hypotheses_is_p1_and_remains_in_m"},
+        "p1_function": {"const": "p_i(delta)=1_for_all_finite_delta"},
+        "p1_bound": {"const": "null_no_finite_confidence_bound"}
+      }
+    },
+    "constants": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bootstrap_replicates", "moving_block_weeks", "ci_level", "master_seed", "alpha", "family_attempt_limit"],
+      "properties": {
+        "bootstrap_replicates": {"const": 100000},
+        "moving_block_weeks": {"const": 4},
+        "ci_level": {"const": 0.95},
+        "master_seed": {"const": 20261118},
+        "alpha": {"const": 0.05},
+        "family_attempt_limit": {"const": 36}
+      }
+    },
+    "qualification_gate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "required_executable_hypotheses", "strict_positive_bound", "protocol_owner_approval_required"],
+      "properties": {
+        "status": {"const": "DISABLED_UNTIL_EXPLICIT_AMENDMENT_APPROVAL"},
+        "required_executable_hypotheses": {"const": ["robust_executable_absolute_weekly_return", "executable_paired_weekly_delta"]},
+        "strict_positive_bound": {"const": true},
+        "protocol_owner_approval_required": {"const": true}
+      }
+    }
+  }
+}

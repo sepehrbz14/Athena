@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/athena_m4_persistent_family_report_v2.schema.json",
+  "title": "Athena M4 persistent-family statistical validation report v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "search_family_id",
+    "protocol_ids",
+    "registry_tip_sha256",
+    "registry_event_count",
+    "trusted_checkpoint_sha256",
+    "attempt_count",
+    "hypothesis_count",
+    "attempts",
+    "hypotheses",
+    "holm_alpha",
+    "holm_method",
+    "qualification_status",
+    "family_completion_status",
+    "family_outcome",
+    "eligible_terminal_outcome_if_qualification_enabled",
+    "no_qualifying_candidate_authoritative",
+    "unresolved_attempt_ids",
+    "notes",
+    "inversion_amendment",
+    "inversion_status"
+  ],
+  "properties": {
+    "schema": {
+      "const": "athena.m4.persistent-family-report.v2"
+    },
+    "search_family_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "protocol_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "registry_tip_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "registry_event_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "trusted_checkpoint_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "attempt_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 36
+    },
+    "hypothesis_count": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 144
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "attempt_id",
+          "ordinal",
+          "protocol_id",
+          "status",
+          "hypotheses",
+          "provenance"
+        ],
+        "properties": {
+          "attempt_id": {
+            "type": "string"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "protocol_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "hypotheses": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "candidate_spec_sha256",
+              "protocol_sha256",
+              "source_commit",
+              "source_dirty",
+              "dataset_hashes",
+              "configuration_hashes"
+            ]
+          },
+          "evidence": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "attempt_id",
+          "ordinal",
+          "hypothesis",
+          "raw_p",
+          "source",
+          "holm_adjusted_p",
+          "simultaneous_lower_bound",
+          "bound_status",
+          "reconstructed_estimate"
+        ],
+        "properties": {
+          "attempt_id": {
+            "type": "string"
+          },
+          "ordinal": {
+            "type": "integer"
+          },
+          "hypothesis": {
+            "type": "string",
+            "enum": [
+              "predictive_absolute_weekly_score",
+              "predictive_paired_weekly_delta",
+              "robust_executable_absolute_weekly_return",
+              "executable_paired_weekly_delta"
+            ]
+          },
+          "raw_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reconstructed_raw_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "independently_reconstructed",
+              "frozen_p1_placeholder",
+              "frozen_p1_placeholder_missing_m1_stat"
+            ]
+          },
+          "holm_adjusted_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "simultaneous_lower_bound": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "bound_status": {
+            "enum": [
+              "NOT_COMPUTED",
+              "NON_AUTHORITATIVE_PROPOSED_AMENDMENT",
+              "P1_PLACEHOLDER_NO_FINITE_BOUND"
+            ]
+          },
+          "reconstructed_estimate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "holm_alpha": {
+      "const": 0.05
+    },
+    "holm_method": {
+      "const": "holm_stepdown_familywise"
+    },
+    "qualification_status": {
+      "const": "BLOCKED_M0_AMENDMENT_UNAPPROVED"
+    },
+    "family_completion_status": {
+      "enum": [
+        "ALL_ATTEMPTS_TERMINAL",
+        "ATTEMPTS_UNRESOLVED"
+      ]
+    },
+    "family_outcome": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "eligible_terminal_outcome_if_qualification_enabled": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "no_qualifying_candidate_authoritative": {
+      "const": false
+    },
+    "unresolved_attempt_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inversion_amendment": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "amendment_id",
+        "document_sha256",
+        "status"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "athena.evolution.m0-holm-inversion-amendment.v1"
+        },
+        "amendment_id": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "document_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status": {
+          "const": "PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL"
+        }
+      }
+    },
+    "inversion_status": {
+      "enum": [
+        "AMENDMENT_NOT_SUPPLIED",
+        "PROPOSED_BOUNDS_NON_AUTHORITATIVE"
+      ]
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Status
 
-Integrated synthetic software implementation is complete. M4 does not run candidate evaluations. Qualification is deliberately disabled pending a protocol-owner decision on Holm-adjusted simultaneous lower-bound inversion. No historical input or holdout was accessed.
+Integrated synthetic software implementation is complete. M4 does not run candidate evaluations. A separately versioned proposed M0 Holm-inversion amendment is implemented and mathematically tested; qualification remains disabled pending explicit protocol-owner approval. No historical input or holdout was accessed.
 
 ## Implementation
 
@@ -11,6 +11,8 @@ Integrated synthetic software implementation is complete. M4 does not run candid
 - Added `tests/test_m4_validation.py`: Holm mathematical vectors, full 144-hypothesis p=1 family, frozen sample floors, regime floor, qualification fail-closed behavior, M3/M4 bootstrap reproduction, and signed M1/M2 end-to-end scenarios for invalid, failed, skipped, and insufficient attempts plus missing/tampered package and registry identity cases.
 - Added this M4 design, acceptance, and implementation record.
 - Final integration fixes kept invalid attempts distinct from valid attempts, bound M3 packages to their original sealed M2 checkpoint prefix, and made the signed package fixture create its parent directory portably.
+- Added a versioned M0 amendment and M4 report v2 for arbitrary-threshold bootstrap p-values and Holm-compatible simultaneous bounds. The amendment is hash-verified and remains proposed; calculated bounds are marked non-authoritative.
+- Added independent golden vectors for threshold p-values, Holm ties and placeholders, inversion boundaries, family growth, and strict amendment identity/schema validation.
 
 ## Local verification so far
 
@@ -23,4 +25,4 @@ Integrated synthetic software implementation is complete. M4 does not run candid
 
 ## Open scientific decision
 
-The frozen protocol specifies the raw centered bootstrap p-value at the zero-edge null, Holm FWER alpha 0.05 across up to 144 hypotheses, and requires simultaneous lower bounds derived by inversion of Holm-adjusted tests. It does not specify the p-value function at arbitrary null values or the joint inversion rule. Qualification remains fail-closed until that rule and its golden fixtures are approved and recorded as a versioned M0 decision.
+M0 v1 is unchanged. The new proposed amendment specifies arbitrary-threshold raw p-value functions, Holm step-down for each complete threshold-specific family, and the Holm-compatible simultaneous lower-bound construction. It preserves all M0 constants and p=1 accounting. The mathematical fixtures pass locally; the amendment and resulting bounds are not authoritative until protocol-owner approval. Qualification remains disabled. The method's explicit consequence is that any unresolved p=1 placeholder prevents all family hypotheses from receiving strictly positive lower bounds, so the frozen executable gate cannot pass in that case.
