@@ -520,7 +520,7 @@ class M4FamilyIntegrationTests(unittest.TestCase):
         self.assertEqual(result.report["attempt_count"], 5)
         self.assertEqual(result.report["hypothesis_count"], 20)
         self.assertEqual(result.report["qualification_status"], "BLOCKED_M0_AMENDMENT_UNAPPROVED")
-        self.assertEqual(result.report["inversion_status"], "PROPOSED_BOUNDS_NON_AUTHORITATIVE")
+        self.assertEqual(result.report["inversion_status"], "PROPOSED_BONFERRONI_BOUNDS_NON_AUTHORITATIVE")
         self.assertEqual(result.report["inversion_amendment"]["amendment_id"], _proposed_amendment()["amendment_id"])
         self.assertFalse(result.report["no_qualifying_candidate_authoritative"])
         self.assertEqual(sum(row["raw_p"] == 1 for row in result.report["hypotheses"]), 20)
