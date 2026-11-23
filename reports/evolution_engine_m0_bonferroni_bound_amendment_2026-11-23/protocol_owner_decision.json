@@ -1,0 +1,25 @@
+{
+  "schema_version": "athena.evolution.m0-protocol-owner-decision.v1",
+  "decision_status": "APPROVED",
+  "decision_date": "2026-11-24",
+  "base_protocol": "athena.evolution.m0-frozen.v1",
+  "amendment_schema": "athena.evolution.m0-bonferroni-bound-amendment.v1",
+  "amendment_id": "sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9",
+  "amendment_document_sha256": "0245084071fdd3f56ac1bc5f122dbe246612bca62b8d2919338b0505819e7a07",
+  "approved_method": {
+    "family_testing": "holm_stepdown_fwer_alpha_0.05_over_all_registered_attempt_hypotheses",
+    "numerical_bounds": "full_family_bonferroni_inversion_at_alpha_over_m",
+    "family_denominator": "all_registered_attempts_including_unresolved_p1_placeholders",
+    "qualification_rule": "existing_frozen_strict_positive_executable_bounds_and_all_other_M0_gates_unchanged"
+  },
+  "preservation": {
+    "m0_v1": "unchanged",
+    "prior_holm_inversion_proposal": "preserved_as_separate_historical_proposal"
+  },
+  "limitations_and_boundaries": {
+    "bootstrap_validity": "coverage_is_conditional_on_valid_marginal_bootstrap_tests; approval_does_not_establish_exact_finite_sample_validity",
+    "historical_evaluation": "not_authorized_by_this_decision",
+    "prospective_holdout": "inaccessible_and_not_authorized_by_this_decision",
+    "qualification_execution": "method_approval_does_not_authorize_historical_family_evaluation_or_qualification_execution"
+  }
+}

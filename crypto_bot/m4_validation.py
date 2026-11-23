@@ -38,13 +38,19 @@ SCENARIOS = (
     "funding_2bps_per_8h_only",
 )
 EVIDENCE_SCHEMA = "athena.m4.m3-weekly-statistical-input.v1"
-REPORT_SCHEMA = "athena.m4.persistent-family-report.v3"
+REPORT_SCHEMA = "athena.m4.persistent-family-report.v4"
 INVERSION_AMENDMENT_SCHEMA = "athena.evolution.m0-bonferroni-bound-amendment.v1"
+APPROVED_AMENDMENT_ID = "sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9"
+APPROVED_AMENDMENT_DOCUMENT_SHA256 = "0245084071fdd3f56ac1bc5f122dbe246612bca62b8d2919338b0505819e7a07"
+PROTOCOL_OWNER_DECISION_SHA256 = "497ba433f6fdb7af8e0ff184064ec74f0ca7932b90e3f236ec4750dcaf6a26f8"
 _M4_REPORT_ROOT = Path(__file__).resolve().parents[1] / "reports" / "evolution_engine_milestone4"
 _WEEKLY_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_weekly_statistical_input_v1.schema.json"
-_REPORT_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_persistent_family_report_v3.schema.json"
+_REPORT_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "athena_m4_persistent_family_report_v4.schema.json"
 _INVERSION_AMENDMENT_SCHEMA = (Path(__file__).resolve().parents[1] / "schemas"
                                / "athena_m0_bonferroni_bound_amendment_v1.schema.json")
+_PROTOCOL_OWNER_DECISION = (Path(__file__).resolve().parents[1] / "reports"
+                            / "evolution_engine_m0_bonferroni_bound_amendment_2026-11-23"
+                            / "protocol_owner_decision.json")
 
 
 class M4ValidationError(RuntimeError):
@@ -294,19 +300,45 @@ def bonferroni_simultaneous_lower_bounds(
     return tuple(bounds)
 
 
-def _validate_inversion_amendment(amendment: Mapping[str, Any]) -> tuple[str, str]:
-    """Validate proposed amendment identity; never interpret it as approval."""
+def _verify_protocol_owner_decision() -> None:
+    """Verify the separately recorded approval without mutating proposal bytes."""
+    try:
+        data = _PROTOCOL_OWNER_DECISION.read_bytes()
+        decision = json.loads(data.decode("utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise M4ValidationError("approved M0 protocol-owner decision record is unavailable or invalid") from exc
+    if _sha(_canonical(decision)) != PROTOCOL_OWNER_DECISION_SHA256:
+        raise M4ValidationError("M0 protocol-owner decision record digest differs from the pinned approval")
+    expected = {
+        "schema_version": "athena.evolution.m0-protocol-owner-decision.v1",
+        "decision_status": "APPROVED",
+        "decision_date": "2026-11-24",
+        "base_protocol": "athena.evolution.m0-frozen.v1",
+        "amendment_schema": INVERSION_AMENDMENT_SCHEMA,
+        "amendment_id": APPROVED_AMENDMENT_ID,
+        "amendment_document_sha256": APPROVED_AMENDMENT_DOCUMENT_SHA256,
+    }
+    if any(decision.get(key) != value for key, value in expected.items()):
+        raise M4ValidationError("M0 protocol-owner decision does not approve the pinned amendment identity")
+
+
+def _validate_inversion_amendment(amendment: Mapping[str, Any]) -> tuple[str, str, str]:
+    """Validate immutable proposal bytes and recognize the pinned approval record."""
     try:
         schema = json.loads(_INVERSION_AMENDMENT_SCHEMA.read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator.check_schema(schema)
         jsonschema.validate(amendment, schema)
     except Exception as exc:
-        raise M4ValidationError("M0 Holm-inversion amendment fails its strict versioned schema") from exc
+        raise M4ValidationError("M0 Bonferroni-bound amendment fails its strict versioned schema") from exc
     payload = dict(amendment)
     amendment_id = payload.pop("amendment_id")
     if amendment_id != "sha256:" + _sha(_canonical(payload)):
         raise M4ValidationError("M0 Holm-inversion amendment identity hash mismatch")
-    return amendment_id, _sha(_canonical(amendment))
+    document_sha256 = _sha(_canonical(amendment))
+    if amendment_id != APPROVED_AMENDMENT_ID or document_sha256 != APPROVED_AMENDMENT_DOCUMENT_SHA256:
+        raise M4ValidationError("M4 accepts only the exact protocol-owner-approved amendment identity")
+    _verify_protocol_owner_decision()
+    return amendment_id, document_sha256, "APPROVED_BY_PROTOCOL_OWNER"
 
 
 def _block_indices(length: int, rng: random.Random) -> tuple[int, ...]:
@@ -633,12 +665,12 @@ def validate_family(registry: m1.ExperimentRegistry, *,
 
     amendment_identity: dict[str, str] | None = None
     if inversion_amendment is not None:
-        amendment_id, amendment_sha = _validate_inversion_amendment(inversion_amendment)
+        amendment_id, amendment_sha, approval_status = _validate_inversion_amendment(inversion_amendment)
         amendment_identity = {
             "schema_version": INVERSION_AMENDMENT_SCHEMA,
             "amendment_id": amendment_id,
             "document_sha256": amendment_sha,
-            "status": inversion_amendment["status"],
+            "status": approval_status,
         }
 
     events = registry.events()
@@ -840,9 +872,9 @@ def validate_family(registry: m1.ExperimentRegistry, *,
             missing_function = centered_errors_by_hypothesis.get((row["attempt_id"], row["hypothesis"])) is None
             row["bound_status"] = (
                 "P1_PLACEHOLDER_NO_FINITE_BOUND" if missing_function
-                else "NON_AUTHORITATIVE_PROPOSED_AMENDMENT"
+                else "APPROVED_METHOD_BOUND_NOT_QUALIFICATION"
             )
-        inversion_status = "PROPOSED_BONFERRONI_BOUNDS_NON_AUTHORITATIVE"
+        inversion_status = "APPROVED_BONFERRONI_BOUNDS_CALCULATED"
     unresolved = [row["attempt_id"] for row in report_attempts
                   if row["status"] in {"UNEVALUATED", "TECHNICAL_EVALUATION_FAILURE", "RUNNING", "VALIDATED", "SUBMITTED"}]
     already_advanced = any(row["status"] == "RESEARCH_ADVANCED_PENDING_PROSPECTIVE" for row in report_attempts)
@@ -862,7 +894,7 @@ def validate_family(registry: m1.ExperimentRegistry, *,
         "hypotheses": hypotheses,
         "holm_alpha": ALPHA,
         "holm_method": "holm_stepdown_familywise",
-        "qualification_status": "BLOCKED_M0_AMENDMENT_UNAPPROVED",
+        "qualification_status": "QUALIFICATION_NOT_RUN" if amendment_identity else "BLOCKED_AMENDMENT_NOT_SUPPLIED",
         "inversion_amendment": amendment_identity,
         "inversion_status": inversion_status,
         "family_completion_status": "ALL_ATTEMPTS_TERMINAL" if complete_attempt_family else "ATTEMPTS_UNRESOLVED",
@@ -874,8 +906,10 @@ def validate_family(registry: m1.ExperimentRegistry, *,
         "unresolved_attempt_ids": unresolved,
         "notes": [
             "M4 reconstructs evidence and Holm adjusted p-values; it does not execute candidates.",
-            "M0 full-family Bonferroni-bound amendment remains proposed; calculated bounds are non-authoritative and qualification is disabled.",
-            "Holm-adjusted p-values remain authoritative family-testing evidence; numerical bounds use the separately proposed alpha/m marginal inversion.",
+            "The exact M0 full-family Bonferroni-bound amendment is approved by the pinned protocol-owner decision record.",
+            "Holm-adjusted p-values remain family-testing evidence; simultaneous numerical bounds use full-family alpha/m marginal inversion.",
+            "Qualification was not run by M4 family reconstruction; method approval does not authorize historical evaluation, candidate qualification, or holdout access.",
+            "Bootstrap bound coverage remains conditional on valid marginal bootstrap tests; approval does not establish exact finite-sample validity.",
             "All data through 2026-08-19 remain previously observed research data, never untouched holdout data.",
         ],
     }
@@ -897,7 +931,7 @@ def validate_family(registry: m1.ExperimentRegistry, *,
 
 
 def qualify_family(*_args: Any, **_kwargs: Any) -> None:
-    """Qualification stays disabled until explicit approval of the proposed M0 amendment."""
+    """Method is approved; qualification execution remains a separate authorization gate."""
     raise QualificationBlocked(
-        "M0 Bonferroni-bound amendment is not approved; calculated proposed bounds are non-authoritative"
+        "M0 bound methodology is approved, but historical qualification execution has not been separately authorized"
     )

@@ -257,15 +257,25 @@ class M4MathTests(unittest.TestCase):
     def test_bonferroni_amendment_is_versioned_and_rejects_contract_drift(self):
         from crypto_bot.m4_validation import _validate_inversion_amendment
         amendment = _proposed_amendment()
-        amendment_id, _ = _validate_inversion_amendment(amendment)
+        amendment_id, _, approval_status = _validate_inversion_amendment(amendment)
         self.assertEqual(amendment_id, "sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9")
+        self.assertEqual(approval_status, "APPROVED_BY_PROTOCOL_OWNER")
         self.assertEqual(amendment["status"], "PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL")
         drifted = json.loads(json.dumps(amendment))
         drifted["simultaneous_lower_bounds"]["marginal_level"] = "alpha"
         with self.assertRaises(M4ValidationError):
             _validate_inversion_amendment(drifted)
 
-    def test_proposed_amendment_hash_and_schema_are_fail_closed(self):
+    def test_approved_amendment_requires_unchanged_pinned_decision_record(self):
+        from crypto_bot import m4_validation
+        with tempfile.TemporaryDirectory() as temp_dir:
+            decision_path = Path(temp_dir) / "protocol_owner_decision.json"
+            decision_path.write_text('{"decision_status":"REVOKED"}', encoding="utf-8")
+            with mock.patch.object(m4_validation, "_PROTOCOL_OWNER_DECISION", decision_path):
+                with self.assertRaisesRegex(M4ValidationError, "decision record digest"):
+                    m4_validation._validate_inversion_amendment(_proposed_amendment())
+
+    def test_approved_amendment_hash_and_schema_are_fail_closed(self):
         from crypto_bot.m4_validation import _validate_inversion_amendment
         amendment = _proposed_amendment()
         self.assertEqual(_validate_inversion_amendment(amendment)[0], amendment["amendment_id"])
@@ -279,7 +289,7 @@ class M4MathTests(unittest.TestCase):
         self.assertEqual(len(adjusted), 144)
         self.assertTrue(all(value == 1.0 for value in adjusted))
 
-    def test_qualification_is_fail_closed_until_m0_bound_inversion_is_frozen(self):
+    def test_qualification_remains_fail_closed_until_separate_authorization(self):
         with self.assertRaises(QualificationBlocked):
             qualify_family()
 
@@ -519,9 +529,10 @@ class M4FamilyIntegrationTests(unittest.TestCase):
         self.assertEqual(result.report_sha256, replay.report_sha256)
         self.assertEqual(result.report["attempt_count"], 5)
         self.assertEqual(result.report["hypothesis_count"], 20)
-        self.assertEqual(result.report["qualification_status"], "BLOCKED_M0_AMENDMENT_UNAPPROVED")
-        self.assertEqual(result.report["inversion_status"], "PROPOSED_BONFERRONI_BOUNDS_NON_AUTHORITATIVE")
+        self.assertEqual(result.report["qualification_status"], "QUALIFICATION_NOT_RUN")
+        self.assertEqual(result.report["inversion_status"], "APPROVED_BONFERRONI_BOUNDS_CALCULATED")
         self.assertEqual(result.report["inversion_amendment"]["amendment_id"], _proposed_amendment()["amendment_id"])
+        self.assertEqual(result.report["inversion_amendment"]["status"], "APPROVED_BY_PROTOCOL_OWNER")
         self.assertFalse(result.report["no_qualifying_candidate_authoritative"])
         self.assertEqual(sum(row["raw_p"] == 1 for row in result.report["hypotheses"]), 20)
         manifest_path = package / "manifest.json"

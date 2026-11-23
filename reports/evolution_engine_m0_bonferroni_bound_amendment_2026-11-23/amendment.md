@@ -1,6 +1,6 @@
 # M0 Amendment: Full-Family Bonferroni Numerical Bounds (Proposed)
 
-**Status:** `PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL` — not approved. M4 qualification remains disabled and every generated bound is non-authoritative.
+**Current status:** Approved by the protocol owner on 2026-11-24, as recorded in [protocol_owner_decision.md](protocol_owner_decision.md). The amendment JSON retains its original `PROPOSED_FOR_PROTOCOL_OWNER_APPROVAL` field because that field is part of the immutable hashed proposal document; approval is recorded separately and does not alter its identity.
 
 **Amendment schema:** `athena.evolution.m0-bonferroni-bound-amendment.v1`  
 **Amendment ID:** `sha256:693ba1f2f357788ebf9348685c44e4d03ef4915a322e31c72e1cd13654d2f1a9`  
@@ -32,7 +32,7 @@ M0's alpha (0.05), 100,000 bootstrap replicates, 4-week moving blocks, 95% inter
 
 ## Operational state
 
-M4 may reconstruct Holm-adjusted p-values and proposed Bonferroni bounds for synthetic/software verification and report evidence. `qualify_family()` continues to fail closed. Historical evaluation and holdout access remain separately unauthorized. Approval requires an explicit protocol-owner decision followed by a separately versioned protocol identity and verified tests.
+M4 recognizes only the exact approved amendment ID, amendment-document digest, and pinned protocol-owner decision record. Holm p-values and full-family Bonferroni bounds may be reconstructed under the approved method. `qualify_family()` remains fail-closed because this methodological approval does not authorize historical family evaluation or qualification execution. Holdout access remains separately unauthorized. Bootstrap coverage remains conditional on valid marginal tests.
 
 ## Reproduction
 
