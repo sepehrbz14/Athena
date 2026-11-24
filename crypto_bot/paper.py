@@ -287,7 +287,11 @@ class PaperOnlyRunner:
     @staticmethod
     def _atomic_text(path: Path, text: str) -> None:
         temporary = path.with_suffix(path.suffix + ".tmp")
-        temporary.write_text(text, encoding="utf-8")
+        # The frozen paper-output goldens were captured with CRLF line endings.
+        # Pin the on-disk convention so the same replay has identical bytes on
+        # Windows and POSIX instead of inheriting the host's newline default.
+        with temporary.open("w", encoding="utf-8", newline="\r\n") as handle:
+            handle.write(text)
         os.replace(temporary, path)
 
     def _atomic_json(self, path: Path, value: dict[str, Any]) -> None:

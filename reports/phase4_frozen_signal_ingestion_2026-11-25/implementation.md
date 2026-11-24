@@ -18,4 +18,5 @@ Successful calls return a versioned provenance manifest; optional publication us
 - Focused synthetic suite: `python -m unittest tests.test_frozen_signal_ingestion -v` — 13 passing tests.
 - Full regression: `python -m unittest discover -s tests -v` — 115 passing tests.
 - Additional checks: schema JSON parsing, Python compile, `git diff --check`, and validation of the existing capture metadata against its new schema.
-- Cross-platform Python 3.13 CI is defined in `.github/workflows/tests.yml` and run on the implementation branch.
+- Cross-platform regression initially exposed that the pre-existing paper-output golden was serialized with CRLF while POSIX used LF. `crypto_bot/paper.py` now pins CRLF for atomic text outputs, preserving the existing golden bytes on both platforms; the paper outputs remain semantically unchanged.
+- Python 3.13 CI is defined in `.github/workflows/tests.yml`. Final Ubuntu and Windows jobs are recorded in the linked Actions run in the completion report.
