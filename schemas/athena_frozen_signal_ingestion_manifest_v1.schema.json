@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/athena_frozen_signal_ingestion_manifest_v1.schema.json",
+  "title": "Athena frozen signal ingestion provenance manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "input_manifest_schema_version", "input_manifest_identity", "input_manifest_sha256", "inputs", "signal_schema_version", "normalized_signal_schema_version", "metadata_schema_version", "candle_schema_version", "candle_interval_minutes", "source_code", "configuration", "configuration_sha256", "total_raw_rows", "selected_rows", "excluded_nonselected_rows", "invalid_input_count", "rejection_reasons", "date_range_utc", "ordering_policy"],
+  "properties": {
+    "schema_version": {"const": "athena.frozen-signal-ingestion-manifest.v1"},
+    "input_manifest_schema_version": {"const": "athena.frozen-signal-input-manifest.v1"},
+    "input_manifest_identity": {"type": "string", "minLength": 1},
+    "input_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "inputs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["signals", "metadata", "candles"],
+      "properties": {
+        "signals": {"$ref": "#/$defs/input_identity"},
+        "metadata": {"$ref": "#/$defs/input_identity"},
+        "candles": {"$ref": "#/$defs/input_identity"}
+      }
+    },
+    "signal_schema_version": {"const": "athena.frozen_signal_csv.v1"},
+    "normalized_signal_schema_version": {"const": "athena.frozen_signal.v1"},
+    "metadata_schema_version": {"const": "athena.frozen-signal-capture-metadata.v1"},
+    "candle_schema_version": {"const": "athena.ohlcv.csv.v1"},
+    "candle_interval_minutes": {"type": "integer", "minimum": 1, "maximum": 1440},
+    "source_code": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "dirty", "ingestion_module_sha256"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[a-f0-9]{40,64}$"},
+        "dirty": {"type": "boolean"},
+        "ingestion_module_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "configuration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["instrument_id", "reference_price_tolerance_abs", "candle_interval_minutes"],
+      "properties": {
+        "instrument_id": {"const": "BTCUSDT"},
+        "reference_price_tolerance_abs": {"type": "number", "minimum": 0},
+        "candle_interval_minutes": {"type": "integer", "minimum": 1, "maximum": 1440}
+      }
+    },
+    "configuration_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "total_raw_rows": {"type": "integer", "minimum": 0},
+    "selected_rows": {"type": "integer", "minimum": 0},
+    "excluded_nonselected_rows": {"type": "integer", "minimum": 0},
+    "invalid_input_count": {"const": 0},
+    "rejection_reasons": {"type": "array", "maxItems": 0},
+    "date_range_utc": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start_inclusive", "end_inclusive"],
+      "properties": {
+        "start_inclusive": {"type": ["string", "null"], "format": "date-time"},
+        "end_inclusive": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "ordering_policy": {"const": "ascending_utc_available_at_instrument_id_signal_id"}
+  },
+  "$defs": {
+    "input_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["identity", "sha256"],
+      "properties": {
+        "identity": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

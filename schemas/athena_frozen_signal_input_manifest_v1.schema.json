@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://athena.invalid/schemas/athena_frozen_signal_input_manifest_v1.schema.json",
+  "title": "Athena frozen signal input commitment manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "signal_schema_version", "metadata_schema_version", "candle_schema_version", "candle_interval_minutes", "signals_sha256", "metadata_sha256", "candles_sha256"],
+  "properties": {
+    "schema_version": {"const": "athena.frozen-signal-input-manifest.v1"},
+    "signal_schema_version": {"const": "athena.frozen_signal_csv.v1"},
+    "metadata_schema_version": {"const": "athena.frozen-signal-capture-metadata.v1"},
+    "candle_schema_version": {"const": "athena.ohlcv.csv.v1"},
+    "candle_interval_minutes": {"type": "integer", "minimum": 1, "maximum": 1440},
+    "signals_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "metadata_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "candles_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
